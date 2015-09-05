@@ -1,11 +1,3 @@
-## The github project
-## It should contain all the scripts required to reproduce the analysis
-## Also it will have the basic tree structure of the track hub and all HTML description files
-## While all the data files will be uploaded to the iPlant space
-## This design will allow the community to share in developiong the track hub
-## and also they can fork to have their own vesion with different view options
-## Using the iplant for data storage has the advatage of using the icommand tools to upload data directly from the cloud
-###########################################################################################
 myRoot=$"/mnt/ls12/Tamer"
 horse_trans=$myRoot/horse_trans
 script_path=$myRoot/horse_trans/scripts
