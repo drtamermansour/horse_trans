@@ -265,38 +265,38 @@ bash $script_path/get_trackHub_template.sh $track_hub
 current_tracks=$track_hub/current_tracks  ## list of the identifiers of current tracks
 tissue_array=()
 labExp_array=()
-while read identifier; do
-  tissue=$(echo $identifier | cut -d"/" -f1)
-  labExp=$(echo $bigbed_path | cut -d"/" -f2)
-  if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
-    labExp_array+=($labExp); tissue_array+=($tissue); fi
-done < $current_tracks
-
+if [ -f $current_tracks ]; then
+  while read identifier; do
+    tissue=$(echo $identifier | cut -d"/" -f1)
+    labExp=$(echo $bigbed_path | cut -d"/" -f2)
+    if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
+      labExp_array+=($labExp); tissue_array+=($tissue); fi; done < $current_tracks
+fi
 ## edit the trackDb
 track_data=$"https://To_be_defined/"     ## put the URL of the data folder on iplant
 while read assembly; do
   echo $assembly
   identifier=${assembly#$prepData/}
   tissue=$(echo $identifier | cut -d"/" -f1)
-  labExp=$(echo $bigbed_path | cut -d"/" -f2)
+  labExp=$(echo $identifier | cut -d"/" -f2)
   if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
     labExp_array+=($labExp); tissue_array+=($tissue); fi
-    filename=$(echo $identifier | sed 's/\//_/g' | sed 's/_output//g')
-    track=$(echo $filename | sed 's/\.//g')
-    bigDataUrl=$track_data/${filename}.BigBed
-    shortLabel=$tissue-$(echo ${tissue_array[@]} | grep -o $tissue | wc -l)
-    longLabel=$bigbed_path
-    echo "track $track" >> $prepData/trackDb_labSpecificCuffmerge.txt
-    echo "bigDataUrl $bigDataUrl" >> $track_hub/equCab2/trackDb.txt
-    echo "shortLabel $shortLabel" >> $track_hub/equCab2/trackDb.txt
-    echo "longLabel $longLabel" >> $track_hub/equCab2/trackDb.txt
-    echo "type bigBed 12" >> $track_hub/equCab2/trackDb.txt
-    echo "colorByStrand 255,0,0 0,0,255" >> $track_hub/equCab2/trackDb.txt
-    echo "visibility dense" >> $track_hub/equCab2/trackDb.txt
-    echo "group Tophat2/Cufflinks Refgene guided followed by Cuffmerge" >> $track_hub/equCab2/trackDb.txt
-    echo " " >> $track_hub/equCab2/trackDb.txt
-    echo $identifier >> $track_hub/current_tracks
-done < $prepdata/merged_assemblies.txt
+  filename=$(echo $identifier | sed 's/\//_/g' | sed 's/_output//g')
+  track=$(echo $filename | sed 's/\.//g')
+  bigDataUrl=$track_data/${filename}.BigBed
+  shortLabel=$tissue-$(echo ${tissue_array[@]} | grep -o $tissue | wc -l)
+  longLabel=$bigbed_path
+  echo "track $track" >> $track_hub/equCab2/trackDb.txt
+  echo "bigDataUrl $bigDataUrl" >> $track_hub/equCab2/trackDb.txt
+  echo "shortLabel $shortLabel" >> $track_hub/equCab2/trackDb.txt
+  echo "longLabel $longLabel" >> $track_hub/equCab2/trackDb.txt
+  echo "type bigBed 12" >> $track_hub/equCab2/trackDb.txt
+  echo "colorByStrand 255,0,0 0,0,255" >> $track_hub/equCab2/trackDb.txt
+  echo "visibility dense" >> $track_hub/equCab2/trackDb.txt
+  echo "group Tophat2/Cufflinks Refgene guided followed by Cuffmerge" >> $track_hub/equCab2/trackDb.txt
+  echo " " >> $track_hub/equCab2/trackDb.txt
+  echo $identifier >> $track_hub/current_tracks
+done < $prepData/merged_assemblies.txt
 
 ## add metadata like closest Ref gene
 grep "exon_number \"1\"" merged.gtf > merged_ex1.gtf
