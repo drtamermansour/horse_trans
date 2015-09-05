@@ -5,7 +5,7 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  
 track Skin_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
 bigDataUrl http://de.iplantcollaborative.org/dl/d/3369DE6F-335E-42D8-8B11-B4A294F01EB3/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
@@ -14,7 +14,7 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
 bigDataUrl http://de.iplantcollaborative.org/dl/d/CFFD59B6-4C97-4000-9DE2-369C2F79EBCD/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
@@ -23,7 +23,7 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
 bigDataUrl http://de.iplantcollaborative.org/dl/d/4C46A835-4A8E-4A23-B063-DE00B11F0C9C/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
@@ -32,7 +32,7 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  
 track Skin_SE_95_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
 bigDataUrl http://de.iplantcollaborative.org/dl/d/5EA923FC-F866-4903-B47F-34CF7EC16B53/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
@@ -41,7 +41,7 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  
 track Skin_SE_95_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
 bigDataUrl http://de.iplantcollaborative.org/dl/d/466965FD-58CD-41A1-843D-FB497CA5B673/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
@@ -50,5 +50,5 @@ longLabel
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-group Tophat2/Cufflinks Refgene guided followed by Cuffmerge
+group Tophat2_Cufflinks_refGTFguided_Cuffmerge
  

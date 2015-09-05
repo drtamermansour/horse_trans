@@ -272,6 +272,12 @@ if [ -f $current_tracks ]; then
     if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
       labExp_array+=($labExp); tissue_array+=($tissue); fi; done < $current_tracks
 fi
+## edit the groups
+echo "name Tophat2_Cufflinks_refGTFguided_Cuffmerge" >> $track_hub/groups
+echo "label Tophat2/Cufflinks Refgene guided followed by Cuffmerge" >> $track_hub/groups
+echo "priority 1" >> $track_hub/groups
+echo "defaultIsClosed 0" >> $track_hub/groups
+
 ## edit the trackDb
 track_data=$"https://To_be_defined/"     ## put the URL of the data folder on iplant
 while read assembly; do
@@ -293,7 +299,7 @@ while read assembly; do
   echo "type bigBed 12" >> $track_hub/equCab2/trackDb.txt
   echo "colorByStrand 255,0,0 0,0,255" >> $track_hub/equCab2/trackDb.txt
   echo "visibility dense" >> $track_hub/equCab2/trackDb.txt
-  echo "group Tophat2/Cufflinks Refgene guided followed by Cuffmerge" >> $track_hub/equCab2/trackDb.txt
+  echo "group Tophat2_Cufflinks_refGTFguided_Cuffmerge" >> $track_hub/equCab2/trackDb.txt
   echo " " >> $track_hub/equCab2/trackDb.txt
   echo $identifier >> $track_hub/current_tracks
 done < $prepData/merged_assemblies.txt
