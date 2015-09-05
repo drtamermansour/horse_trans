@@ -1,2 +1,3 @@
 genome equCab2
 trackDb equCab2/trackDb.txt
+groups groups.txt
