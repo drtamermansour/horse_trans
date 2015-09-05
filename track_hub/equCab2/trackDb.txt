@@ -1,0 +1,7 @@
+track bigBed1
+bigDataUrl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeCaltechRnaSeq/wgEncodeCaltechRnaSeqGm12891R2x75Il200JunctionsRep1V3.bigBed
+shortLabel bigBed example
+longLabel This bigBed file is an example from the ENCODE RNA-seq Caltech Track
+type bigBed
+visibility dense
+
