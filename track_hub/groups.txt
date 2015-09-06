@@ -1,5 +1,0 @@
-name Tophat2_Cufflinks_refGTFguided_Cuffmerge
-label Tophat2/Cufflinks Refgene guided followed by Cuffmerge
-priority 1
-defaultIsClosed 0
-
