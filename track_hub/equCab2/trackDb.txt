@@ -1,6 +1,6 @@
 track Skin_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
 bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
-shortLabel Skin-3
+shortLabel Skin-1
 longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -9,7 +9,7 @@ html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
  
 track Skin_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
 bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
-shortLabel Skin-3
+shortLabel Skin-1
 longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -18,7 +18,7 @@ html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
 bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
-shortLabel Skin-3
+shortLabel Skin-2
 longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -27,7 +27,7 @@ html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
 bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
-shortLabel Skin-3
+shortLabel Skin-2
 longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -51,4 +51,76 @@ type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 html Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
+ 
+track BrainStem_PE_100_frfirststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel BrainStem-1
+longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+ 
+track BrainStem_PE_100_frfirststrand_Finno_01012015_tophat_cuffmerge_withRefGene
+bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel BrainStem-1
+longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withRefGene
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withRefGene
+ 
+track Muscle_PE_125_frfirststrand_ValbergFinno_01012015_tophat_cuffmerge_withoutGTF
+bigDataUrl BigBed/Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel Muscle-1
+longLabel Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF
+ 
+track Muscle_PE_125_frfirststrand_ValbergFinno_01012015_tophat_cuffmerge_withRefGene
+bigDataUrl BigBed/Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel Muscle-1
+longLabel Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/tophat_output/cuffmerge_output/withRefGene
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withRefGene
+ 
+track Retina_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+bigDataUrl BigBed/Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel Retina-0
+longLabel Retina/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+ 
+track Retina_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
+bigDataUrl BigBed/Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel Retina-0
+longLabel Retina/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
+ 
+track SpinalCord_PE_100_frfirststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+bigDataUrl BigBed/SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel SpinalCord-0
+longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+ 
+track SpinalCord_PE_100_frfirststrand_Finno_01012015_tophat_cuffmerge_withRefGene
+bigDataUrl BigBed/SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel SpinalCord-0
+longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withRefGene
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withRefGene
  

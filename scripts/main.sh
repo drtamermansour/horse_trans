@@ -237,7 +237,7 @@ rm -f $prepData/merged_assemblies.txt
 while read work_dir; do if [ -d $work_dir/tophat_output/cuffmerge_output ]; then
   for dir in $work_dir/tophat_output/cuffmerge_output/*; do if [ -d $dir ]; then
     echo $dir >> $prepData/merged_assemblies.txt; fi; done;
-fi; done < $horse_trans/working_list_skin.txt
+fi; done < $horse_trans/working_list_NoPBMCs_NoCereb_NoSkin.txt
 
 ## convert the gtf files into BigBed files
 while read assembly; do
@@ -276,7 +276,7 @@ labExp_array=()
 if [ -f $current_tracks ]; then
   while read identifier; do
     tissue=$(echo $identifier | cut -d"/" -f1)
-    labExp=$(echo $bigbed_path | cut -d"/" -f2)
+    labExp=$(echo $identifier | cut -d"/" -f2)
     if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
       labExp_array+=($labExp); tissue_array+=($tissue); fi; done < $current_tracks
 fi
