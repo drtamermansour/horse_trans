@@ -1,6 +1,6 @@
 track Skin_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
-bigDataUrl Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
-shortLabel Skin-1
+bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel Skin-3
 longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -8,8 +8,8 @@ visibility dense
 html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
  
 track Skin_PE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
-bigDataUrl Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
-shortLabel Skin-1
+bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel Skin-3
 longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -17,8 +17,8 @@ visibility dense
 html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
-bigDataUrl Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
-shortLabel Skin-2
+bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel Skin-3
 longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -26,8 +26,8 @@ visibility dense
 html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
  
 track Skin_SE_81_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
-bigDataUrl Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
-shortLabel Skin-2
+bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
+shortLabel Skin-3
 longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
@@ -35,7 +35,7 @@ visibility dense
 html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
  
 track Skin_SE_95_frunstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
-bigDataUrl Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+bigDataUrl BigBed/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
 shortLabel Skin-3
 longLabel Skin/SE_95_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
 type bigBed 12
@@ -44,7 +44,7 @@ visibility dense
 html Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
  
 track Skin_SE_95_frunstranded_Bellone_01012015_tophat_cuffmerge_withRefGene
-bigDataUrl Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
+bigDataUrl BigBed/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withRefGene.BigBed
 shortLabel Skin-3
 longLabel Skin/SE_95_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withRefGene
 type bigBed 12

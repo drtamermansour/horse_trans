@@ -250,16 +250,24 @@ done < $prepData/merged_assemblies.txt
 ## run icommand to push the file to iplant
 ## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
 ## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
-icd /iplant/home/drtamermansour/horseTrans
+#icd /iplant/home/drtamermansour/horseTrans
+#while read assembly; do
+#  echo $assembly
+#  iput $assembly/*.BigBed
+#done < $prepData/merged_assemblies.txt
+
+## Create (or restart) track hub
+UCSCgenome=$"equCab2"
+hub_name=$"UCDavis_horse_transcriptome_hub"
+shortlabel=$"Horse-Trans"
+longlabel=$"Track hub for tissue specific horse transcriptomes"
+bash $script_path/create_trackHub.sh $UCSCgenome $hub_name $shortlabel $longlabel $track_hub
+
+## copy the BigBed files to the track hub directory
 while read assembly; do
   echo $assembly
-  iput $assembly/*.BigBed
+  cp $assembly/*.BigBed $track_hub/equCab2/BigBed/.
 done < $prepData/merged_assemblies.txt
-
-## Download template for a track hub
-## Now you can edit the hub files to match your targets
-## change this by copy of the track hub from github
-bash $script_path/get_trackHub_template.sh $track_hub
 
 ## load the data of the current tracks
 current_tracks=$track_hub/current_tracks  ## list of the identifiers of current tracks
@@ -272,14 +280,8 @@ if [ -f $current_tracks ]; then
     if [ $(echo ${labExp_array[@]} | grep -o $labExp | wc -l) -eq 0 ]; then
       labExp_array+=($labExp); tissue_array+=($tissue); fi; done < $current_tracks
 fi
-## edit the groups
-echo "name Tophat2_Cufflinks_refGTFguided_Cuffmerge" >> $track_hub/groups
-echo "label Tophat2/Cufflinks Refgene guided followed by Cuffmerge" >> $track_hub/groups
-echo "priority 1" >> $track_hub/groups
-echo "defaultIsClosed 0" >> $track_hub/groups
 
 ## edit the trackDb
-track_data=$"https://To_be_defined/"     ## put the URL of the data folder on iplant
 while read assembly; do
   echo $assembly
   identifier=${assembly#$prepData/}
@@ -289,9 +291,9 @@ while read assembly; do
     labExp_array+=($labExp); tissue_array+=($tissue); fi
   filename=$(echo $identifier | sed 's/\//_/g' | sed 's/_output//g')
   track=$(echo $filename | sed 's/\.//g')
-  bigDataUrl=$track_data/${filename}.BigBed
+  bigDataUrl=$"BigBed"/${filename}.BigBed
   shortLabel=$tissue-$(echo ${tissue_array[@]} | grep -o $tissue | wc -l)
-  longLabel=$bigbed_path
+  longLabel=$identifier
   echo "track $track" >> $track_hub/equCab2/trackDb.txt
   echo "bigDataUrl $bigDataUrl" >> $track_hub/equCab2/trackDb.txt
   echo "shortLabel $shortLabel" >> $track_hub/equCab2/trackDb.txt
@@ -299,10 +301,17 @@ while read assembly; do
   echo "type bigBed 12" >> $track_hub/equCab2/trackDb.txt
   echo "colorByStrand 255,0,0 0,0,255" >> $track_hub/equCab2/trackDb.txt
   echo "visibility dense" >> $track_hub/equCab2/trackDb.txt
-  echo "group Tophat2_Cufflinks_refGTFguided_Cuffmerge" >> $track_hub/equCab2/trackDb.txt
+  echo "html $filename" >> $track_hub/equCab2/trackDb.txt
   echo " " >> $track_hub/equCab2/trackDb.txt
   echo $identifier >> $track_hub/current_tracks
 done < $prepData/merged_assemblies.txt
+
+## create the HTML file page for every track
+
+## Organizing Track Hubs into Groupings
+## https://genome.ucsc.edu/goldenPath/help/hubQuickStartGroups.html
+## Can we make multiple track hubs for the same genome?
+## if yes, can we make them as different barnches of the same Github repository
 
 ## add metadata like closest Ref gene
 grep "exon_number \"1\"" merged.gtf > merged_ex1.gtf
