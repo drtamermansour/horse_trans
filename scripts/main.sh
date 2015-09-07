@@ -301,6 +301,7 @@ while read assembly; do
   echo "type bigBed 12" >> $track_hub/equCab2/trackDb.txt
   echo "colorByStrand 255,0,0 0,0,255" >> $track_hub/equCab2/trackDb.txt
   echo "visibility dense" >> $track_hub/equCab2/trackDb.txt
+  echo "priority 1" >> $track_hub/equCab2/trackDb.txt
   echo "html $filename" >> $track_hub/equCab2/trackDb.txt
   echo " " >> $track_hub/equCab2/trackDb.txt
   echo $identifier >> $track_hub/current_tracks
