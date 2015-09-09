@@ -1,2 +1,10 @@
 genome equCab2
 trackDb equCab2/trackDb_TopCuff_Cuffmerge.txt
+genome equCab2
+trackDb equCab2/trackDb_TopCuff_Cuffmerge.txt
+genome equCab2
+trackDb equCab2/trackDb_TopCuff_Cuffmerge.txt
+genome equCab2
+trackDb equCab2/trackDb_TopCuff_Cuffmerge.txt
+genome equCab2
+trackDb equCab2/trackDb_TopCuff_Cuffmerge.txt

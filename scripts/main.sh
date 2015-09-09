@@ -265,7 +265,7 @@ shortlabel=$"TopCuff_Cuffmerge"
 longlabel=$"Single samlpe reference guided Tophat/Cufflinks followed by Cuffmerge"
 email=$"drtamermansour@gmail.com"
 cd $track_hub
-bash $script_path/create_trackHub.sh $UCSCgenome $hub_name $shortlabel $longlabel $email
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
 
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
