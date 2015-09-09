@@ -31,6 +31,7 @@ html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
 track Skin
 compositeTrack on
 shortLabel Skin
+longLabel composite track for Skin libraries
 type bigBed 12
 visibility dense
 priority 4

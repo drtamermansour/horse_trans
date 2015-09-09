@@ -30,18 +30,21 @@ fi
 ## add the new data
 while read assembly; do
   echo $assembly
-  lib_assembly_array+=($assembly)
-  tissue=$(echo $assembly | cut -d"/" -f1)
-  tissue_array+=($tissue)
-done < $lib_assemblies
+  ## ensure the assembly was not loaded before
+  if [ $(echo ${lib_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
+    lib_assembly_array+=($assembly)
+    tissue=$(echo $assembly | cut -d"/" -f1)
+    tissue_array+=($tissue)
+fi; done < $lib_assemblies
 
 while read assembly; do
   echo $assembly
-  tiss_assembly_array+=($assembly)
-  tissue=$(echo $assembly | cut -d"/" -f1)
-  multi_tissue_array+=($tissue)
-done < $tiss_assemblies
-
+  ## ensure the assembly was not loaded before
+  if [ $(echo ${lib_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
+    tiss_assembly_array+=($assembly)
+    tissue=$(echo $assembly | cut -d"/" -f1)
+    multi_tissue_array+=($tissue)
+fi; done < $tiss_assemblies
 
 ## restart the trackDb
 > $trackDb
@@ -62,6 +65,7 @@ for t in ${tissue_array[@]}; do
       echo "track $t" >> $trackDb
       echo "compositeTrack on" >> $trackDb
       echo "shortLabel $t" >> $trackDb
+      echo "longLabel composite track for $t libraries" >> $trackDb
       echo "type bigBed 12" >> $trackDb
       echo "visibility dense" >> $trackDb
       echo "priority $priority" >> $trackDb
