@@ -1,5 +1,0 @@
-hub UCDavis_horse_transcriptome_hub
-shortLabel Horse-Trans
-longLabel Track hub for tissue specific horse transcriptomes
-genomesFile genomes.txt
-email drtamermansour@gmail.com

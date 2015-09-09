@@ -1,9 +1,0 @@
-track BrainStem_PE_100_frfirststrand_Finno_01012015_tophat_cuffmerge_withoutGTF2
-bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed2
-shortLabel BrainStem-9
-longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF2
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 1
-html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF2

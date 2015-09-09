@@ -2,7 +2,7 @@
 #PBS -l walltime=24:00:00,nodes=1:ppn=4,mem=16Gb
 #mdiag -A ged
 #PBS -m abe
-#PBS -N tophat-SE
+#PBS -N tophat
 
 module load TopHat2/2.0.14
 

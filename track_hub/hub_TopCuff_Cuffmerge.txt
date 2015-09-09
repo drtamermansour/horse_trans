@@ -1,0 +1,5 @@
+hub HorseTrans1
+shortLabel TopCuff_Cuffmerge
+longLabel Single
+genomesFile genomes_TopCuff_Cuffmerge.txt
+email samlpe
