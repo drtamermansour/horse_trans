@@ -36,4 +36,10 @@ Coding guidelines in this project
 - Track hubs: 
    * Each hub should include tracks for set of samples that underwent the same "non-branching" analytical piepline. 
    * Each hub should contain tracks for every tissue. Tissues with mutliple libraries would have a special composite track which allow the visualization of the separate libraries. The hub also should contain track that represent the integration of all tissues.  
-   * I tried to automate the creation and edition of the tracks so that the user just pass a list of all the annotation files or even only the newer files to the "edit_trackDb.sh" script which take care of of arranging the libraries and tissues into the appropriate format. Hopefully it is going to work the way I like.   
+   * I tried to automate the creation and edition of the tracks so that the user just pass a list of all the annotation files or even only the newer files to the "edit_trackDb.sh" script which take care of of arranging the libraries and tissues into the appropriate format. Hopefully it is going to work the way I like.
+
+Current avaliable track hubs
+============================
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt
+
+   
