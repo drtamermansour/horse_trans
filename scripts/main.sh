@@ -1,4 +1,7 @@
+## pathways of the diretory structure
+## you need to change myRoot to match you actual working directory
 myRoot=$"/mnt/ls12/Tamer"
+mkdir -p $myRoot/horse_trans/{scripts,resources,rawdata,prepdata,refGenome,track_hub}
 horse_trans=$myRoot/horse_trans
 script_path=$myRoot/horse_trans/scripts
 resources=$myRoot/horse_trans/resources
@@ -6,29 +9,28 @@ rawData=$myRoot/horse_trans/rawdata
 prepData=$myRoot/horse_trans/prepdata
 genome_dir=$myRoot/horse_trans/refGenome
 track_hub=$myRoot/horse_trans/track_hub
-###########################################################################################
-## assess_public_annotations
-bash $script_path/assess_public_annotations.sh $resources
 
 ###########################################################################################
 #### prepare the raw fastq files:
 ## Every tissue has a separate folder carrying its name (maximum 14 letter) in $prepData.
-## Every libarary should have a separate folder into the corresponding tissue folder.
+## Every RNAseq libarary should have a separate folder into the corresponding tissue folder.
 ## The libarary folder name should start with PE_ or SE_ according to the sequencoing type
 ## Then it should should have the read length followed by underscore
 ## Then it should have fr.unstranded_ , fr.firststrand_ , fr.secondstrand_ according to lib type
 ## Then the owner name (or names separted by dots) followed by underscore
 ## Then the date of sequencing as MMDDYYYY
 ## The raw data files should be prepared so that they have enconding "Sanger / illumina 1.9"
-## all sample replicates should be merged into one sample
 ## The file names should fit the format *_R1_*.fastq.gz & *_R2_*.fastq.gz for PE reads or *_SR_*.fastq.gz for SE
+## All sample replicates should be merged into one sample
 ## The first syllbus (the part of the file name before _R1_ , _R2_ or _SR_) should be unique
 ## the final form of the data files should be kept in a folder named fastq_data in the tissue folder
-bash $script_path/prep_in_home_seq_files.sh $rawData $prepData $script_path
 
-proj_rawData=$rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
+## a representive work out to one SRA reposatories
+## The script is missing a step to ensure merging of sample duplicates if they do exist
+mkdir -p $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
+cd $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
 SRA_URL=$"ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653"
-bash $script_path/prep_proj.sh $proj_rawData $SRA_URL $prepData $script_path
+bash $script_path/prep_proj.sh $SRA_URL $prepData $script_path
 ###########################################################################################
 ## define the list of working directory and the list samples in each. This is where you can edit the output list file(s) to restrict the processing for certain target(s)
 rm -f $horse_trans/working_list.txt
@@ -246,9 +248,49 @@ mkdir -p $tissue_Cuffmerge/all_tissues
 #cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/all_tissues/withRefGene --num-threads 4 --ref-gtf "${Genes_GTF_file}" $prepData/All_tissues_assemblies.txt > $Alltissue_merge/cuffmerge_withRef.txt 2>&1
 ## without the --ref-gtf option
 cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/all_tissues/withoutGTF --num-threads 4 $prepData/All_tissues_assemblies.txt > $Alltissue_merge/cuffmerge_withoutGTF.txt 2>&1
+
+###################
+## create list of assemblies from each library
+## This is where you can edit the list to restrict the processing for certain target(s)
+rm -f $prepData/merged_assemblies.txt
+rm -f $horse_trans/merged_and_tissue_assemblies.txt
+while read work_dir; do if [ -d $work_dir/tophat_output/cuffmerge_output ]; then
+  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
+    echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
+    echo ${dir} >> $horse_trans/merged_and_tissue_assemblies.txt; fi; done;
+fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+## create list of assemblies for tissues of multiple libraries
+rm -f $tissue_Cuffmerge/tissue_assemblies.txt
+for tissue in $tissue_Cuffmerge/*; do
+  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF >> $tissue_Cuffmerge/tissue_assemblies.txt;
+  echo ${tissue}/withoutGTF >> $horse_trans/merged_and_tissue_assemblies.txt; done
 ####################
 ## predict UTR
-## Add some code to do the UTR prediction
+## install protein database such as Swissprot (fast) or Uniref90 (slow but more comprehensive)
+mkdir -p $genome_dir/ptnDB
+cd $genome_dir/ptnDB
+wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+gunzip uniprot_sprot.fasta.gz
+refPtn="$genome_dir/ptnDB/uniprot_sprot.fasta"
+bash $script_path/make_ptnDB.sh $refPtn
+#wget ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz
+#gunzip uniref90.fasta.gz
+#refPtn=$"uniref90.fasta"
+#bash $script_path/make_ptnDB.sh $refPtn
+
+## install pfam database
+wget ftp://ftp.broadinstitute.org/pub/Trinity/Trinotate_v2.0_RESOURCES/Pfam-A.hmm.gz
+gunzip Pfam-A.hmm.gz
+refPfam="$genome_dir/ptnDB/Pfam-A.hmm"
+bash $script_path/make_PfamDB.sh $refPfam
+
+## run Transdecoder with homology options
+sample_list="$horse_trans/merged_and_tissue_assemblies.txt"
+bash $script_path/run_transdecoder.sh $sample_list $genome_dir/Bowtie2Index/genome.fa $refPtn $refPfam $script_path/transdecoder.sh
+
+TransDecoder.Predict -t transcripts.fasta --retain_pfam_hits pfam.domtblout --retain_blastp_hits blastp.outfmt6
+$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta > transcripts.fasta.transdecoder.genome.gff3
+
 ####################
 #### Format the data (create the BigBed files)
 
@@ -267,13 +309,6 @@ email=$"drtamermansour@gmail.com"
 cd $track_hub
 bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
 
-## create list of assemblies from each library
-## This is where you can edit the list to restrict the processing for certain target(s)
-rm -f $prepData/merged_assemblies.txt
-while read work_dir; do if [ -d $work_dir/tophat_output/cuffmerge_output ]; then
-  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
-    echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
 ## convert the gtf files into BigBed files
 while read assembly; do
   echo $assembly
@@ -286,10 +321,6 @@ while read assembly; do
   cp $prepData/$assembly/*.BigBed $track_hub/$UCSCgenome/BigBed/.
 done < $prepData/merged_assemblies.txt
 
-## create list of assemblies for tissues of multiple libraries
-rm -f $tissue_Cuffmerge/tissue_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
-  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF >> $tissue_Cuffmerge/tissue_assemblies.txt; done
 ## convert the gtf files into BigBed files
 while read assembly; do
   echo $assembly

@@ -1,6 +1,5 @@
-
-resources="$1"
-
+myRoot=$"/mnt/ls12/Tamer"
+resources=$myRoot/horse_trans/resources
 ##################################################################################################
 
 mkdir -p $resources/NCBI/GFF

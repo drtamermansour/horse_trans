@@ -1,10 +1,8 @@
-proj_rawData="$1"
-SRA_URL="$2"
-prepData="$3"
-script_path="$4"
+SRA_URL="$1"
+prepData="$2"
+script_path="$3"
+proj_rawData=$(pwd)
 
-mkdir -p $proj_rawData
-cd $proj_rawData
 wget -r $SRA_URL/*
 #wget -r ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653/ERR6534[2-9][0-9]
 #wget -r ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653/ERR6535[0-9][0-9]
