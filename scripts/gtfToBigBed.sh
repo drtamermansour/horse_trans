@@ -2,7 +2,7 @@
 
 if [ $# -lt 3 ]
 then
-printf "\nUsage run_cufflinks.sh [genome chrom sizes] [identifier] [script path]\n"
+printf "\nUsage gtfToBigBed.sh [genome chrom sizes] [identifier] [script path]\n"
 exit 0
 fi
 

@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#PBS -l walltime=4:00:00:00,nodes=1:ppn=4,mem=64Gb
+#PBS -l walltime=7:00:00:00,nodes=1:ppn=4,mem=64Gb
 #mdiag -A ged
 #PBS -m abe
 #PBS -N cufflinks

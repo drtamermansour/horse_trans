@@ -1,0 +1,5 @@
+hub HorseTrans2
+shortLabel TopCuffmerge_TD
+longLabel Single samlpe ref guided Tophat/Cufflinks followed by Cuffmerge/transdecoder
+genomesFile genomes_TopCuffmerge_TD.txt
+email drtamermansour@gmail.com

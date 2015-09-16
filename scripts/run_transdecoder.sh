@@ -14,6 +14,7 @@ script="$5"
 
 
 while read assembly; do
-  cd $assembly
+  mkdir $assembly/transdecoder
+  cd $assembly/transdecoder
   qsub -v genome="$genome",refPtn="$refPtn",refPfam="$refPfam" "$script"
 done < $sample_list

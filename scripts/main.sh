@@ -85,7 +85,7 @@ cat ../*.fa > genome.fa
 module load bowtie2/2.1.0
 bowtie2-build genome.fa genome
 Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome
-
+genome=$genome_dir/Bowtie2Index/genome.fa
 ## define the GTF/GFF files
 ## generation of GTF from UCSC tables using the guidelines of genomewiki.ucsc
 ## http://genomewiki.ucsc.edu/index.php/Genes_in_gtf_or_gff_format
@@ -181,37 +181,21 @@ cufflinks_utlization=$prepData/cufflinks_utlization.txt
 > $cufflinks_utlization
 while read work_dir; do
   cd $work_dir/tophat_output
-  echo $(pwd) >> $cufflinks_utlization
-  for dir in tophat_*; do
-    f=$dir/cufflinks.e*
-    if [ -f $f ]; then
-      f2=$(echo $f | sed 's/cufflinks.e/cufflinks.o/')
-      echo $dir >> $cufflinks_utlization
-      grep "resources_used.vmem =" $f2 >> $cufflinks_utlization
-      grep "resources_used.walltime =" $f2 >> $cufflinks_utlization
-      grep "Resource_List.nodes =" $f2 >> $cufflinks_utlization
-    else echo "no cufflinks report in $dir" >> $cufflinks_utlization
-fi; done; done < $horse_trans/working_list_NoPBMCs.txt
-#############
-waiting for
-27040191.mgr-04.i       mansourt    main     cufflinks         69153     1     16   48gb 168:00:00 R  38:24:45
-27040192.mgr-04.i       mansourt    main     cufflinks         74838     1     16   48gb 168:00:00 R  37:53:49
-tophat_6_MO_C_AGTCAA
-tophat_Nancy_TGACCA
-#############
-
-
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  bash ${script_path}/assess_cufflinks_utlization.sh "$sample_list" "$cufflinks_utlization"
+done < $horse_trans/working_list_NoPBMCs.txt
 ##################
 ### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/cuffmerge_output
-module load cufflinks/2.2.1
+output_noGTF=$"cuffmerge_output/withoutGTF"
+#output_withRefGene=$"cuffmerge_output/withRefGene"
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cd $work_dir/tophat_output
   for dir in $work_dir/tophat_output/tophat_*; do if [ -d "$dir" ]; then
     echo "$dir"/transcripts.gtf; fi; done > assemblies.txt
-  ## with the --ref-gtf option, merge input assemblies together with the reference GTF
-  #cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o cuffmerge_output/withRefGene --num-threads 4 --ref-gtf "${Genes_GTF_file}" assemblies.txt > cuffmerge_withRef.txt 2>&1
-  ## without the --ref-gtf option
-  cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o cuffmerge_output/withoutGTF --num-threads 4 assemblies.txt > cuffmerge_withoutGTF.txt 2>&1
+  rm -fR $output_noGTF
+  #rm -fR $output_withRefGene
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" $"assemblies.txt"
+  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" $"assemblies.txt" "$Genes_GTF_file"
 fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
@@ -223,48 +207,109 @@ for tissue_dir in $prepData/*; do if [[ -d $tissue_dir && $(ls $tissue_dir | wc 
 
 # For every target tissue, cuffmerge the lab-spefific assemblies into one assembly in $horse_trans/tissue_merge/cuffmerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
 tissue_Cuffmerge=$horse_trans/tissue_merge/cuffmerge
+mkdir -p $tissue_Cuffmerge
+cd $tissue_Cuffmerge
 while read tissue_dir; do
   tissue=$(basename $tissue_dir)
-  mkdir -p $tissue_Cuffmerge/$tissue
+  mkdir -p $tissue
   rm -f $tissue_dir/All_libraries_assemblies.txt
   for dir in $tissue_dir/*; do if [ -d "$dir" ]; then
     cat "$dir"/tophat_output/assemblies.txt >> $tissue_dir/All_libraries_assemblies.txt; fi; done
-
-  ## with the --ref-gtf option, merge input assemblies together with the reference GTF
-  #cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/$tissue/withRefGene --num-threads 4 --ref-gtf "${Genes_GTF_file}" $tissue_dir/All_libraries_assemblies.txt > $tissue_merge/cuffmerge_withRef.txt 2>&1
-  ## without the --ref-gtf option
-  cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/$tissue/withoutGTF --num-threads 4 $tissue_dir/All_libraries_assemblies.txt > $tissue_merge/cuffmerge_withoutGTF.txt 2>&1
+  output_noGTF=$tissue/withoutGTF
+  rm -fR $output_noGTF
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$tissue_dir/All_libraries_assemblies.txt"
+  #output_withRefGene=$tissue/withRefGene
+  #rm -fR $output_withRefGene
+  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$tissue_dir/All_libraries_assemblies.txt" "$Genes_GTF_file"
 done < $horse_trans/multi_lib_tissues.txt
 ##################
 ### cuffmerge all assemblies into one total assembly
 # save the assembly in $horse_trans/total_merge/cuffmerge/withORwithoutRefGuidence.gtf
+cd $tissue_Cuffmerge
 rm -f $prepData/All_tissues_assemblies.txt
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/assemblies.txt >> $prepData/All_tissues_assemblies.txt
 done < $horse_trans/working_list.txt
 
-mkdir -p $tissue_Cuffmerge/all_tissues
-## with the --ref-gtf option, merge input assemblies together with the reference GTF
-#cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/all_tissues/withRefGene --num-threads 4 --ref-gtf "${Genes_GTF_file}" $prepData/All_tissues_assemblies.txt > $Alltissue_merge/cuffmerge_withRef.txt 2>&1
-## without the --ref-gtf option
-cuffmerge -s $genome_dir/Bowtie2Index/genome.fa -o $tissue_Cuffmerge/all_tissues/withoutGTF --num-threads 4 $prepData/All_tissues_assemblies.txt > $Alltissue_merge/cuffmerge_withoutGTF.txt 2>&1
-
+mkdir -p all_tissues
+output_noGTF=$"all_tissues/withoutGTF"
+bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$prepData/All_tissues_assemblies.txt"
+#output_withRefGene=$"all_tissues/withRefGene"
+#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$prepData/All_tissues_assemblies.txt" "$Genes_GTF_file"
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/merged_assemblies.txt
 rm -f $horse_trans/merged_and_tissue_assemblies.txt
-while read work_dir; do if [ -d $work_dir/tophat_output/cuffmerge_output ]; then
+while read work_dir; do
   for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
     echo ${dir} >> $horse_trans/merged_and_tissue_assemblies.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/tissue_assemblies.txt
 for tissue in $tissue_Cuffmerge/*; do
   echo ${tissue#$tissue_Cuffmerge/}/withoutGTF >> $tissue_Cuffmerge/tissue_assemblies.txt;
   echo ${tissue}/withoutGTF >> $horse_trans/merged_and_tissue_assemblies.txt; done
+
 ####################
+#### Format the data (create the BigBed files)
+## fetch the UCSC database to get the chromosome sizes
+UCSCgenome=$"equCab2"
+module load ucscUtils/262
+fetchChromSizes $UCSCgenome > $genome_dir/$UCSCgenome.chrom.sizes
+## Create the basic directory structure of the track hubs
+mkdir -p $track_hub/$UCSCgenome/BigBed
+
+## initiate a given track hub
+hub_name=$"HorseTrans1"
+shortlabel=$"TopCuff_Cuffmerge"
+longlabel=$"Single samlpe reference guided Tophat/Cufflinks followed by Cuffmerge"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+while read assembly; do
+  echo $assembly
+  cd $prepData/$assembly
+  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
+  cp *.BigBed $track_hub/$UCSCgenome/BigBed/.
+done < $prepData/merged_assemblies.txt
+
+while read assembly; do
+  echo $assembly
+  cd $tissue_Cuffmerge/$assembly
+  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
+  cp *_coding.BigBed $track_hub/$UCSCgenome/BigBed/.
+done < $tissue_Cuffmerge/tissue_assemblies.txt
+
+## run icommand to push the file to iplant
+## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
+## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
+#icd /iplant/home/drtamermansour/horseTrans
+#while read assembly; do
+#  echo $assembly
+#  iput $assembly/*.BigBed
+#done < $prepData/merged_assemblies.txt
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$prepData/merged_assemblies.txt
+tiss_assemblies=$tissue_Cuffmerge/tissue_assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+
+## create the HTML file page for every track
+
+## add metadata like closest Ref gene
+grep "exon_number \"1\"" merged.gtf > merged_ex1.gtf
+grep "class_code \"u\"" merged_ex1.gtf > merged_ex1_u.gtf
+grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
+
+#######################
 ## predict UTR
 ## install protein database such as Swissprot (fast) or Uniref90 (slow but more comprehensive)
 mkdir -p $genome_dir/ptnDB
@@ -286,61 +331,62 @@ bash $script_path/make_PfamDB.sh $refPfam
 
 ## run Transdecoder with homology options
 sample_list="$horse_trans/merged_and_tissue_assemblies.txt"
-bash $script_path/run_transdecoder.sh $sample_list $genome_dir/Bowtie2Index/genome.fa $refPtn $refPfam $script_path/transdecoder.sh
+bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $script_path/transdecoder.sh
 
-TransDecoder.Predict -t transcripts.fasta --retain_pfam_hits pfam.domtblout --retain_blastp_hits blastp.outfmt6
-$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta > transcripts.fasta.transdecoder.genome.gff3
+## calculate the phase of Transdecoder GFF3 files
+#while read assembly; do if [ -f $assembly/transdecoder/transcripts.fasta.transdecoder.genome.gff3 ];then
+#  echo $assembly
+#  cd $assembly/transdecoder
+#  bash $script_path/cdsphase.sh transcripts.fasta.transdecoder.genome.gff3
+#fi; done < $horse_trans/merged_and_tissue_assemblies.txt
+#######################
+## create list of assemblies from each library
+## This is where you can edit the list to restrict the processing for certain target(s)
+rm -f $prepData/merged_decoder_assemblies.txt
+while read work_dir; do
+  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF/transdecoder; do if [ -d $dir ]; then
+    echo ${dir#$prepData/} >> $prepData/merged_decoder_assemblies.txt;
+  fi; done;
+done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
 
-####################
-#### Format the data (create the BigBed files)
+## create list of assemblies for tissues of multiple libraries
+rm -f $tissue_Cuffmerge/tissue_decoder_assemblies.txt
+for tissue in $tissue_Cuffmerge/*; do
+  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF/transdecoder >> $tissue_Cuffmerge/tissue_decoder_assemblies.txt;
+done
 
-## fetch the UCSC database to get the chromosome sizes
-UCSCgenome=$"equCab2"
-module load ucscUtils/262
-fetchChromSizes $UCSCgenome > $genome_dir/$UCSCgenome.chrom.sizes
-## Create the basic directory structure of the track hubs
-mkdir -p $track_hub/$UCSCgenome/BigBed
-
+#########################
 ## initiate a given track hub
-hub_name=$"HorseTrans1"
-shortlabel=$"TopCuff_Cuffmerge"
-longlabel=$"Single samlpe reference guided Tophat/Cufflinks followed by Cuffmerge"
+hub_name=$"HorseTrans2"
+shortlabel=$"TopCuffmerge_TD"
+longlabel=$"Single samlpe ref guided Tophat/Cufflinks followed by Cuffmerge/transdecoder"
 email=$"drtamermansour@gmail.com"
 cd $track_hub
 bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
 
-## convert the gtf files into BigBed files
+## convert the bed files into BigBed files & copy to the track hub directory & create assembly list
+rm -f $horse_trans/merged_and_tissue_decoder_assemblies.txt
 while read assembly; do
   echo $assembly
-  cd $prepData/$assembly && rm -f *.BigBed
-  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
-done < $prepData/merged_assemblies.txt
-## copy the BigBed files to the track hub directory
-while read assembly; do
-  echo $assembly
-  cp $prepData/$assembly/*.BigBed $track_hub/$UCSCgenome/BigBed/.
-done < $prepData/merged_assemblies.txt
+  cd $prepData/$assembly
+  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
+  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
+  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
+    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+    cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    echo $prepData/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
+fi; done < $prepData/merged_decoder_assemblies.txt
 
-## convert the gtf files into BigBed files
 while read assembly; do
   echo $assembly
-  cd $tissue_Cuffmerge/$assembly && rm -f *.BigBed
-  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
-done < $tissue_Cuffmerge/tissue_assemblies.txt
-## copy the BigBed files to the track hub directory
-while read assembly; do
-  echo $assembly
-  cp $tissue_Cuffmerge/$assembly/*.BigBed $track_hub/$UCSCgenome/BigBed/.
-done < $tissue_Cuffmerge/tissue_assemblies.txt
-
-## run icommand to push the file to iplant
-## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
-## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
-#icd /iplant/home/drtamermansour/horseTrans
-#while read assembly; do
-#  echo $assembly
-#  iput $assembly/*.BigBed
-#done < $prepData/merged_assemblies.txt
+  cd $tissue_Cuffmerge/$assembly
+  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
+  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
+  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
+  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+  cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+  echo $tissue_Cuffmerge/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
+fi; done < $tissue_Cuffmerge/tissue_decoder_assemblies.txt
 
 ## edit the trackDb
 current_libs=$track_hub/current_libs_$shortlabel
@@ -349,13 +395,6 @@ trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
 lib_assemblies=$prepData/merged_assemblies.txt
 tiss_assemblies=$tissue_Cuffmerge/tissue_assemblies.txt
 bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-
-## create the HTML file page for every track
-
-## add metadata like closest Ref gene
-grep "exon_number \"1\"" merged.gtf > merged_ex1.gtf
-grep "class_code \"u\"" merged_ex1.gtf > merged_ex1_u.gtf
-grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
 
 ###########################################################################################
 ###########################################################################################
@@ -527,6 +566,65 @@ while read work_dir; do
   bash ${script_path}/run_cufflinks2.sh "$sample" "$Genes_GTF_file" "$label" "$script_path/cufflinks2.sh";
 done < $horse_trans/working_list_NoPBMCs.txt
 
+## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
+while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
+  echo $work_dir
+  cd $work_dir/digi_tophat_output
+  sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
+  #bash $script_path/check_cufflinks2.sh "$sample_list"
+  x=$(cat $sample_list | wc -l)
+  if [ $x -ne 0 ]; then
+    echo "Failed Cufflinks jobs in: "$work_dir
+    sample=$(cat $sample_list)
+    label=$(basename $work_dir)
+    bash ${script_path}/run_cufflinks2.sh "$sample" "$Genes_GTF_file" "$label" "$script_path/cufflinks2.sh";
+fi; fi; done < $horse_trans/working_list_NoPBMCs.txt
+
+# For every target tissue, diginorm the lab-spefific BAMs $horse_trans/tissue_merge/digimerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
+# 1. diginorm: start with tissues with longer reads (& higher mapping effeciency)
+# 2. tophat libraries separately
+# 3. merge BAM files
+# 4. Cufflinks
+# 5. ln to the tissue_merge path
+tissue_Digimerge=$horse_trans/tissue_merge/digimerge
+mkdir -p $tissue_Digimerge
+cd $tissue_Digimerge
+while read tissue_dir; do
+  tissue=$(basename $tissue_dir)
+  mkdir -p $tissue
+  ln XXXXXXXXXXXXXXXXXXXXXX
+done < $horse_trans/multi_lib_tissues.txt
+##################
+## multi-tissue diginorm into one total assembly
+# save the assembly in $horse_trans/total_merge/cuffmerge/withORwithoutRefGuidence.gtf
+
+###################
+## create list of assemblies from each library
+## This is where you can edit the list to restrict the processing for certain target(s)
+rm -f $prepData/digi_merged_assemblies.txt
+rm -f $horse_trans/digi_merged_and_tissue_assemblies.txt
+while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
+  dir=$work_dir/digi_tophat_output
+  mkdir $dir/withoutGTF
+  ln $dir/transcripts.gtf $dir/withoutGTF/.
+  echo ${dir#$prepData/}/withoutGTF >> $prepData/digi_merged_assemblies.txt;
+  echo ${dir}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; fi;
+done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+
+## create list of assemblies for tissues of multiple libraries
+rm -f $tissue_Digimerge/tissue_assemblies.txt
+for tissue in $tissue_Cuffmerge/*; do
+  echo ${tissue#$tissue_Digimerge/}/withoutGTF >> $tissue_Digimerge/digi_tissue_assemblies.txt;
+  echo ${tissue}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; done
+
+## initiate a given track hub
+hub_name=$"HorseTrans3"
+shortlabel=$"rawdigi_TopCuff"
+longlabel=$"diginorm of raw data followed by reference guided Tophat/Cufflinks"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 #while read work_dir; do
 #  echo $work_dir
@@ -563,17 +661,6 @@ done < $horse_trans/working_list_NoPBMCs.txt
 #      grep "Resource_List.nodes =" $f2 >> $cufflinks_utlization
 #    else echo "no cufflinks report in $dir" >> $cufflinks_utlization
 #fi; done; done < $horse_trans/working_list_NoPBMCs.txt
-
-## multi-tissue diginorm
-## start with tissues with longer reads (& higher mapping effeciency)
-
-## initiate a given track hub
-hub_name=$"HorseTrans2"
-shortlabel=$"rawdigi_TopCuff"
-longlabel=$"diginorm of raw data followed by reference guided Tophat/Cufflinks"
-cd $track_hub
-bash $script_path/create_trackHub.sh $UCSCgenome $hub_name $shortlabel $longlabel $email
-
 
 ###########################################################################################
 ##### Suggested piplines
