@@ -1,32 +1,32 @@
 track BrainStem
-bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
 shortLabel BrainStem
-longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 1
-html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
 track Muscle
-bigDataUrl BigBed/Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+bigDataUrl BigBed/Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
 shortLabel Muscle
-longLabel Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+longLabel Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 2
-html Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF
+html Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
 track Retina
-bigDataUrl BigBed/Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+bigDataUrl BigBed/Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
 shortLabel Retina
-longLabel Retina/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
+longLabel Retina/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 3
-html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
 track Skin
 compositeTrack on
@@ -38,57 +38,46 @@ priority 4
 allButtonPair on
 html Skin
  
-     track Skin.merge
-     parent Skin on
-     bigDataUrl BigBed/Skin_withoutGTF.BigBed
-     shortLabel Skin.merge
-     longLabel Skin/withoutGTF
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 4
-     html Skin_withoutGTF
- 
      track Skin.1
      parent Skin off
-     bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+     bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
      shortLabel Skin
-     longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
+     longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
      priority 4
-     html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+     html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
      track Skin.2
      parent Skin off
-     bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+     bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
      shortLabel Skin
-     longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
+     longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
      priority 4
-     html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+     html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
      track Skin.3
      parent Skin off
-     bigDataUrl BigBed/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF.BigBed
+     bigDataUrl BigBed/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
      shortLabel Skin
-     longLabel Skin/SE_95_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF
+     longLabel Skin/SE_95_fr.unstranded_Bellone_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
      priority 4
-     html Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF
+     html Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
 track SpinalCord
-bigDataUrl BigBed/SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF.BigBed
+bigDataUrl BigBed/SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder.BigBed
 shortLabel SpinalCord
-longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF/transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 5
-html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF_transdecoder
  
