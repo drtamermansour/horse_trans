@@ -40,6 +40,7 @@ Coding guidelines in this project
 
 Current avaliable track hubs
 ============================
+refGTFguided Tophat2 followed by refGTFguided Cufflinks then Cuffmerge:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt
-
+Adding UTRs to the coding transcripts:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt   
