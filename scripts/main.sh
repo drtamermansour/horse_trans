@@ -1,15 +1,20 @@
-## pathways of the diretory structure
+#!/bin/sh
+
+## construction of the basic diretory structure
 ## you need to change myRoot to match you actual working directory
 myRoot=$"/mnt/ls12/Tamer"
-mkdir -p $myRoot/horse_trans/{scripts,resources,rawdata,prepdata,refGenome,track_hub}
-horse_trans=$myRoot/horse_trans
-script_path=$myRoot/horse_trans/scripts
-resources=$myRoot/horse_trans/resources
-rawData=$myRoot/horse_trans/rawdata
-prepData=$myRoot/horse_trans/prepdata
-genome_dir=$myRoot/horse_trans/refGenome
-track_hub=$myRoot/horse_trans/track_hub
+mkdir -p $myRoot/horse_trans/{scripts,resources,rawdata,prepdata,tissue_merge,refGenome,track_hub}
 
+## create a config file to contain all the pathes to be used by all pipelines
+echo "horse_trans=$myRoot/horse_trans" >> $myRoot/config.txt
+echo "script_path=$myRoot/horse_trans/scripts" >> $myRoot/config.txt
+echo "resources=$myRoot/horse_trans/resources" >> $myRoot/config.txt
+echo "rawData=$myRoot/horse_trans/rawdata" >> $myRoot/config.txt
+echo "prepData=$myRoot/horse_trans/prepdata" >> $myRoot/config.txt
+echo "tissue_merge=$myRoot/horse_trans/tissue_merge" >> $myRoot/config.txt
+echo "genome_dir=$myRoot/horse_trans/refGenome" >> $myRoot/config.txt
+echo "track_hub=$myRoot/horse_trans/track_hub" >> $myRoot/config.txt
+source $myRoot/config.txt
 ###########################################################################################
 #### prepare the raw fastq files:
 ## Every tissue has a separate folder carrying its name (maximum 14 letter) in $prepData.
@@ -26,11 +31,11 @@ track_hub=$myRoot/horse_trans/track_hub
 ## the final form of the data files should be kept in a folder named fastq_data in the tissue folder
 
 ## a representive work out to one SRA reposatories
-## The script is missing a step to ensure merging of sample duplicates if they do exist
-mkdir -p $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
-cd $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
+newLib=$"PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014"
 SRA_URL=$"ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653"
-bash $script_path/prep_proj.sh $SRA_URL $prepData $script_path
+mkdir -p $rawData/$newLib
+cd $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
+bash $script_path/prep_proj.sh $SRA_URL $prepData $script_path  ## The script is missing a step to ensure merging of sample duplicates if they do exist
 ###########################################################################################
 ## define the list of working directory and the list samples in each. This is where you can edit the output list file(s) to restrict the processing for certain target(s)
 rm -f $horse_trans/working_list.txt
@@ -84,584 +89,92 @@ mkdir -p $genome_dir/Bowtie2Index && cd $genome_dir/Bowtie2Index
 cat ../*.fa > genome.fa
 module load bowtie2/2.1.0
 bowtie2-build genome.fa genome
-Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome
-genome=$genome_dir/Bowtie2Index/genome.fa
-## define the GTF/GFF files
+
+## Add the paths to the common config file
+echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $myRoot/config.txt
+echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $myRoot/config.txt
+source $myRoot/config.txt
+###########################################################################################
+## Create GTF file based of refGenes
 ## generation of GTF from UCSC tables using the guidelines of genomewiki.ucsc
 ## http://genomewiki.ucsc.edu/index.php/Genes_in_gtf_or_gff_format
 ## The example on the wiki is based ok knowngene table which does not exist for horses. Instead there are refGene and ensGene tables
 ## The commands of wikigenome are modified to match the table schemes
-#$HOME/bin/UCSC_kent_commands/genePredToGtf equCab2 refGene refGene.gtf    ## Couldn't connect to database equCab2 on genome-mysql.cse.ucsc.edu as genomep
+cd $genome_dir
 wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/refGene.txt.gz
-zcat refGene.txt.gz | cut -f2-11 | $HOME/bin/UCSC_kent_commands/genePredToGtf file stdin refGene.gtf
-Genes_GTF_file=$genome_dir/refGene.gtf
-#Genes_GFF_file=$resources/NCBI/GFF/ref_EquCab2.0_top_level.gff3
+ucscTable=$"refGene.txt.gz"
+output_GTF=$"refGene.gtf"
+bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
 
+## Get the NCBI GFF files
+#NCBI_GFF_file=$resources/NCBI/GFF/ref_EquCab2.0_top_level.gff3
+
+## Add the paths to the common config file
+echo "refGTF_file=$genome_dir/refGene.gtf" >> $myRoot/config.txt
+source $myRoot/config.txt
 ###########################################################################################
-## pipeline_OneSampleAtaTime_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
-## build the transcriptome-index
-transcriptome_index=$genome_dir/trans_index/equ
-module load TopHat2/2.0.14              ## bowtie2/2.1.0 => bowtie2/2.2.3
-tophat --GTF "${Genes_GTF_file}" --transcriptome-index "${transcriptome_index}" "${Bowtie2_genome_index_base}"
-rm -R tophat_out
-
-## define the list samples.
-## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
-  rm -f $work_dir/trimmed_RNA_reads/sample_list.txt
-  for f in $work_dir/trimmed_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
-    echo $f >> $work_dir/trimmed_RNA_reads/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## run Tophat on each sample
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/tophat_output
-  cd $work_dir/tophat_output
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
-  sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
-  bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Check for successful tophat runs and trouble shooting the failed tophat jobs (require tophat-[SP]E.e & .o)
-while read work_dir; do
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/trimmed_RNA_reads/tophat_failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_tophat.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    lib=$(basename $work_dir | cut -d"_" -f 1)
-    strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')
-    echo "Failed tophat jobs in: "$work_dir
-    bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-  fi
-done < $horse_trans/working_list_NoPBMCs.txt
-##################
-## create summary for tophat run
-while read work_dir; do
-  for f in $work_dir/tophat_output/tophat_*; do
-    echo ${f} >> $work_dir/tophat_output/allsample_summary.txt
-    cd ${f}
-    grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
-    grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
-  done
-done < $horse_trans/working_list_NoPBMCs.txt
-##################
-## define the list samples.
-## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/tophat_output ]; then
-  rm -f $work_dir/tophat_output/sample_list.txt
-  for f in $work_dir/tophat_output/tophat_*; do if [ -d $f ]; then
-  echo $f >> $work_dir/tophat_output/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  bash ${script_path}/run_cufflinks.sh "$sample_list" "$Genes_GTF_file" "$script_path/cufflinks.sh";
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
-while read work_dir; do
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_cufflinks.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    echo "Failed Cufflinks jobs in: "$work_dir
-    cat $sample_list
-    bash ${script_path}/run_cufflinks.sh "$sample_list" "$Genes_GTF_file" "$script_path/cufflinks.sh";
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-############
-## Assess computational utilization of cufflinks
-cufflinks_utlization=$prepData/cufflinks_utlization.txt
-> $cufflinks_utlization
-while read work_dir; do
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  bash ${script_path}/assess_cufflinks_utlization.sh "$sample_list" "$cufflinks_utlization"
-done < $horse_trans/working_list_NoPBMCs.txt
-##################
-### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/cuffmerge_output
-output_noGTF=$"cuffmerge_output/withoutGTF"
-#output_withRefGene=$"cuffmerge_output/withRefGene"
-while read work_dir; do if [ -d $work_dir/tophat_output ]; then
-  cd $work_dir/tophat_output
-  for dir in $work_dir/tophat_output/tophat_*; do if [ -d "$dir" ]; then
-    echo "$dir"/transcripts.gtf; fi; done > assemblies.txt
-  rm -fR $output_noGTF
-  #rm -fR $output_withRefGene
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" $"assemblies.txt"
-  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" $"assemblies.txt" "$Genes_GTF_file"
-fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
-##################
-### cuffmerge the lab-specific tissue assemblies into tissue specific assemblies
-# prepare list of target tissues
-rm -f $horse_trans/multi_lib_tissues.txt
-for tissue_dir in $prepData/*; do if [[ -d $tissue_dir && $(ls $tissue_dir | wc -l) -gt 1 ]]; then
-  echo $tissue_dir >> $horse_trans/multi_lib_tissues.txt; fi; done;
-
-# For every target tissue, cuffmerge the lab-spefific assemblies into one assembly in $horse_trans/tissue_merge/cuffmerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
-tissue_Cuffmerge=$horse_trans/tissue_merge/cuffmerge
-mkdir -p $tissue_Cuffmerge
-cd $tissue_Cuffmerge
-while read tissue_dir; do
-  tissue=$(basename $tissue_dir)
-  mkdir -p $tissue
-  rm -f $tissue_dir/All_libraries_assemblies.txt
-  for dir in $tissue_dir/*; do if [ -d "$dir" ]; then
-    cat "$dir"/tophat_output/assemblies.txt >> $tissue_dir/All_libraries_assemblies.txt; fi; done
-  output_noGTF=$tissue/withoutGTF
-  rm -fR $output_noGTF
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$tissue_dir/All_libraries_assemblies.txt"
-  #output_withRefGene=$tissue/withRefGene
-  #rm -fR $output_withRefGene
-  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$tissue_dir/All_libraries_assemblies.txt" "$Genes_GTF_file"
-done < $horse_trans/multi_lib_tissues.txt
-##################
-### cuffmerge all assemblies into one total assembly
-# save the assembly in $horse_trans/total_merge/cuffmerge/withORwithoutRefGuidence.gtf
-cd $tissue_Cuffmerge
-rm -f $prepData/All_tissues_assemblies.txt
-while read work_dir; do if [ -d $work_dir/tophat_output ]; then
-  cat "$work_dir"/tophat_output/assemblies.txt >> $prepData/All_tissues_assemblies.txt
-done < $horse_trans/working_list.txt
-
-mkdir -p all_tissues
-output_noGTF=$"all_tissues/withoutGTF"
-bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$prepData/All_tissues_assemblies.txt"
-#output_withRefGene=$"all_tissues/withRefGene"
-#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$prepData/All_tissues_assemblies.txt" "$Genes_GTF_file"
-###################
-## create list of assemblies from each library
-## This is where you can edit the list to restrict the processing for certain target(s)
-rm -f $prepData/merged_assemblies.txt
-rm -f $horse_trans/merged_and_tissue_assemblies.txt
-while read work_dir; do
-  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
-    echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
-    echo ${dir} >> $horse_trans/merged_and_tissue_assemblies.txt; fi; done;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## create list of assemblies for tissues of multiple libraries
-rm -f $tissue_Cuffmerge/tissue_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
-  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF >> $tissue_Cuffmerge/tissue_assemblies.txt;
-  echo ${tissue}/withoutGTF >> $horse_trans/merged_and_tissue_assemblies.txt; done
-
-####################
-#### Format the data (create the BigBed files)
+### Initiate the basic structure for horse track hubs
+echo "UCSCgenome=equCab2" >> $myRoot/config.txt
+source $myRoot/config.txt
 ## fetch the UCSC database to get the chromosome sizes
-UCSCgenome=$"equCab2"
-module load ucscUtils/262
-fetchChromSizes $UCSCgenome > $genome_dir/$UCSCgenome.chrom.sizes
+chromSizes=$genome_dir/$UCSCgenome.chrom.sizes
+bash ${script_path}/calcChromSizes.sh $UCSCgenome $chromSizes
 ## Create the basic directory structure of the track hubs
 mkdir -p $track_hub/$UCSCgenome/BigBed
-
-## initiate a given track hub
-hub_name=$"HorseTrans1"
-shortlabel=$"TopCuff_Cuffmerge"
-longlabel=$"Single samlpe reference guided Tophat/Cufflinks followed by Cuffmerge"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-while read assembly; do
-  echo $assembly
-  cd $prepData/$assembly
-  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
-  cp *.BigBed $track_hub/$UCSCgenome/BigBed/.
-done < $prepData/merged_assemblies.txt
-
-while read assembly; do
-  echo $assembly
-  cd $tissue_Cuffmerge/$assembly
-  bash $script_path/gtfToBigBed.sh "$genome_dir/$UCSCgenome.chrom.sizes" "$assembly" "$script_path"
-  cp *_coding.BigBed $track_hub/$UCSCgenome/BigBed/.
-done < $tissue_Cuffmerge/tissue_assemblies.txt
-
-## run icommand to push the file to iplant
-## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
-## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
-#icd /iplant/home/drtamermansour/horseTrans
-#while read assembly; do
-#  echo $assembly
-#  iput $assembly/*.BigBed
-#done < $prepData/merged_assemblies.txt
-
-## edit the trackDb
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$prepData/merged_assemblies.txt
-tiss_assemblies=$tissue_Cuffmerge/tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-
-## create the HTML file page for every track
-
-## add metadata like closest Ref gene
-grep "exon_number \"1\"" merged.gtf > merged_ex1.gtf
-grep "class_code \"u\"" merged_ex1.gtf > merged_ex1_u.gtf
-grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
-
-#######################
-## predict UTR
-## install protein database such as Swissprot (fast) or Uniref90 (slow but more comprehensive)
+###########################################################################################
+### Install homology search databases
+## download protein database such as Swissprot (fast) or Uniref90 (slow but more comprehensive)
 mkdir -p $genome_dir/ptnDB
 cd $genome_dir/ptnDB
 wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 gunzip uniprot_sprot.fasta.gz
-refPtn="$genome_dir/ptnDB/uniprot_sprot.fasta"
-bash $script_path/make_ptnDB.sh $refPtn
 #wget ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz
 #gunzip uniref90.fasta.gz
-#refPtn=$"uniref90.fasta"
-#bash $script_path/make_ptnDB.sh $refPtn
 
-## install pfam database
+## download pfam database
 wget ftp://ftp.broadinstitute.org/pub/Trinity/Trinotate_v2.0_RESOURCES/Pfam-A.hmm.gz
 gunzip Pfam-A.hmm.gz
-refPfam="$genome_dir/ptnDB/Pfam-A.hmm"
+
+## Add the paths to the common config file
+echo "refPtn=$genome_dir/ptnDB/uniprot_sprot.fasta" >> $myRoot/config.txt
+#echo "refPtn=$genome_dir/ptnDB/uniref90.fasta" >> $myRoot/config.txt
+echo "refPfam=$genome_dir/ptnDB/Pfam-A.hmm" >> $myRoot/config.txt
+source $myRoot/config.txt
+
+## make the databases
+bash $script_path/make_ptnDB.sh $refPtn
+#bash $script_path/make_ptnDB.sh $refPtn
 bash $script_path/make_PfamDB.sh $refPfam
-
-## run Transdecoder with homology options
-sample_list="$horse_trans/merged_and_tissue_assemblies.txt"
-bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $script_path/transdecoder.sh
-
-## calculate the phase of Transdecoder GFF3 files
-#while read assembly; do if [ -f $assembly/transdecoder/transcripts.fasta.transdecoder.genome.gff3 ];then
-#  echo $assembly
-#  cd $assembly/transdecoder
-#  bash $script_path/cdsphase.sh transcripts.fasta.transdecoder.genome.gff3
-#fi; done < $horse_trans/merged_and_tissue_assemblies.txt
-#######################
-## create list of assemblies from each library
-## This is where you can edit the list to restrict the processing for certain target(s)
-rm -f $prepData/merged_decoder_assemblies.txt
-while read work_dir; do
-  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF/transdecoder; do if [ -d $dir ]; then
-    echo ${dir#$prepData/} >> $prepData/merged_decoder_assemblies.txt;
-  fi; done;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## create list of assemblies for tissues of multiple libraries
-rm -f $tissue_Cuffmerge/tissue_decoder_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
-  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF/transdecoder >> $tissue_Cuffmerge/tissue_decoder_assemblies.txt;
-done
-
-#########################
-## initiate a given track hub
-hub_name=$"HorseTrans2"
-shortlabel=$"TopCuffmerge_TD"
-longlabel=$"Single samlpe ref guided Tophat/Cufflinks followed by Cuffmerge/transdecoder"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-## convert the bed files into BigBed files & copy to the track hub directory & create assembly list
-rm -f $horse_trans/merged_and_tissue_decoder_assemblies.txt
-while read assembly; do
-  echo $assembly
-  cd $prepData/$assembly
-  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
-  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
-  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $prepData/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
-fi; done < $prepData/merged_decoder_assemblies.txt
-
-while read assembly; do
-  echo $assembly
-  cd $tissue_Cuffmerge/$assembly
-  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
-  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
-  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
-  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-  echo $tissue_Cuffmerge/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
-fi; done < $tissue_Cuffmerge/tissue_decoder_assemblies.txt
-
-## edit the trackDb
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$prepData/merged_assemblies.txt
-tiss_assemblies=$tissue_Cuffmerge/tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+###########################################################################################
+## build Tophat transcriptome-index
+echo "transcriptome_index=$genome_dir/trans_index/equ" >> $myRoot/config.txt
+source $myRoot/config.txt
+bash ${script_path}/buildTransIndex.sh "$refGTF_file" "$transcriptome_index" "$Bowtie2_genome_index_base"
+###########################################################################################
+## pipeline_OneSampleAtaTime_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
+bash ${script_path}/TopHatCufflinksCuffmerge_pipline.sh
 
 ###########################################################################################
-###########################################################################################
-###########################################################################################
-
 ## pipeline_diginormAllsamples_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
-cd ~/khmer
-git checkout horseTrans         ## the branch was created on 08/24/2015 for reproducibility
-## interleave PE files
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/trimmed_RNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  if [ "$lib" = $"PE" ]; then
-    sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
-    bash ${script_path}/run_interleave.sh "$sample_list" $script_path/interleave.sh
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+bash ${script_path}/DigiTopHatCufflinks_pipline.sh
 
-## Check for successful interleave runs and trouble shooting the failed jobs (requires interleave.e)
-while read work_dir; do
-  cd $work_dir/trimmed_RNA_reads
-  sample_list=$work_dir/trimmed_RNA_reads/interleave_failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_interleave.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    echo "Failed interleave jobs in: "$work_dir
-    cat $sample_list
-    bash ${script_path}/run_interleave.sh "$sample_list" $script_path/interleave.sh;
-fi
-done < $horse_trans/working_list_NoPBMCs.txt
+###########################################################################################
+## pipeline_mapped_diginormAllsamples_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
+bash ${script_path}/MapDigiTopHatCufflinks_pipline.sh
 
-## run digital normalization of lab specific tissues (need to be updated to use sample list and check for success)
-kmer=20
-cutoff=50
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/normalizied_RNA_reads
-  cd $work_dir/normalizied_RNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)
-  bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/trimmed_RNA_reads" "$kmer" "$cutoff" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
+###########################################################################################
+## Split GTF and BAM files by chromosomes
+cat ${refGTF_file} | awk '{ print $1}' | sort | uniq > $genome_dir/refChrom_list.txt
+mkdir $genome_dir/GTFbyChrom
+while read refChrom; do
+  cat ${refGTF_file} | awk -v ref="$refChrom" '($1 == ref)' >> $genome_dir/GTFbyChrom/"$refChrom"_refGene.gtf
+done < $genome_dir/refChrom_list.txt
 
-## Check for successful diginorm and trouble shooting the failed jobs (requires T_Trim.e)
-sample_list=$prepData/failed_diginorm.txt                   ## define the path of empty file
-> $sample_list
-while read work_dir; do
-  cd $work_dir/normalizied_RNA_reads
-  bash $script_path/check_diginorm.sh "$sample_list"
-done < $horse_trans/working_list_NoPBMCs.txt
-x=$(cat $sample_list | wc -l)
-if [ $x -ne 0 ]; then
-  echo "Failed jobs in: "
-  cat $sample_list
-  while read work_dir; do
-    cd $work_dir/normalizied_RNA_reads
-    lib=$(basename $work_dir | cut -d"_" -f 1)
-    bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/trimmed_RNA_reads" "$kmer" "$cutoff" "$script_path"
-  done < $sample_list
-fi
+module load BAMTools/2.2.3
+bamtools split -in accepted_hits.bam -reference
 
-## split the interleaved reads
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/normalizied_RNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  if [ "$lib" = $"PE" ]; then
-    sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
-    bash ${script_path}/run_split_reads.sh "$sample_list" $script_path/split_reads.sh
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## merge singletons and change the file names to fit the tophat script
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/normalizied_RNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  if [ "$lib" = $"PE" ]; then
-    singletones=1
-    for f in *_R1_001.pe.fq; do
-      base=${f%_R1_001.pe.fq}
-      if [ $singletones -eq 1 ]; then cat $f allsingletons.fq.keep > "$base"_R1_001.pe.se.fq; singletones=0;
-      else mv $f "$base"_R1_001.pe.se.fq; fi; done
-  elif [ "$lib" = $"SE" ]; then
-    mv allsingletons.fq.keep allsingletons_SR_002.se.fq
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## merge the files in tophat compatible format
-#while read work_dir; do
-#  echo $work_dir
-#  cd $work_dir/normalizied_RNA_reads
-#  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-#  if [ "$lib" = $"PE" ]; then
-#    cat *_R1_001.pe.fq allsingletons.fq.keep > allsamples_R1_002.pe.se.fq
-#    cat *_R2_001.pe.fq > allsamples_R2_002.pe.fq
-#  elif [ "$lib" = $"SE" ]; then
-#    mv allsingletons.fq.keep allsingletons_SR_002.se.fq
-#fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## define the list samples.
-## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/normalizied_RNA_reads ]; then
-  rm -f $work_dir/normalizied_RNA_reads/sample_list.txt
-  for f in $work_dir/normalizied_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
-    echo $f >> $work_dir/normalizied_RNA_reads/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## run Tophat on each sample independantly
-## we meight need to run tophat on one sample after another feeding each run by the junctions of the previous run
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/digi_tophat_output
-  cd $work_dir/digi_tophat_output
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
-  sample_list=$work_dir/normalizied_RNA_reads/sample_list.txt
-  bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Check for successful tophat runs and trouble shooting the failed tophat jobs (require tophat-[SP]E.e & .o)
-while read work_dir; do
-  cd $work_dir/digi_tophat_output
-  sample_list=$work_dir/normalizied_RNA_reads/tophat_failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_tophat.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    lib=$(basename $work_dir | cut -d"_" -f 1)
-    strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')
-    echo "Failed tophat jobs in: "$work_dir
-    bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-##################
-## create summary for tophat run
-while read work_dir; do
-  for f in $work_dir/digi_tophat_output/tophat_*; do
-    echo ${f} >> $work_dir/digi_tophat_output/allsample_summary.txt
-    cd ${f}
-    grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
-    grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
-  done
-done < $horse_trans/working_list_NoPBMCs.txt
-##################
-## define the list samples.
-## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
-  rm -f $work_dir/digi_tophat_output/sample_list.txt
-  for f in $work_dir/digi_tophat_output/tophat_*; do if [ -d $f ]; then
-    echo $f >> $work_dir/digi_tophat_output/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## Merge BAM files
-module load SAMTools/0.1.19
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/digi_tophat_output
-  samples=()
-  while read sample; do samples+=($sample/accepted_hits.bam); done < sample_list.txt
-  len=${#samples[@]}
-  if [ $len -gt 1 ]; then samtools merge merged.bam ${samples[*]};
-  elif [ $len -eq 1 ]; then cp ${samples[0]} merged.bam;
-  else echo "can find bam files"; fi
-done < $horse_trans/working_list_NoPBMCs.txt
-
-### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/digi_tophat_output
-  sample=$work_dir/digi_tophat_output/merged.bam
-  label=$(basename $work_dir)
-  bash ${script_path}/run_cufflinks2.sh "$sample" "$Genes_GTF_file" "$label" "$script_path/cufflinks2.sh";
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
-  echo $work_dir
-  cd $work_dir/digi_tophat_output
-  sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
-  #bash $script_path/check_cufflinks2.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    echo "Failed Cufflinks jobs in: "$work_dir
-    sample=$(cat $sample_list)
-    label=$(basename $work_dir)
-    bash ${script_path}/run_cufflinks2.sh "$sample" "$Genes_GTF_file" "$label" "$script_path/cufflinks2.sh";
-fi; fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-# For every target tissue, diginorm the lab-spefific BAMs $horse_trans/tissue_merge/digimerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
-# 1. diginorm: start with tissues with longer reads (& higher mapping effeciency)
-# 2. tophat libraries separately
-# 3. merge BAM files
-# 4. Cufflinks
-# 5. ln to the tissue_merge path
-tissue_Digimerge=$horse_trans/tissue_merge/digimerge
-mkdir -p $tissue_Digimerge
-cd $tissue_Digimerge
-while read tissue_dir; do
-  tissue=$(basename $tissue_dir)
-  mkdir -p $tissue
-  ln XXXXXXXXXXXXXXXXXXXXXX
-done < $horse_trans/multi_lib_tissues.txt
-##################
-## multi-tissue diginorm into one total assembly
-# save the assembly in $horse_trans/total_merge/cuffmerge/withORwithoutRefGuidence.gtf
-
-###################
-## create list of assemblies from each library
-## This is where you can edit the list to restrict the processing for certain target(s)
-rm -f $prepData/digi_merged_assemblies.txt
-rm -f $horse_trans/digi_merged_and_tissue_assemblies.txt
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
-  dir=$work_dir/digi_tophat_output
-  mkdir $dir/withoutGTF
-  ln $dir/transcripts.gtf $dir/withoutGTF/.
-  echo ${dir#$prepData/}/withoutGTF >> $prepData/digi_merged_assemblies.txt;
-  echo ${dir}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; fi;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## create list of assemblies for tissues of multiple libraries
-rm -f $tissue_Digimerge/tissue_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
-  echo ${tissue#$tissue_Digimerge/}/withoutGTF >> $tissue_Digimerge/digi_tissue_assemblies.txt;
-  echo ${tissue}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; done
-
-## initiate a given track hub
-hub_name=$"HorseTrans3"
-shortlabel=$"rawdigi_TopCuff"
-longlabel=$"diginorm of raw data followed by reference guided Tophat/Cufflinks"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
-#while read work_dir; do
-#  echo $work_dir
-#  cd $work_dir/digi_tophat_output
-#  sample_list=$work_dir/digi_tophat_output/sample_list.txt
-#  bash ${script_path}/run_cufflinks.sh "$sample_list" "$Genes_GTF_file" "$script_path/cufflinks2.sh";
-#done < $horse_trans/working_list_NoPBMCs.txt
-
-## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
-#while read work_dir; do
-#  cd $work_dir/digi_tophat_output
-#  sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
-#  bash $script_path/check_cufflinks.sh "$sample_list"
-#  x=$(cat $sample_list | wc -l)
-#  if [ $x -ne 0 ]; then
-#    echo "Failed Cufflinks jobs in: "$work_dir
-#    cat $sample_list
-#     bash ${script_path}/run_cufflinks.sh "$sample_list" "$Genes_GTF_file" "$script_path/cufflinks.sh";
-#fi; done < $horse_trans/working_list_NoPBMCs.txt
-###################
-## Assess computational utilization of cufflinks
-#cufflinks_utlization=$prepData/digi_cufflinks_utlization.txt
-#> $cufflinks_utlization
-#while read work_dir; do
-#  cd $work_dir/digi_tophat_output
-#  echo $(pwd) >> $cufflinks_utlization
-#  for dir in tophat_*; do
-#    f=$dir/cufflinks.e*
-#    if [ -f $f ]; then
-#      f2=$(echo $f | sed 's/cufflinks.e/cufflinks.o/')
-#      echo $dir >> $cufflinks_utlization
-#      grep "resources_used.vmem =" $f2 >> $cufflinks_utlization
-#      grep "resources_used.walltime =" $f2 >> $cufflinks_utlization
-#      grep "Resource_List.nodes =" $f2 >> $cufflinks_utlization
-#    else echo "no cufflinks report in $dir" >> $cufflinks_utlization
-#fi; done; done < $horse_trans/working_list_NoPBMCs.txt
-
+module load cufflinks/2.2.1
+cufflinks --GTF-guide $genome_dir/GTFbyChrom/chr10_refGene.gtf --num-threads 4 --verbose accepted_hits.REF_chr10.bam
 ###########################################################################################
 ##### Suggested piplines
 ### With Tophat
@@ -669,142 +182,6 @@ bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$l
 ## Try very senstive Bowtie search
 ## Try --coverage-search
 ## For diginorm, try to start with mapped reads only (to minimize error accumulation ==> decrease RAM required to achive minimal false postive rate and allow either final mapping). You can diginorm the non-mapped reads separetly
-
-###############################################################################
-## convert the tophat output BAM files into Fastq files
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/mapped_trimmed
-  cd $work_dir/mapped_trimmed
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  lib=$(basename $work_dir | cut -d"_" -f 1)
-  bash ${script_path}/run_BamToFastq.sh "$sample_list" "$lib" "$script_path/restore_mapped_trimmed.sh"
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## Check for successful jobs (requires restore_mapped.e & restore_mapped.o)
-while read work_dir; do
-  cd $work_dir/mapped_trimmed
-  sample_list=$work_dir/mapped_trimmed/failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_BamToFastq.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
-  if [ $x -ne 0 ]; then
-    lib=$(basename $work_dir | cut -d"_" -f 1)
-    echo "Failed jobs in: "$work_dir
-    bash ${script_path}/run_BamToFastq.sh "$sample_list" "$lib" "$script_path/restore_mapped_trimmed.sh"
-fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## run digital normalization of lab specific tissues (need to be updated to use sample list and check for success)
-kmer=20
-cutoff=50
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/normalizied_mappedRNA_reads
-  cd $work_dir/normalizied_mappedRNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)
-  bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/mapped_trimmed" "$kmer" "$cutoff" "$script_path"
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## Check for successful diginorm and trouble shooting the failed jobs (requires T_Trim.e)
-sample_list=$prepData/failed_diginorm.txt                   ## define the path of empty file
-> $sample_list
-while read work_dir; do
-  cd $work_dir/normalizied_mappedRNA_reads
-  bash $script_path/check_diginorm.sh "$sample_list"
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-x=$(cat $sample_list | wc -l)
-if [ $x -ne 0 ]; then
-    echo "Failed jobs in: "
-    cat $sample_list
-    while read work_dir; do
-      cd $work_dir/normalizied_mappedRNA_reads
-      lib=$(basename $work_dir | cut -d"_" -f 1)
-      bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/mapped_trimmed" "$kmer" "$cutoff" "$script_path"
-    done < $sample_list
-fi
-
-## split the interleaved reads
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/normalizied_mappedRNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  if [ "$lib" = $"PE" ]; then
-    sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
-    bash ${script_path}/run_split_reads.sh "$sample_list" $script_path/split_reads.sh
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## merge singletons and change the file names to fir the tophat script
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/normalizied_mappedRNA_reads
-  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-  if [ "$lib" = $"PE" ]; then
-    singletones=1
-    for f in *_R1_001.pe.fq; do
-      base=${f%_R1_001.pe.fq}
-      if [ $singletones -eq 1 ]; then cat $f allsingletons.fq.keep > "$base"_R1_001.pe.se.fq; singletones=0;
-      else mv $f "$base"_R1_001.pe.se.fq; fi; done
-  elif [ "$lib" = $"SE" ]; then
-    mv allsingletons.fq.keep allsingletons_SR_002.se.fq
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## define the list samples.
-## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/normalizied_RNA_reads ]; then
-rm -f $work_dir/normalizied_RNA_reads/sample_list.txt
-for f in $work_dir/normalizied_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
-echo $f >> $work_dir/normalizied_RNA_reads/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
-
-## run Tophat on each sample
-while read work_dir; do
-echo $work_dir
-mkdir -p $work_dir/digi_tophat_output
-cd $work_dir/digi_tophat_output
-lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
-strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
-sample_list=$work_dir/normalizied_RNA_reads/sample_list.txt
-bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-while read work_dir; do
-  echo $work_dir
-  mkdir -p $work_dir/unmapped_trimmed
-  cd $work_dir/unmapped_trimmed
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  lib=$(basename $work_dir | cut -d"_" -f 1)
-  bash ${script_path}/run_BamToFastq.sh "$sample_list" "$lib" "$script_path/restore_unmapped_trimmed.sh"
-done < $horse_trans/working_list_NoPBMCs_NoCereb_NoSkin.txt
-
-
-
-#################################################################################
-## Split GTF and BAM files by chromosomes
-cat ${Genes_GTF_file} | awk '{ print $1}' | sort | uniq > $genome_dir/refChrom_list.txt
-mkdir $genome_dir/GTFbyChrom
-while read refChrom; do
-  cat ${Genes_GTF_file} | awk -v ref="$refChrom" '($1 == ref)' >> $genome_dir/GTFbyChrom/"$refChrom"_refGene.gtf
-done < $genome_dir/refChrom_list.txt
-
-
-module load BAMTools/2.2.3
-bamtools split -in accepted_hits.bam -reference
-
-
-module load cufflinks/2.2.1
-cufflinks --GTF-guide $genome_dir/GTFbyChrom/chr10_refGene.gtf --num-threads 4 --verbose accepted_hits.REF_chr10.bam
 
 
 

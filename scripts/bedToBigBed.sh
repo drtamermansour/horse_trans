@@ -11,7 +11,6 @@ chrom_sizes="$2"
 
 
 module load ucscUtils/262   # UCSC_kent_commands
-n=$(ls $targetAss | wc -l)
 if [ -f $targetAss ]; then
   filename=${targetAss%.bed}
   tail -n +2 $targetAss | sort -k1,1 -k2,2n > ${filename}_sorted.bed
