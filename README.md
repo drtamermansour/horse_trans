@@ -40,10 +40,11 @@ Coding guidelines in this project
 
 Current avaliable track hubs
 ============================
-You can view all the hubs by following this `link <http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt>`__ or you can add them to your hubs on UCSC using these URLs:
+You can view all the hubs by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt) or you can add them to your hubs on UCSC using these URLs:
+
 -  refGTFguided Tophat2 followed by refGTFguided Cufflinks then Cuffmerge:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt
 -  Adding UTRs to the coding transcripts:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt   
 
-To add a hub, go to the genome browser home bage. In the My Data menu, open the Track Hubs page and click the `My Hubs <https://genome.ucsc.edu/cgi-bin/hgHubConnect>`__ tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button. 
+To add a hub, go to the genome browser home bage. In the My Data menu, open the Track Hubs page and click the [My Hubs](https://genome.ucsc.edu/cgi-bin/hgHubConnect) tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button. 
