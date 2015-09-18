@@ -151,7 +151,7 @@ for tissue in $tissue_Cuffmerge/*; do
 done
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-rm -f $horse_trans/merged_and_tissue_assemblies.txt
+rm -f $horse_trans/TopCuff_Cuffmerge_assemblies.txt
 while read assembly; do
   echo $assembly
   cd $prepData/$assembly
@@ -160,7 +160,7 @@ while read assembly; do
   if [ -f $"merged.BigBed" ];then
     identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
     cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $prepData/$assembly >> $horse_trans/merged_and_tissue_assemblies.txt;
+    echo $prepData/$assembly >> $horse_trans/TopCuff_Cuffmerge_assemblies.txt;
 fi; done < $prepData/merged_assemblies.txt
 
 while read assembly; do
@@ -171,7 +171,7 @@ while read assembly; do
   if [ -f $"merged.BigBed" ];then
     identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
     cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $tissue_Cuffmerge/$assembly >> $horse_trans/merged_and_tissue_assemblies.txt;
+    echo $tissue_Cuffmerge/$assembly >> $horse_trans/TopCuff_Cuffmerge_assemblies.txt;
 fi; done < $tissue_Cuffmerge/tissue_assemblies.txt
 
 ## run icommand to push the file to iplant
@@ -208,7 +208,7 @@ grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
 
 #######################
 ## run Transdecoder to predict UTRs with homology options
-sample_list="$horse_trans/merged_and_tissue_assemblies.txt"
+sample_list="$horse_trans/TopCuff_Cuffmerge_assemblies.txt"
 bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $script_path/transdecoder.sh
 
 ## calculate the phase of Transdecoder GFF3 files
@@ -216,7 +216,7 @@ bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $scr
 #  echo $assembly
 #  cd $assembly/transdecoder
 #  bash $script_path/cdsphase.sh transcripts.fasta.transdecoder.genome.gff3
-#fi; done < $horse_trans/merged_and_tissue_assemblies.txt
+#fi; done < $horse_trans/TopCuff_Cuffmerge_assemblies.txt
 #######################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)

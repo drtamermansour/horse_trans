@@ -204,20 +204,20 @@ done < $horse_trans/multi_lib_tissues.txt
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/digi_merged_assemblies.txt
-rm -f $horse_trans/digi_merged_and_tissue_assemblies.txt
+rm -f $horse_trans/rawdigi_TopCuff_assemblies.txt
 while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
   dir=$work_dir/digi_tophat_output
   mkdir $dir/withoutGTF
   ln $dir/transcripts.gtf $dir/withoutGTF/.
   echo ${dir#$prepData/}/withoutGTF >> $prepData/digi_merged_assemblies.txt;
-  echo ${dir}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; fi;
+  echo ${dir}/withoutGTF >> $horse_trans/rawdigi_TopCuff_assemblies.txt; fi;
 done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Digimerge/tissue_assemblies.txt
 for tissue in $tissue_Cuffmerge/*; do
   echo ${tissue#$tissue_Digimerge/}/withoutGTF >> $tissue_Digimerge/digi_tissue_assemblies.txt;
-  echo ${tissue}/withoutGTF >> $horse_trans/digi_merged_and_tissue_assemblies.txt; done
+  echo ${tissue}/withoutGTF >> $horse_trans/rawdigi_TopCuff_assemblies.txt; done
 
 ## initiate a given track hub
 hub_name=$"HorseTrans3"
