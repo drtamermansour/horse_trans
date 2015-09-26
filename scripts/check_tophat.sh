@@ -4,7 +4,6 @@ sample_list="$1"
 mkdir -p job_reports/failed_reports
 mv tophat.[eo]* job_reports/. 2>/dev/null
 cd job_reports
-> $sample_list
 for f in tophat.e*; do if [ -f $f ]; then
   x=$(grep -c "Run complete" $f) #line=$(tail -1 $f)
   if [ $x -eq 0 ]; then

@@ -173,7 +173,7 @@ while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
   echo $work_dir
   cd $work_dir/digi_tophat_output
   sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
-  #bash $script_path/check_cufflinks2.sh "$sample_list"
+  bash $script_path/check_cufflinks2.sh "$sample_list"
   x=$(cat $sample_list | wc -l)
   if [ $x -ne 0 ]; then
     echo "Failed Cufflinks jobs in: "$work_dir

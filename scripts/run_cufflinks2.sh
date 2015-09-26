@@ -2,7 +2,7 @@
 
 if [ $# -lt 4 ]
 then
-printf "\nUsage run_cufflinks.sh [samples] [Genes_GTF_file] [sample label] [script]\n"
+printf "\nUsage run_cufflinks2.sh [sample] [Genes_GTF_file] [sample label] [script]\n"
 exit 0
 fi
 

@@ -32,12 +32,11 @@ unzip 2-3_MO_C_GATCAG_L007_R1_001.fastq.zip
 rm -r __MACOSX
 rm 2-3_MO_C_GATCAG_L007_R1_001.fastq.zip
 gzip 2-3_MO_C_GATCAG_L007_R1_001.fastq
-mkdir -p $rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/temp1
-for f in *_L006_R1_001.fastq.gz; do f2=$(basename $f | sed 's/_L006_R1_/_L007_R1_/'); newf=$(basename $f | sed 's/_L006_R1_001/_R1_002/'); zcat $f $f2 | gzip -c > $rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/temp1/$newf; done
-for f in *_L006_R2_001.fastq.gz; do f2=$(basename $f | sed 's/_L006_R2_/_L007_R2_/'); newf=$(basename $f | sed 's/_L006_R2_001/_R2_002/'); zcat $f $f2 | gzip -c > $rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/temp1/$newf; done
-bash ${script_path}/run_fastqc.sh "$rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/temp1"
+> replicates.txt
+for f in *_L006_R1_001.fastq.gz; do f2=$(basename $f | sed 's/_L006_R1_/_L007_R1_/'); echo $f $f2 >> replicates.txt; done
+bash ${script_path}/run_fastqc.sh "$rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/rawdata"
 mkdir -p $prepData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/fastq_data
-mv $rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/temp1/* $prepData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/fastq_data/.
+mv $rawData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/rawdata/* $prepData/Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/fastq_data/.
 ###############################################################################################
 mkdir -p $rawData/Retina/PE_81_fr.unstranded_Bellone_01012015/rawdata
 cd $rawData/Retina/PE_81_fr.unstranded_Bellone_01012015/rawdata

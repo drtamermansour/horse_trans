@@ -10,5 +10,5 @@ if [ -f $f ]; then
   if [ "$line" != "$success" ]; then
     echo $(pwd)/merged.bam >> $sample_list
     mv $f failed_reports/.
-  else echo "no cufflinks reports in $dir"; fi
+  else echo "Cufflinks job was successful"; fi
 fi
