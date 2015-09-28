@@ -40,7 +40,7 @@ fi; done < $lib_assemblies
 while read assembly; do
   echo $assembly
   ## ensure the assembly was not loaded before
-  if [ $(echo ${lib_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
+  if [ $(echo ${tiss_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
     tiss_assembly_array+=($assembly)
     tissue=$(echo $assembly | cut -d"/" -f1)
     multi_tissue_array+=($tissue)
@@ -89,6 +89,8 @@ for t in ${tissue_array[@]}; do
           echo "     html $filename" >> $trackDb
           echo " " >> $trackDb
           echo $assembly >> $current_tissues
+          unset multi_tissue_array[$i]
+          unset tiss_assembly_array[$i]
         fi; done
       mark=1
       for i in "${!tissue_array[@]}"; do
@@ -130,6 +132,27 @@ for t in ${tissue_array[@]}; do
   let "index++"
   let "priority++"
 done
+
+for i in ${!multi_tissue_array[@]}; do
+  t=${multi_tissue_array[i]}
+  if [ "$t" != "" ];then
+    echo "$t is multi-tissue lib without composite track"
+    ## create non-composite entry of the assembly
+    assembly="${tiss_assembly_array[$i]}"; echo $assembly;
+    filename=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+    echo "track $t" >> $trackDb
+    echo "bigDataUrl BigBed/$filename.BigBed" >> $trackDb
+    echo "shortLabel $t" >> $trackDb
+    echo "longLabel $assembly" >> $trackDb
+    echo "type bigBed 12" >> $trackDb
+    echo "colorByStrand 255,0,0 0,0,255" >> $trackDb
+    echo "visibility dense" >> $trackDb
+    echo "priority $priority" >> $trackDb
+    echo "html $filename" >> $trackDb
+    echo " " >> $trackDb
+    echo $assembly >> $current_tissues
+    let "priority++"
+fi; done
 
 ##labExp=$(echo $assembly | cut -d"/" -f1,2)
 

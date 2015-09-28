@@ -181,7 +181,7 @@ while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
     label=$(basename $work_dir)
     bash ${script_path}/run_cufflinks2.sh "$sample" "$refGTF_file" "$label" "$script_path/cufflinks2.sh";
 fi; fi; done < $horse_trans/working_list_NoPBMCs.txt
-
+##################
 # For every target tissue, diginorm the lab-spefific BAMs $tissue_merge/digimerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
 # 1. diginorm: start with tissues with longer reads (& higher mapping effeciency)
 # 2. tophat libraries separately

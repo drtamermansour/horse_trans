@@ -89,6 +89,26 @@ longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerg
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-priority 5
+priority 7
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_cuffmerge_withoutGTF
+ 
+track Cerebellum
+bigDataUrl BigBed/Cerebellum_PE_100_fr.firststrand_Scott.Murray.Penedo_01012015_tophat_cuffmerge_withoutGTF.BigBed
+shortLabel Cerebellum
+longLabel Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/tophat_output/cuffmerge_output/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 8
+html Cerebellum_PE_100_fr.firststrand_Scott.Murray.Penedo_01012015_tophat_cuffmerge_withoutGTF
+ 
+track all_tissues
+bigDataUrl BigBed/all_tissues_withoutGTF.BigBed
+shortLabel all_tissues
+longLabel all_tissues/withoutGTF
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 9
+html all_tissues_withoutGTF
  

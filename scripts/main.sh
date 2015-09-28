@@ -51,17 +51,19 @@ for work_dir in $prepData/*/{PE_*,SE_*}; do if [ -d $work_dir/fastq_data ]; then
 fi; done;
 
 ## get read length statistics
-headers=$(Rscript -e 'cat("Library", "No_of_reads", "Min_length", "Max_length", "Median_length", "Mean_length", sep="\t");')
+headers=$(Rscript -e 'cat("Tissue", "Library", "No_of_samples", "No_of_reads(M)", "Total_bp_count(Gb)", "Min_length", "Max_length", "Median_length", "Mean_length", sep="\t");')
 echo "$headers" > $horse_trans/raw_statistics.txt
 while read work_dir; do
   echo $work_dir
   cd $work_dir/fastq_data
   sample_list=$work_dir/fastq_data/sample_list.txt
   cat sample_list.txt | xargs zcat | awk '{if(NR%4==2) print length($1)}' > input.readslength.txt
-  stat=$(Rscript -e 'd<-scan("input.readslength.txt", quiet=TRUE); cat(length(d), min(d), max(d), median(d), mean(d), sep="\t");')
+  stat=$(Rscript -e 'd<-scan("input.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
   lib=$(basename $work_dir)
-  echo "$lib"$'\t'"$stat" >> $horse_trans/raw_statistics.txt
-done < $horse_trans/working_list.txt
+  tissue=$(dirname $work_dir | xargs basename)
+  no=$(cat $sample_list | wc -l)
+  echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/raw_statistics.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 ###########################################################################################
 #### Read trimming
 ## This step requires input working_list & sample_list and output folder
@@ -113,33 +115,35 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ###########################################################################################
 ## Assess read length statistics after trimming
-headers=$(Rscript -e 'cat("Library", "No_of_reads", "Total_bp_count", "Min_length", "Max_length", "Median_length", "Mean_length", sep="\t");')
+headers=$(Rscript -e 'cat("Tissue", "Library", "No_of_samples", "No_of_reads(M)", "Total_bp_count(Gb)", "Min_length", "Max_length", "Median_length", "Mean_length", sep="\t");')
 echo "$headers" > $horse_trans/trimmed_statistics.txt
 while read work_dir; do
   echo $work_dir
   cd $work_dir/trimmed_RNA_reads
   sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
   lib=$(basename $work_dir)
+  tissue=$(dirname $work_dir | xargs basename)
+  no=$(cat $sample_list | wc -l)
   libType=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   if [ "$libType" = $"PE" ]; then
     ## stats of the R1 files
-    cat sample_list.txt | sed 's/.pe.se.fq/.pe.fq/'| xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed_PE.readslength.txt
-    stat=$(Rscript -e 'd<-scan("trimmed_R1.readslength.txt", quiet=TRUE); cat(length(d), sum(d)/10^9, min(d), max(d), median(d), mean(d), sep="\t");')
-    echo "$lib"$'_R1\t'"$stat" >> $horse_trans/trimmed_statistics.txt
+    cat sample_list.txt | sed 's/.pe.se.fq/.pe.fq/'| xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed_R1.readslength.txt
+    stat=$(Rscript -e 'd<-scan("trimmed_R1.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
+    echo "$tissue"$'\t'"$lib"$'_R1\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
 
     ## stats of the R2 files
     cat sample_list.txt | sed 's/\(.*\)_R1_\(.*\).pe.se.fq/\1_R2_\2.pe.fq/'| xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed_R2.readslength.txt
-    stat=$(Rscript -e 'd<-scan("trimmed_R2.readslength.txt", quiet=TRUE); cat(length(d), sum(d)/10^9, min(d), max(d), median(d), mean(d), sep="\t");')
-    echo "$lib"$'_R2\t'"$stat" >> $horse_trans/trimmed_statistics.txt
+    stat=$(Rscript -e 'd<-scan("trimmed_R2.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
+    echo "$tissue"$'\t'"$lib"$'_R2\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
 
    ## stats of the singletones files
     cat sample_list.txt | sed 's/\(.*\)_R1_\(.*\).pe.se.fq/\1_R_\2.se.fq/'| xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed_SE.readslength.txt
-    stat=$(Rscript -e 'd<-scan("trimmed_SE.readslength.txt", quiet=TRUE); cat(length(d), sum(d)/10^9, min(d), max(d), median(d), mean(d), sep="\t");')
-    echo "$lib"$'_SE\t'"$stat" >> $horse_trans/trimmed_statistics.txt
+    stat=$(Rscript -e 'd<-scan("trimmed_SE.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
+    echo "$tissue"$'\t'"$lib"$'_SE\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
   elif [ "$libType" = $"SE" ]; then
     cat sample_list.txt | xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed.readslength.txt
-    stat=$(Rscript -e 'd<-scan("trimmed.readslength.txt", quiet=TRUE); cat(length(d), sum(d)/10^9, min(d), max(d), median(d), mean(d), sep="\t");')
-    echo "$lib"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
+    stat=$(Rscript -e 'd<-scan("trimmed.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
+    echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 ###########################################################################################
 ## get the referenece genome
@@ -262,6 +266,8 @@ while read work_dir; do
 done < $horse_trans/working_list_Cerebellum.txt
 ##################
 ## create summary for tophat run
+headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "min_concordance", "max_concordance", sep="\t");')
+echo "$headers" > $horse_trans/tophat_summary.txt
 while read work_dir; do
   > $work_dir/tophat_output/allsample_summary.txt
   for f in $work_dir/tophat_output/tophat_*; do
@@ -270,7 +276,12 @@ while read work_dir; do
     grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
     grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
   done
-done < $horse_trans/working_list_Cerebellum.txt
+  mapping=$(grep "overall read mapping rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
+  conc=$(grep "concordant pair alignment rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
+  lib=$(basename $work_dir)
+  tissue=$(dirname $work_dir | xargs basename)
+  echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/tophat_summary.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 ##################
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
@@ -341,13 +352,13 @@ output_noGTF=$"cuffmerge_output/withoutGTF"
 #output_withRefGene=$"cuffmerge_output/withRefGene"
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cd $work_dir/tophat_output
-  for dir in $work_dir/tophat_output/tophat_*; do if [ -d "$dir" ]; then
+  for dir in $work_dir/tophat_output/tophat_*; do if [ -f "$dir"/transcripts.gtf ]; then
     echo "$dir"/transcripts.gtf; fi; done > assemblies.txt
   rm -fR $output_noGTF
   #rm -fR $output_withRefGene
   bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" $"assemblies.txt"
   #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" $"assemblies.txt" "$refGTF_file"
-fi; done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
 ### cuffmerge the lab-specific tissue assemblies into tissue specific assemblies
@@ -380,7 +391,7 @@ cd $tissue_Cuffmerge
 rm -f $prepData/All_tissues_assemblies.txt
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/assemblies.txt >> $prepData/All_tissues_assemblies.txt
-done < $horse_trans/working_list.txt
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 mkdir -p all_tissues
 output_noGTF=$"all_tissues/withoutGTF"
@@ -395,13 +406,13 @@ while read work_dir; do
   for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
   fi; done;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/tissue_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
+for tissue in $tissue_Cuffmerge/*; do if [ -d $tissue ]; then
   echo ${tissue#$tissue_Cuffmerge/}/withoutGTF >> $tissue_Cuffmerge/tissue_assemblies.txt;
-done
+fi; done
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
 rm -f $horse_trans/TopCuff_Cuffmerge_assemblies.txt
