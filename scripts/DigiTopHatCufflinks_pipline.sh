@@ -204,28 +204,61 @@ done < $horse_trans/multi_lib_tissues.txt
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/digi_merged_assemblies.txt
-rm -f $horse_trans/rawdigi_TopCuff_assemblies.txt
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
+while read work_dir; do
   dir=$work_dir/digi_tophat_output
-  mkdir $dir/withoutGTF
-  ln $dir/transcripts.gtf $dir/withoutGTF/.
-  echo ${dir#$prepData/}/withoutGTF >> $prepData/digi_merged_assemblies.txt;
-  echo ${dir}/withoutGTF >> $horse_trans/rawdigi_TopCuff_assemblies.txt; fi;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
+  if [ -d $dir ]; then
+    echo ${dir#$prepData/} >> $prepData/digi_merged_assemblies.txt;
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Digimerge/tissue_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
+for tissue in $tissue_Cuffmerge/*; do if [ -d $tissue ]; then
   echo ${tissue#$tissue_Digimerge/}/withoutGTF >> $tissue_Digimerge/digi_tissue_assemblies.txt;
-  echo ${tissue}/withoutGTF >> $horse_trans/rawdigi_TopCuff_assemblies.txt; done
+fi; done
+####################
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+rm -f $horse_trans/rawdigi_TopCuff_assemblies.txt
+while read assembly; do
+  echo $assembly
+  cd $prepData/$assembly
+  targetAss=$"transcripts.gtf"
+  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+  if [ -f $"transcripts.BigBed" ];then
+    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+    cp transcripts.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    echo $prepData/$assembly >> $horse_trans/rawdigi_TopCuff_assemblies.txt;
+fi; done < $prepData/digi_merged_assemblies.txt
+
+while read assembly; do
+  echo $assembly
+  cd $tissue_Digimerge/$assembly
+  targetAss=$"merged.gtf"
+  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+  if [ -f $"merged.BigBed" ];then
+    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+    cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    echo $tissue_Cuffmerge/$assembly >> $horse_trans/rawdigi_TopCuff_assemblies.txt;
+fi; done < $tissue_Digimerge/tissue_assemblies.txt
 
 ## initiate a given track hub
-hub_name=$"HorseTrans3"
+hub_name=$"HorseTrans_rawdigi_TopCuff"
 shortlabel=$"rawdigi_TopCuff"
 longlabel=$"diginorm of raw data followed by reference guided Tophat/Cufflinks"
 email=$"drtamermansour@gmail.com"
 cd $track_hub
 bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$prepData/digi_merged_assemblies.txt
+#tiss_assemblies=$tissue_Digimerge/tissue_assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+
+## create the HTML file page for every track
+
+###########################################################################################
 
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 #while read work_dir; do

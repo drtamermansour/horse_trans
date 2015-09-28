@@ -403,10 +403,10 @@ bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$prepData/All_
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/merged_assemblies.txt
 while read work_dir; do
-  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF; do if [ -d $dir ]; then
+  dir=$work_dir/tophat_output/cuffmerge_output/withoutGTF
+  if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
-  fi; done;
-done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/tissue_assemblies.txt
@@ -473,8 +473,31 @@ grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
 ## Run Cuffcompare
 mkdir $horse_trans/cuffcompare_$shortlabel
 cd $horse_trans/cuffcompare_$shortlabel
-sample_list=$horse_trans/TopCuff_Cuffmerge_assemblies.txt
-bash ${script_path}/run_cuffcompare.sh "$sample_list" "$refGTF_file" "$script_path/cuffcompare.sh"
+#sample_list=$horse_trans/TopCuff_Cuffmerge_assemblies.txt
+#bash ${script_path}/run_cuffcompare.sh "$sample_list" "$refGTF_file" "$script_path/cuffcompare.sh"
+while read assembly; do
+  echo $assembly
+  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+  bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare2.sh"
+done < $prepData/merged_assemblies.txt
+while read assembly; do
+  echo $assembly
+  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+  bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare2.sh"
+done < $tissue_Cuffmerge/tissue_assemblies.txt
+
+mkdir $horse_trans/cuffcompare_R_$shortlabel
+cd $horse_trans/cuffcompare_R_$shortlabel
+while read assembly; do
+  echo $assembly
+  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+  bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare3.sh"
+done < $prepData/merged_assemblies.txt
+while read assembly; do
+  echo $assembly
+  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+  bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare3.sh"
+done < $tissue_Cuffmerge/tissue_assemblies.txt
 #######################
 ## run Transdecoder to predict UTRs with homology options
 sample_list="$horse_trans/TopCuff_Cuffmerge_assemblies.txt"
