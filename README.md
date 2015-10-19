@@ -53,5 +53,7 @@ https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hu
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt) 
 -  Diginorm followed by refGTFguided Tophat2 then refGTFguided Cufflinks
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_rawdigi_TopCuff.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_rawdigi_TopCuff.txt)
+-  Assemblies after exom merge
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_exonMerge_assemblies.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_exonMerge_assemblies.txt)
 
 To add a hub, go to the genome browser home bage. In the My Data menu, open the Track Hubs page and click the [My Hubs](https://genome.ucsc.edu/cgi-bin/hgHubConnect) tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button. 

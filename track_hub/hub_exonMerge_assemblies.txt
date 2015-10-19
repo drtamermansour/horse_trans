@@ -1,0 +1,5 @@
+hub HorseTrans_exonMerge_assemblies
+shortLabel exonMerge_assemblies
+longLabel Assemblies presented with exon merge
+genomesFile genomes_exonMerge_assemblies.txt
+email drtamermansour@gmail.com

@@ -1,0 +1,22 @@
+#!/usr/bin/awk -f
+#
+# Convert annotation summary file to a psl file where the Refseq (NCBI) genome is the target and UCSC genome is the quary (on stdout) #
+BEGIN {
+FS="\t";
+OFS="\t"; }
+{
+genBankAcc=$1 
+refSeqAcc=$2
+refSeqlength=$3
+ucscScaf=$4
+ucscName=$5
+ucsclength=$6
+ucscStart=$7
+ucscEnd=$8
+strand="+"
+blockSizes= refSeqlength ","; 
+refSeqStarts= 0 ",";
+ucscStarts= ucscStart ",";
+print refSeqlength, 0, 0, 0, 0, 0, 0, 0, strand, ucscName, ucsclength, ucscStart, ucscEnd, refSeqAcc, refSeqlength, 0, refSeqlength, 1, blockSizes, ucscStarts, refSeqStarts
+}
+

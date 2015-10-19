@@ -159,13 +159,25 @@ echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $myRoot/config.txt
 echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $myRoot/config.txt
 source $myRoot/config.txt
 
-
 ## prepare BWA index (for GATK variant analysis)
 mkdir -p $genome_dir/BwaIndex && cd $genome_dir/BwaIndex
 cat ../*.fa > genome.fa
 bash ${script_path}/run_bwa-index.sh genome.fa
 echo "Bwa_ref=$genome_dir/BwaIndex/genome.fa" >> $myRoot/config.txt
 source $myRoot/config.txt
+
+###########################################################################################
+## create liftover files
+## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
+
+# Download the genome files
+mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
+wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
+gunzip eca_ref_EquCab2.0_*.fa.gz
+cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
+## map the genomes
+bash $script_path/mapGenome.sh              ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
+
 ###########################################################################################
 ## Create GTF file based of refGenes
 ## generation of GTF from UCSC tables using the guidelines of genomewiki.ucsc
@@ -183,19 +195,28 @@ source $myRoot/config.txt
 ## Get the NCBI annotation files
 wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/GFF/ref_EquCab2.0_top_level.gff3.gz
 gunzip ref_EquCab2.0_top_level.gff3.gz
-sed 's/Is_circular/is_circular/' ref_EquCab2.0_top_level.gff3 > editMTattrib_temp.gff3
-input_GFF=$"editMTattrib_temp.gff3"
-output_GTF=$"ref_EquCab2.0_top_level.gtf"
-bash ${script_path}/gffToGTF.sh $input_GFF $output_GTF  ## 3 errors converting GFF3 file
-echo "ncbiGFF_file=$genome_dir/ref_EquCab2.0_top_level.gff3" >> $myRoot/config.txt
+$HOME/bin/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level.gpred
+$HOME/bin/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped.gpred unMapped -genePred
+$HOME/bin/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped.gpred ref_EquCab2.0_top_level.gtf
 echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level.gtf" >> $myRoot/config.txt
+
+$HOME/bin/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level_noName.gpred
+$HOME/bin/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_noName.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_noName.gpred unMapped_noName -genePred
+$HOME/bin/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_noName.gpred ref_EquCab2.0_top_level_noName.gtf
+echo "ncbiNoNameGTF_file=$genome_dir/ref_EquCab2.0_top_level_noName.gtf" >> $myRoot/config.txt
 source $myRoot/config.txt
 
 ## Get the ensemble GTF files
-wget ftp://ftp.ensembl.org/pub/release-80/gtf/equus_caballus/Equus_caballus.EquCab2.80.gtf.gz
-gunzip Equus_caballus.EquCab2.80.gtf.gz
-echo "ensGTF_file=$genome_dir/Equus_caballus.EquCab2.80.gtf" >> $myRoot/config.txt
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/ensGene.txt.gz
+ucscTable=$"refGene.txt.gz"
+output_GTF=$"ensGene.gtf"
+bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
+echo "ensGTF_file=$genome_dir/ensGene.gtf" >> $myRoot/config.txt
 source $myRoot/config.txt
+#wget ftp://ftp.ensembl.org/pub/release-80/gtf/equus_caballus/Equus_caballus.EquCab2.80.gtf.gz
+#gunzip Equus_caballus.EquCab2.80.gtf.gz
+#echo "ensGTF_file=$genome_dir/Equus_caballus.EquCab2.80.gtf" >> $myRoot/config.txt
+#source $myRoot/config.txt
 ###########################################################################################
 ### Initiate the basic structure for horse track hubs
 echo "UCSCgenome=equCab2" >> $myRoot/config.txt
@@ -319,11 +340,14 @@ fi; done < $horse_trans/working_list_Cerebellum.txt
 ###########################################################################################
 #### pipeline_OneSampleAtaTime_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
+#cufflinks_run="refGeneGuided_Cufflinks"
+cufflinks_run="nonGuided_Cufflinks"
 while read work_dir; do
   echo $work_dir
   cd $work_dir/tophat_output
   sample_list=$work_dir/tophat_output/sample_list.txt
-  bash ${script_path}/run_cufflinks.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
+  #bash ${script_path}/run_cufflinks.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
+  bash ${script_path}/run_cufflinks_noRef.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks_noRef.sh";
 done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
@@ -335,29 +359,40 @@ while read work_dir; do
   if [ $x -ne 0 ]; then
     echo "Failed Cufflinks jobs in: "$work_dir
     cat $failedSample_list
-    bash ${script_path}/run_cufflinks.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks.sh";
+    #bash ${script_path}/run_cufflinks.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks.sh";
+    bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks_noRef2.sh";
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 ############
 ## Assess computational utilization of cufflinks
-cufflinks_utlization=$prepData/cufflinks_utlization.txt
+cufflinks_utlization=$prepData/${cufflinks_run}_cufflinks_utlization.txt
 > $cufflinks_utlization
 while read work_dir; do
   cd $work_dir/tophat_output
   sample_list=$work_dir/tophat_output/sample_list.txt
   bash ${script_path}/assess_cufflinks_utlization.sh "$sample_list" "$cufflinks_utlization"
 done < $horse_trans/working_list_NoPBMCs.txt
-##################
-### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/cuffmerge_output
-output_noGTF=$"cuffmerge_output/withoutGTF"
-#output_withRefGene=$"cuffmerge_output/withRefGene"
+############
+## relocate the cufflinks analysis results
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cd $work_dir/tophat_output
   for dir in $work_dir/tophat_output/tophat_*; do if [ -f "$dir"/transcripts.gtf ]; then
-    echo "$dir"/transcripts.gtf; fi; done > assemblies.txt
-  rm -fR $output_noGTF
-  #rm -fR $output_withRefGene
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" $"assemblies.txt"
-  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" $"assemblies.txt" "$refGTF_file"
+    mkdir $cufflinks_run
+    mv "$dir"/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $cufflinks_run/.; fi; done
+fi; done < $horse_trans/working_list_NoPBMCs.txt
+########################
+### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/$cufflinks_run/$cuffmerge_run
+#cuffmerge_run="refGeneGuided_Cuffmerge"
+cuffmerge_run="nonGuided_Cuffmerge"
+cuffmerge_output=$cufflinks_run/$cuffmerge_run
+while read work_dir; do if [ -d $work_dir/tophat_output ]; then
+  cd $work_dir/tophat_output
+  for dir in $work_dir/tophat_output/tophat_*; do if [ -f "$dir"/$cufflinks_run/transcripts.gtf ]; then
+    echo "$dir"/$cufflinks_run/transcripts.gtf; fi; done > ${cufflinks_run}_assemblies.txt
+  #rm -fR $cuffmerge_output
+  rm -fR $cuffmerge_output
+  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt" "$refGTF_file"
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt"
+
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
@@ -376,13 +411,12 @@ while read tissue_dir; do
   mkdir -p $tissue
   rm -f $tissue_dir/All_libraries_assemblies.txt
   for dir in $tissue_dir/*; do if [ -d "$dir" ]; then
-    cat "$dir"/tophat_output/assemblies.txt >> $tissue_dir/All_libraries_assemblies.txt; fi; done
-  output_noGTF=$tissue/withoutGTF
-  rm -fR $output_noGTF
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$tissue_dir/All_libraries_assemblies.txt"
-  #output_withRefGene=$tissue/withRefGene
-  #rm -fR $output_withRefGene
-  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$tissue_dir/All_libraries_assemblies.txt" "$refGTF_file"
+    cat "$dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $tissue_dir/All_libraries_assemblies.txt; fi; done
+  #cuffmerge_output=$tissue/$cuffmerge_run
+  cuffmerge_output=$tissue/$cuffmerge_run
+  rm -fR $cuffmerge_output
+  #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$tissue_dir/All_libraries_assemblies.txt" "$refGTF_file"
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$tissue_dir/All_libraries_assemblies.txt"
 done < $horse_trans/multi_lib_tissues.txt
 ##################
 ### cuffmerge all assemblies into one total assembly
@@ -390,20 +424,20 @@ done < $horse_trans/multi_lib_tissues.txt
 cd $tissue_Cuffmerge
 rm -f $prepData/All_tissues_assemblies.txt
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
-  cat "$work_dir"/tophat_output/assemblies.txt >> $prepData/All_tissues_assemblies.txt
+  cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/All_tissues_assemblies.txt
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 mkdir -p all_tissues
-output_noGTF=$"all_tissues/withoutGTF"
-bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$output_noGTF" "$prepData/All_tissues_assemblies.txt"
-#output_withRefGene=$"all_tissues/withRefGene"
-#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$output_withRefGene" "$prepData/All_tissues_assemblies.txt" "$refGTF_file"
+#cuffmerge_output=$"all_tissues"/$cuffmerge_run
+cuffmerge_output=$"all_tissues"/$cuffmerge_run
+#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/All_tissues_assemblies.txt" "$refGTF_file"
+bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$prepData/All_tissues_assemblies.txt"
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/merged_assemblies.txt
 while read work_dir; do
-  dir=$work_dir/tophat_output/cuffmerge_output/withoutGTF
+  dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run
   if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/merged_assemblies.txt;
 fi; done < $horse_trans/working_list_NoPBMCs.txt
@@ -499,6 +533,72 @@ while read assembly; do
   bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare3.sh"
 done < $tissue_Cuffmerge/tissue_assemblies.txt
 #######################
+## compare bed files
+mkdir $horse_trans/compareBed
+cd $horse_trans/compareBed
+
+## define the list of home made annoatations
+alltissueGTF_file=$tissue_Cuffmerge/$"all_tissues"/$cuffmerge_run/merged.gtf
+
+## get a copy of the annotation you want to compare
+for f in refGTF_file ncbiNoNameGTF_file ensGTF_file alltissueGTF_file; do
+  cp ${!f} ${f}.gtf
+  #cat ${!f} | gzip > ${f}.gtf.gz
+done
+## fix name conflicts: change the name of gene in the gene_id field only (and keep the gene_name)
+sed -i '48s/gene25554/gene25554rev/' ncbiNoNameGTF_file.gtf
+
+## merge transcripts per loci
+#for f in *GTF_file.gtf; do
+#  filename=$(basename ${f%.gtf})
+#  cat $f \
+#    | cgat gtf2gtf --method=sort --sort-order=gene \
+#    | cgat gtf2gtf --method=merge-exons --with-utr \
+#    | cgat gtf2gtf --method=set-transcript-to-gene \
+#    | cgat gtf2gtf --method=sort --sort-order=position \
+#    > ${filename}_mergeExons_withUTR.gtf
+#done
+for f in *GTF_file.gtf; do
+  filename=$(basename ${f%.gtf})
+  cat $f \
+    | cgat gtf2gtf --method=sort --sort-order=gene \
+    | cgat gtf2gtf --method=merge-exons \
+    | cgat gtf2gtf --method=set-transcript-to-gene \
+    | cgat gtf2gtf --method=sort --sort-order=position \
+    > ${filename}_mergeExons.gtf
+done
+
+## create list of public assemblies
+## & convert reference GTF to bed files
+rm -f exonMerge_assemblies.txt
+for f in *_mergeExons.gtf; do
+  bash $script_path/gtfToBigBed.sh "$f" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+  identifier=${f%.gtf}
+  cp ${identifier}.BigBed $track_hub/$UCSCgenome/BigBed/.
+  echo ${identifier} >> exonMerge_assemblies.txt;
+done
+
+## initiate a given track hub
+hub_name=$"HorseTrans_exonMerge_assemblies"
+shortlabel=$"exonMerge_assemblies"
+longlabel=$"Assemblies presented with exon merge"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+> $horse_trans/emptyTemp.txt
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$horse_trans/compareBed/exonMerge_assemblies.txt
+tiss_assemblies=$horse_trans/emptyTemp.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+
+## do the bed comparison
+module load BEDTools/2.24.0
+
+#######################
 ## run Transdecoder to predict UTRs with homology options
 sample_list="$horse_trans/TopCuff_Cuffmerge_assemblies.txt"
 bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $script_path/transdecoder.sh
@@ -514,7 +614,7 @@ bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $scr
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/merged_decoder_assemblies.txt
 while read work_dir; do
-  for dir in $work_dir/tophat_output/cuffmerge_output/withoutGTF/transdecoder; do if [ -d $dir ]; then
+  for dir in $work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/transdecoder; do if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/merged_decoder_assemblies.txt;
   fi; done;
 done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
@@ -628,5 +728,4 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ## create the HTML file page for every track
 
 ###########################################################################################
-
 
