@@ -795,6 +795,9 @@ bash ${script_path}/MapDigiTopHatCufflinks_pipline.sh
 mkdir -p $pubAssemblies/Hestand_2014 && cd $pubAssemblies/Hestand_2014
 wget http://server1.intrepidbio.com/FeatureBrowser/gtffilereader/record/-4027466309079733025/7666675698.gtf
 
+mkdir -p $pubAssemblies/NCBI && cd $pubAssemblies/NCBI
+cp $ncbiGTF_file ncbiAnn.gtf
+
 ## create list of public assemblies
 rm -f $pubAssemblies/public_assemblies.txt
 for tissue in $pubAssemblies/*; do
@@ -806,8 +809,8 @@ done
 #rm -f $horse_trans/public_assemblies.txt
 while read assembly; do
   echo $assembly
-  cd $prepData/$assembly
-  targetAss=*.gtf
+  cd $pubAssemblies/$assembly
+  targetAss=$(ls *.gtf)
   bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
   if [ -f *.BigBed ];then
     identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
@@ -828,7 +831,7 @@ current_libs=$track_hub/current_libs_$shortlabel
 current_tissues=$track_hub/current_tiss_$shortlabel
 trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
 lib_assemblies=$pubAssemblies/public_assemblies.txt
-#tiss_assemblies=$(> $horse_trans/temp.txt)
+tiss_assemblies=$horse_trans/emptyTemp.txt
 bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
 
 ## create the HTML file page for every track

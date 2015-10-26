@@ -8,3 +8,13 @@ visibility dense
 priority 1
 html Hestand_2014
  
+track NCBI
+bigDataUrl BigBed/NCBI.BigBed
+shortLabel NCBI
+longLabel NCBI
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 2
+html NCBI
+ 

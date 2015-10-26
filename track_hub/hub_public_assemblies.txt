@@ -3,3 +3,8 @@ shortLabel public_assemblies
 longLabel Publically available assemblies
 genomesFile genomes_public_assemblies.txt
 email drtamermansour@gmail.com
+hub HorseTrans_public_assemblies
+shortLabel public_assemblies
+longLabel Publically available assemblies
+genomesFile genomes_public_assemblies.txt
+email drtamermansour@gmail.com
