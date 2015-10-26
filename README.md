@@ -45,8 +45,10 @@ Current avaliable track hubs
 ============================
 You can add them to your hubs on UCSC using these URLs:
 
+-  refGTFguided Tophat2 followed by Non guided Cufflinks/Cuffmerge:
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopNonGuidCuff.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopNonGuidCuff.txt)
 -  refGTFguided Tophat2 followed by refGTFguided Cufflinks then Cuffmerge:
-https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuff_Cuffmerge.txt) 
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopGuidedCuff.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopGuidedCuff.txt) 
 -  Adding UTRs to the coding transcripts:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt) 
 -  Publically avaliable assemblies

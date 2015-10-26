@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ $# -lt 3 ]
+if [ $# -lt 2 ]
 then
     printf "\nUsage run_cufflinks_noRef.sh [samples list] [script]\n"
     exit 0

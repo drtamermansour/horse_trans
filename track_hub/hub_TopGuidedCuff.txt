@@ -1,0 +1,5 @@
+hub HorseTrans_TopGuidedCuff
+shortLabel TopGuidedCuff
+longLabel Single samlpe refGuided Tophat/Cufflinks - nonGuided Cuffmerge
+genomesFile genomes_TopGuidedCuff.txt
+email drtamermansour@gmail.com

@@ -28,13 +28,3 @@ visibility dense
 priority 3
 html ncbiNoNameGTF_file_mergeExons
  
-track refGTF_file_mergeExons
-bigDataUrl BigBed/refGTF_file_mergeExons.BigBed
-shortLabel refGTF_file_mergeExons
-longLabel refGTF_file_mergeExons
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 4
-html refGTF_file_mergeExons
- 

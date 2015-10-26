@@ -30,20 +30,22 @@ done < $horse_trans/working_list_NoPBMCs.txt
 
 ## run digital normalization of lab specific tissues (need to be updated to use sample list and check for success)
 kmer=20
-cutoff=50
+#cutoff=50
+cutoff=10
+normReads="normalizied_RNA_reads_k${kmer}_C${cutoff}"
 while read work_dir; do
   echo $work_dir
-  mkdir -p $work_dir/normalizied_RNA_reads
-  cd $work_dir/normalizied_RNA_reads
+  mkdir -p $work_dir/$normReads
+  cd $work_dir/$normReads
   lib=$(basename $work_dir | cut -d"_" -f 1)
   bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/trimmed_RNA_reads" "$kmer" "$cutoff" "$script_path"
 done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful diginorm and trouble shooting the failed jobs (requires T_Trim.e)
-sample_list=$prepData/failed_diginorm.txt                   ## define the path of empty file
+sample_list=$prepData/failed_diginorm_k${kmer}_C${cutoff}.txt       ## define the path of empty file
 > $sample_list
 while read work_dir; do
-  cd $work_dir/normalizied_RNA_reads
+  cd $work_dir/$normReads
   bash $script_path/check_diginorm.sh "$sample_list"
 done < $horse_trans/working_list_NoPBMCs.txt
 x=$(cat $sample_list | wc -l)
@@ -51,7 +53,7 @@ if [ $x -ne 0 ]; then
   echo "Failed jobs in: "
   cat $sample_list
   while read work_dir; do
-    cd $work_dir/normalizied_RNA_reads
+    cd $work_dir/$normReads
     lib=$(basename $work_dir | cut -d"_" -f 1)
     bash ${script_path}/run_diginorm.sh "$lib" "$work_dir/trimmed_RNA_reads" "$kmer" "$cutoff" "$script_path"
   done < $sample_list
@@ -60,7 +62,7 @@ fi
 ## split the interleaved reads
 while read work_dir; do
   echo $work_dir
-  cd $work_dir/normalizied_RNA_reads
+  cd $work_dir/$normReads
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   if [ "$lib" = $"PE" ]; then
     sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
@@ -70,7 +72,7 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 ## merge singletons and change the file names to fit the tophat script
 while read work_dir; do
   echo $work_dir
-  cd $work_dir/normalizied_RNA_reads
+  cd $work_dir/$normReads
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   if [ "$lib" = $"PE" ]; then
     singletones=1
@@ -85,7 +87,7 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 ## merge the files in tophat compatible format
 #while read work_dir; do
 #  echo $work_dir
-#  cd $work_dir/normalizied_RNA_reads
+#  cd $work_dir/$normReads
 #  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
 #  if [ "$lib" = $"PE" ]; then
 #    cat *_R1_001.pe.fq allsingletons.fq.keep > allsamples_R1_002.pe.se.fq
@@ -96,10 +98,10 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/normalizied_RNA_reads ]; then
-  rm -f $work_dir/normalizied_RNA_reads/sample_list.txt
-  for f in $work_dir/normalizied_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
-    echo $f >> $work_dir/normalizied_RNA_reads/sample_list.txt; fi; done;
+while read work_dir; do if [ -d $work_dir/$normReads ]; then
+  rm -f $work_dir/$normReads/sample_list.txt
+  for f in $work_dir/$normReads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
+    echo $f >> $work_dir/$normReads/sample_list.txt; fi; done;
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## run Tophat on each sample independantly
@@ -110,14 +112,14 @@ while read work_dir; do
   cd $work_dir/digi_tophat_output
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
-  sample_list=$work_dir/normalizied_RNA_reads/sample_list.txt
+  sample_list=$work_dir/$normReads/sample_list.txt
   bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
 done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful tophat runs and trouble shooting the failed tophat jobs (require tophat-[SP]E.e & .o)
 while read work_dir; do
   cd $work_dir/digi_tophat_output
-  sample_list=$work_dir/normalizied_RNA_reads/tophat_failedSamples.txt           ## define the path of empty file
+  sample_list=$work_dir/$normReads/tophat_failedSamples.txt           ## define the path of empty file
   bash $script_path/check_tophat.sh "$sample_list"
   x=$(cat $sample_list | wc -l)
   if [ $x -ne 0 ]; then
