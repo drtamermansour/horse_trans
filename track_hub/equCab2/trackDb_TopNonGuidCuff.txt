@@ -102,9 +102,9 @@ visibility dense
 priority 6
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
-track all_tissuesTr
+track all_tissTr
 bigDataUrl BigBed/all_tissues_nonGuided_Cufflinks_nonGuided_Cuffmerge.miss1.isoform0.2.BigBed
-shortLabel all_tissuesTr
+shortLabel all_tissTr
 longLabel all_tissues/nonGuided_Cufflinks/nonGuided_Cuffmerge.miss1.isoform0.2
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
