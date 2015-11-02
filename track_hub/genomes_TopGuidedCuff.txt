@@ -1,2 +1,4 @@
 genome equCab2
 trackDb equCab2/trackDb_TopGuidedCuff.txt
+genome equCab2
+trackDb equCab2/trackDb_TopGuidedCuff.txt
