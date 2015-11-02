@@ -16,6 +16,14 @@ echo "genome_dir=$myRoot/horse_trans/refGenome" >> $myRoot/config.txt
 echo "pubAssemblies=$myRoot/horse_trans/public_assemblies" >> $myRoot/config.txt
 echo "track_hub=$myRoot/horse_trans/track_hub" >> $myRoot/config.txt
 source $myRoot/config.txt
+
+## download the UCSC kent commands in the script path
+## http://genome-source.cse.ucsc.edu/gitweb/?p=kent.git;a=blob;f=src/userApps/README
+## http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/FOOTER
+mkdir $script_path/UCSC_kent_commands
+cd $script_path/UCSC_kent_commands
+wget -r --no-directories ftp://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/
+chmod 755 *
 ###########################################################################################
 #### prepare the raw fastq files:
 ## Every tissue has a separate folder carrying its name (maximum 14 letter) in $prepData.
@@ -195,7 +203,7 @@ bash $script_path/mapGenome.sh              ## ends by creating ncbi/NCBItoUCSC_
 ## http://genomewiki.ucsc.edu/index.php/Genes_in_gtf_or_gff_format
 ## The example on the wiki is based ok knowngene table which does not exist for horses. Instead there are refGene and ensGene tables
 ## The commands of wikigenome are modified to match the table schemes
-## Note: using genepredToGTF can resolve duplicates of transcript ids but not for gene ids so the 10 fields genepred format which uses transcript names as gene names produce no duplicates but the extended genepred uses separte gene names from column 12 and susbtable for gene name duplication
+## Note: using genepredToGTF can resolve duplicates of transcript ids but not for gene ids so the 10 fields genepred format which uses transcript names as gene names produce no duplicates but the extended genepred uses separte gene names from column 12 and susceptible for gene name duplication
 cd $genome_dir
 wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/refGene.txt.gz
 ucscTable=$"refGene.txt.gz"
@@ -212,20 +220,20 @@ source $myRoot/config.txt
 ## Get the NCBI annotation files
 wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/GFF/ref_EquCab2.0_top_level.gff3.gz
 gunzip ref_EquCab2.0_top_level.gff3.gz
-$HOME/bin/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level.gpred
+$script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 egrep "^rna|^NM|^NR|^XM|^XR" ref_EquCab2.0_top_level.gpred > ref_EquCab2.0_top_level_rna.gpred
-$HOME/bin/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
-$HOME/bin/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_rna.gpred ref_EquCab2.0_top_level_rna.gtf
+$script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
+$script_path/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_rna.gpred ref_EquCab2.0_top_level_rna.gtf
 echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level_rna.gtf" >> $myRoot/config.txt
 cat ref_EquCab2.0_top_level_mapped_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_rna.bed
 echo "ncbiBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_rna.bed" >> $myRoot/config.txt
 
-$HOME/bin/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level_noName.gpred
+$script_path/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level_noName.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 grep "^rna" ref_EquCab2.0_top_level_noName.gpred > ref_EquCab2.0_top_level_noName_rna.gpred
-$HOME/bin/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_noName_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_noName_rna.gpred unMapped_noName -genePred
-$HOME/bin/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_noName_rna.gpred ref_EquCab2.0_top_level_noName_rna.gtf
+$script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_noName_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_noName_rna.gpred unMapped_noName -genePred
+$script_path/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_noName_rna.gpred ref_EquCab2.0_top_level_noName_rna.gtf
 echo "ncbiNoNameGTF_file=$genome_dir/ref_EquCab2.0_top_level_noName_rna.gtf" >> $myRoot/config.txt
 cat ref_EquCab2.0_top_level_mapped_noName_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_noName_rna.bed
 echo "ncbiNoNameBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_noName_rna.bed" >> $myRoot/config.txt
@@ -418,7 +426,7 @@ while read work_dir; do
     echo "Failed Cufflinks jobs in: "$work_dir
     cat $failedSample_list
     #bash ${script_path}/run_cufflinks.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks.sh";
-#    bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks_noRef2.sh";
+    bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks_noRef2.sh";
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 ############
 ## Assess computational utilization of cufflinks
@@ -433,7 +441,7 @@ done < $horse_trans/working_list_NoPBMCs.txt
 ## relocate the cufflinks analysis results
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cd $work_dir/tophat_output
-  for dir in $work_dir/tophat_output/tophat_Barich_Assar_*; do if [ -f "$dir"/transcripts.gtf ]; then
+  for dir in $work_dir/tophat_output/tophat_*; do if [ -f "$dir"/transcripts.gtf ]; then
     cd $dir
     mkdir $cufflinks_run && \
     mv "$dir"/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $cufflinks_run/.; fi; done
@@ -449,7 +457,8 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
     echo "$dir"/$cufflinks_run/transcripts.gtf; fi; done > ${cufflinks_run}_assemblies.txt
   rm -fR $cuffmerge_output
   #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt" "$refGTF_file"
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt"
+  isoformfrac=0.05    ## value 1-0.05 & default= 0.05
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "${cufflinks_run}_assemblies.txt"
 fi; done < $horse_trans/working_list_Cerebellum.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
@@ -472,7 +481,8 @@ while read tissue_dir; do
   cuffmerge_output=$tissue/$cufflinks_run/$cuffmerge_run
   rm -fR $cuffmerge_output
   #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$tissue_dir/${cufflinks_run}_assemblies.txt" "$refGTF_file"
-  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$tissue_dir/${cufflinks_run}_assemblies.txt"
+  isoformfrac=0.05    ## value 1-0.05 & default= 0.05
+  bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$tissue_dir/${cufflinks_run}_assemblies.txt"
 done < $horse_trans/multi_lib_tissues.txt
 ##################
 ### cuffmerge all assemblies into one total assembly
@@ -486,7 +496,8 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 mkdir -p all_tissues
 cuffmerge_output=$"all_tissues"/$cufflinks_run/$cuffmerge_run
 #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
-bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt"
+isoformfrac=0.2    ## value 1-0.05 & default= 0.05
+bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
@@ -573,34 +584,56 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #grep "class_code \"u\"" merged_ex1.gtf > merged_ex1_u.gtf
 #grep -v "class_code \"u\"" merged_ex1.gtf > merged_ex1_nu.gtf
 #######################
-## Run Cuffcompare
-mkdir $horse_trans/cuffcompare_$shortlabel
-cd $horse_trans/cuffcompare_$shortlabel
-#sample_list=$horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt
-#bash ${script_path}/run_cuffcompare.sh "$sample_list" "$refGTF_file" "$script_path/cuffcompare.sh"
-while read assembly; do
-  echo $assembly
-  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare2.sh"
-done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-while read assembly; do
-  echo $assembly
-  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare2.sh"
-done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
+## Run Cuffcompare with public annotations
+for cufflinks_run in nonGuided_Cufflinks refGeneGuided_Cufflinks;do
+  for reference in refGTF_file ncbiGTF_file ensGTF_file;do
+    mkdir -p $horse_trans/cuffcompare/${cufflinks_run}_${reference}
+    cd $horse_trans/cuffcompare/${cufflinks_run}_${reference}
+#    while read assembly; do
+#      echo $assembly
+#      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+#      bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "${!reference}" "$script_path/cuffcompare2.sh"
+#    done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
 
-mkdir $horse_trans/cuffcompare_R_$shortlabel
-cd $horse_trans/cuffcompare_R_$shortlabel
-while read assembly; do
-  echo $assembly
+    while read assembly; do
+      echo $assembly
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "${!reference}" "$script_path/cuffcompare2.sh"
+    done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt2
+
+#    mkdir -p $horse_trans/cuffcompare_R/${cufflinks_run}_${reference}
+#    cd $horse_trans/cuffcompare_R/${cufflinks_run}_${reference}
+#    while read assembly; do
+#      echo $assembly
+#      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+#      bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "${!reference}" "$script_path/cuffcompare3.sh"
+#    done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
+
+#    while read assembly; do
+#      echo $assembly
+#      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+#      bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "${!reference}" "$script_path/cuffcompare3.sh"
+#    done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt2
+done; done
+
+## Run Cuffcompare with of our assembly vs Hestand2014
+reference=$(ls $pubAssemblies/Hestand_2014/*.gtf)
+for cufflinks_run in nonGuided_Cufflinks refGeneGuided_Cufflinks;do
+  mkdir -p $horse_trans/cuffcompare/${cufflinks_run}_Hestand2014
+  cd $horse_trans/cuffcompare/${cufflinks_run}_Hestand2014
+  assembly=$tissue_Cuffmerge/all_tissues/${cufflinks_run}/nonGuided_Cuffmerge/merged.gtf
   identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  bash ${script_path}/run_cuffcompare2.sh "$prepData/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare3.sh"
-done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-while read assembly; do
-  echo $assembly
+  bash ${script_path}/run_cuffcompare2.sh "$assembly" "$identifier" "$reference" "$script_path/cuffcompare2.sh"
+done
+
+## Run Cuffcompare with of Hestand2014 vs public ann
+assembly=$(ls $pubAssemblies/Hestand_2014/*.gtf)
+for reference in refGTF_file ncbiGTF_file ensGTF_file;do
+  mkdir -p $horse_trans/cuffcompare/Hestand2014_${reference}
+  cd $horse_trans/cuffcompare/Hestand2014_${reference}
   identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  bash ${script_path}/run_cuffcompare2.sh "$tissue_Cuffmerge/$assembly/merged.gtf" "$identifier" "$refGTF_file" "$script_path/cuffcompare3.sh"
-done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
+  bash ${script_path}/run_cuffcompare2.sh "$assembly" "$identifier" "${!reference}" "$script_path/cuffcompare2.sh"
+done
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
@@ -672,9 +705,8 @@ mkdir ../ensVSncbi && cd ../ensVSncbi
 python /CAGT_devel/cgat-code/scripts/gtfs2tsv.py ../ensGTF_file.gtf ../ncbiNoNameGTF_file.gtf > ensVSncbi.tsv
 
 ## do the bed comparison
-module load ucscUtils/262
 filename=${alltissueGTF_file%.gtf}
-gtfToGenePred $alltissueGTF_file ${filename}.gpred
+$script_path/UCSC_kent_commands/gtfToGenePred $alltissueGTF_file ${filename}.gpred
 cat ${filename}.gpred | $script_path/genePredToBed > ${filename}.bed
 alltissueBED_file=${filename}.bed
 

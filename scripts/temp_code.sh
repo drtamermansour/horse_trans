@@ -70,16 +70,28 @@ bamtools split -in accepted_hits.bam -reference
 module load cufflinks/2.2.1
 cufflinks --GTF-guide $genome_dir/GTFbyChrom/chr10_refGene.gtf --num-threads 4 --verbose accepted_hits.REF_chr10.bam
 
+###########################################################################################
+## construct custom transcriptome reference FASTA files
+
+# install mmseq according to https://github.com/eturro/mmseq#mmseq-transcript-and-gene-level-expression-analysis-using-multi-mapping-rna-seq-reads
+
+# ROUTE B in http://www.bgx.org.uk/software/mmseq.html
+# skip step 1 and 2 for now
+cd /mnt/ls12/Tamer/horse_trans/prepdata/BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/tophat_Chocolatte_205_AGTCAA_L005
+SBAMS=( `find . -wholename "*/accepted_hits.bam"` )
+module load SAMTools/0.1.19
+samtools mpileup -ugf /mnt/ls12/Tamer/horse_trans/refGenome/Bowtie2Index/genome.fa ${SBAMS[@]} | bcftools view -bvcg - > var.raw.bcf
+bcftools view var.raw.bcf | vcfutils.pl varFilter > var.flt.vcf
 
 
+cd /mnt/ls12/Tamer/horse_trans/prepdata/BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/cuffmerge_output/withoutGTF
+#module load cufflinks/2.2.1
+#gffread -E merged.gtf -o- > merged.gff3
+ensembl_gtf_to_gff.pl merged.gtf > merged.ensGFF
 
+java dataFormat.ImportSNPs merged.ensGFF /mnt/ls12/Tamer/horse_trans/prepdata/BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/tophat_Chocolatte_205_AGTCAA_L005/var.flt.vcf ph2temp
 
-
-
-
-
-
-
+java -jar $HOME/bin/polyHap2/polyHap2.jar dataFormat.ImportSNPs merged.ensGFF /mnt/ls12/Tamer/horse_trans/prepdata/BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/tophat_Chocolatte_205_AGTCAA_L005/var.flt.vcf ph2temp
 
 
 

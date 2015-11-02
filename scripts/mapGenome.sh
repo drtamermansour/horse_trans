@@ -28,7 +28,7 @@ $script_path/NCBItoUCSCmapTopsl NCBItoUCSC_map.txt > NCBItoUCSC_map.psl
 
 sed 's/gi|\(.*\)|ref|\(.*\)| \(.*$\)/\2/g' ncbi_genome.fa > ncbi_genome2.fa
 qsub -v genome="$genome" $script_path/run_axtChain.sh
-###$HOME/bin/UCSC_kent_commands/axtChain -linearGap=medium -psl NCBItoUCSC_map.psl -faT ncbi_genome2.fa -faQ$genome NCBItoUCSC_map.chain
+###$HOME/bin/UCSC_kent_commands/axtChain -linearGap=medium -psl NCBItoUCSC_map.psl -faT ncbi_genome2.fa -faQ $genome NCBItoUCSC_map.chain
 $HOME/bin/UCSC_kent_commands/chainSort NCBItoUCSC_map.chain NCBItoUCSC_map.sorted.chain
 cat NCBItoUCSC_map.psl | awk -F "\t" -v OFS='\t' '{ print $14,$15 }' > ncbi.chromInfo
 cat NCBItoUCSC_map.psl | awk -F "\t" -v OFS='\t' '{ print $10,$11 }' | uniq > ucsc.chromInfo
