@@ -50,9 +50,9 @@ html Skin
  
      track Skin.merge
      parent Skin on
-     bigDataUrl https://s3.amazonaws.com/public.ged.msu.edu/merged.BigBed
+     bigDataUrl BigBed/Skin_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
      shortLabel Skin.merge
-     longLabel Skin/nonGuided_Cufflinks/nonGuided_CuffmergeNew
+     longLabel Skin/nonGuided_Cufflinks/nonGuided_Cuffmerge
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
