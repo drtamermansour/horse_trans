@@ -7,10 +7,9 @@ source $myRoot/config.txt
 while read work_dir; do
   echo $work_dir
   mkdir -p $work_dir/mapped_trimmed
-  cd $work_dir/mapped_trimmed
   sample_list=$work_dir/tophat_output/sample_list.txt
   lib=$(basename $work_dir | cut -d"_" -f 1)
-  bash ${script_path}/run_BamToFastq.sh "$sample_list" "$lib" "$script_path/restore_mapped_trimmed.sh"
+  bash ${script_path}/run_BamToFastq.sh "$sample_list" "$lib" "$work_dir/mapped_trimmed" "$script_path/restore_mapped_trimmed.sh"
 done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
 
 ## Check for successful jobs (requires restore_mapped.e & restore_mapped.o)
@@ -60,8 +59,9 @@ while read work_dir; do
   cd $work_dir/normalizied_mappedRNA_reads
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   if [ "$lib" = $"PE" ]; then
-    sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
-    bash ${script_path}/run_split_reads.sh "$sample_list" $script_path/split_reads.sh
+    #sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
+    sample_list=$work_dir/tophat_output/sample_list.txt
+    bash ${script_path}/run_split_reads2.sh "$sample_list" $script_path/split_reads.sh
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## merge singletons and change the file names to fir the tophat script

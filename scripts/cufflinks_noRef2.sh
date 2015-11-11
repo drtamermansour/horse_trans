@@ -7,9 +7,8 @@
 module load cufflinks/2.2.1
 
 
-#Genes_GTF_file="$1"
-#label="$2"
-#sample="$3"
+#label="$1"
+#sample="$2"
 
 
 cd $PBS_O_WORKDIR

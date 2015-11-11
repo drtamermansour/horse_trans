@@ -11,7 +11,9 @@ sample_list="$1"
 script="$2"
 
 while read f; do echo $f;
-  base=$(basename ${f%_R1_*.pe.se.fq})
+  cd $f
+  base_temp=$(basename $f)
+  base=$(basename ${base_temp#tophat_})
   fkeep="$base"_R_*.pe.fq.keep
   f1="$base"_R1_001.pe.fq
   f2="$base"_R2_001.pe.fq

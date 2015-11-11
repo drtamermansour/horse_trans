@@ -22,7 +22,7 @@ if [ $lib = $"PE" ]; then
     temp=$(echo $f | sed 's/_R1_/_R2_/')
     f2=$(echo $temp | sed 's/.pe.se.fq/.pe.fq/')
     echo $output_dir
-    mkdir ${output_dir}
+    mkdir -p ${output_dir}
     qsub -v output_dir="${output_dir}",\
 Bowtie2_genome_index_base="${Bowtie2_genome_index_base}",\
 transcriptome_index="${transcriptome_index}",\
@@ -38,7 +38,7 @@ if [ $lib = $"SE" ]; then
     base2=${base%_SR_*.se.fq}
     output_dir=$"tophat_"$base2
     echo $output_dir
-    mkdir ${output_dir}
+    mkdir -p ${output_dir}
     qsub -v output_dir="${output_dir}",\
 Bowtie2_genome_index_base="${Bowtie2_genome_index_base}",\
 transcriptome_index="${transcriptome_index}",\

@@ -96,6 +96,21 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 #    mv allsingletons.fq.keep allsingletons_SR_002.se.fq
 #fi; done < $horse_trans/working_list_NoPBMCs.txt
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
 while read work_dir; do if [ -d $work_dir/$normReads ]; then
@@ -108,8 +123,8 @@ fi; done < $horse_trans/working_list_NoPBMCs.txt
 ## we meight need to run tophat on one sample after another feeding each run by the junctions of the previous run
 while read work_dir; do
   echo $work_dir
-  mkdir -p $work_dir/digi_tophat_output
-  cd $work_dir/digi_tophat_output
+  mkdir -p $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
   sample_list=$work_dir/$normReads/sample_list.txt
@@ -118,41 +133,53 @@ done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful tophat runs and trouble shooting the failed tophat jobs (require tophat-[SP]E.e & .o)
 while read work_dir; do
-  cd $work_dir/digi_tophat_output
-  sample_list=$work_dir/$normReads/tophat_failedSamples.txt           ## define the path of empty file
-  bash $script_path/check_tophat.sh "$sample_list"
-  x=$(cat $sample_list | wc -l)
+  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+  sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
+  failedSample_list=$work_dir/trimmed_RNA_reads/tophat_failedSamples.txt
+  > $failedSample_list                                                ## erase previouslly failed samples if any
+  bash $script_path/check_tophat.sh "$failedSample_list"        ## require tophat-[SP]E.e & .o
+  bash $script_path/check2_tophat.sh "$sample_list" "$failedSample_list"   ## check output log files
+  x=$(cat $failedSample_list | wc -l)
   if [ $x -ne 0 ]; then
     lib=$(basename $work_dir | cut -d"_" -f 1)
     strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')
     echo "Failed tophat jobs in: "$work_dir
-    bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
+    bash ${script_path}/run_tophat.sh "$failedSample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ##################
 ## create summary for tophat run
+headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "min_concordance", "max_concordance", sep="\t");')
+echo "$headers" > $horse_trans/digiMulti.k${kmer}.C${cutoff}_tophat_summary.txt
 while read work_dir; do
-  for f in $work_dir/digi_tophat_output/tophat_*; do
-    echo ${f} >> $work_dir/digi_tophat_output/allsample_summary.txt
+  > $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/allsample_summary.txt
+  for f in $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/tophat_*; do
+    echo ${f} >> $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/allsample_summary.txt
     cd ${f}
     grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
     grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
   done
+  mapping=$(grep "overall read mapping rate" $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
+  conc=$(grep "concordant pair alignment rate" $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
+  lib=$(basename $work_dir)
+  tissue=$(dirname $work_dir | xargs basename)
+  echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/digiMulti.k${kmer}.C${cutoff}_tophat_summary.txt
 done < $horse_trans/working_list_NoPBMCs.txt
+
 ##################
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
-  rm -f $work_dir/digi_tophat_output/sample_list.txt
-  for f in $work_dir/digi_tophat_output/tophat_*; do if [ -d $f ]; then
-    echo $f >> $work_dir/digi_tophat_output/sample_list.txt; fi; done;
+while read work_dir; do if [ -d $work_dir/digi.k${kmer}.C${cutoff}_tophat_output ]; then
+  rm -f $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/sample_list.txt
+  for f in $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/tophat_*; do if [ -d $f ]; then
+    echo $f >> $work_dir/digi.k${kmer}.C${cutoff}_tophat_output/sample_list.txt; fi; done;
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Merge BAM files
 module load SAMTools/0.1.19
 while read work_dir; do
   echo $work_dir
-  cd $work_dir/digi_tophat_output
+  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
   samples=()
   while read sample; do samples+=($sample/accepted_hits.bam); done < sample_list.txt
   len=${#samples[@]}
@@ -164,24 +191,24 @@ done < $horse_trans/working_list_NoPBMCs.txt
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 while read work_dir; do
   echo $work_dir
-  cd $work_dir/digi_tophat_output
-  sample=$work_dir/digi_tophat_output/merged.bam
+  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+  sample=$work_dir/digi.k${kmer}.C${cutoff}_tophat_output/merged.bam
   label=$(basename $work_dir)
-  bash ${script_path}/run_cufflinks2.sh "$sample" "$refGTF_file" "$label" "$script_path/cufflinks2.sh";
+  bash ${script_path}/run_cufflinks_wRef_single.sh "$sample" "$refGTF_file" "$label" "$script_path/cufflinks2.sh";
 done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
-while read work_dir; do if [ -d $work_dir/digi_tophat_output ]; then
+while read work_dir; do if [ -d $work_dir/digi.k${kmer}.C${cutoff}_tophat_output ]; then
   echo $work_dir
-  cd $work_dir/digi_tophat_output
-  sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
+  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+  sample_list=$work_dir/digi.k${kmer}.C${cutoff}_tophat_output/failedSamples.txt           ## define the path of empty file
   bash $script_path/check_cufflinks2.sh "$sample_list"
   x=$(cat $sample_list | wc -l)
   if [ $x -ne 0 ]; then
     echo "Failed Cufflinks jobs in: "$work_dir
     sample=$(cat $sample_list)
     label=$(basename $work_dir)
-    bash ${script_path}/run_cufflinks2.sh "$sample" "$refGTF_file" "$label" "$script_path/cufflinks2.sh";
+    bash ${script_path}/run_cufflinks_wRef_single.sh "$sample" "$refGTF_file" "$label" "$script_path/cufflinks2.sh";
 fi; fi; done < $horse_trans/working_list_NoPBMCs.txt
 ##################
 # For every target tissue, diginorm the lab-spefific BAMs $tissue_merge/digimerge/TISSUE.NAME/withORwithoutRefGuidence.gtf
@@ -207,7 +234,7 @@ done < $horse_trans/multi_lib_tissues.txt
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $prepData/digi_merged_assemblies.txt
 while read work_dir; do
-  dir=$work_dir/digi_tophat_output
+  dir=$work_dir/digi.k${kmer}.C${cutoff}_tophat_output
   if [ -d $dir ]; then
     echo ${dir#$prepData/} >> $prepData/digi_merged_assemblies.txt;
 fi; done < $horse_trans/working_list_NoPBMCs.txt
@@ -265,15 +292,15 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 #while read work_dir; do
 #  echo $work_dir
-#  cd $work_dir/digi_tophat_output
-#  sample_list=$work_dir/digi_tophat_output/sample_list.txt
+#  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+#  sample_list=$work_dir/digi.k${kmer}.C${cutoff}_tophat_output/sample_list.txt
 #  bash ${script_path}/run_cufflinks.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks2.sh";
 #done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
 #while read work_dir; do
-#  cd $work_dir/digi_tophat_output
-#  sample_list=$work_dir/digi_tophat_output/failedSamples.txt           ## define the path of empty file
+#  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
+#  sample_list=$work_dir/digi.k${kmer}.C${cutoff}_tophat_output/failedSamples.txt           ## define the path of empty file
 #  bash $script_path/check_cufflinks.sh "$sample_list"
 #  x=$(cat $sample_list | wc -l)
 #  if [ $x -ne 0 ]; then
@@ -286,7 +313,7 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #cufflinks_utlization=$prepData/digi_cufflinks_utlization.txt
 #> $cufflinks_utlization
 #while read work_dir; do
-#  cd $work_dir/digi_tophat_output
+#  cd $work_dir/digi.k${kmer}.C${cutoff}_tophat_output
 #  echo $(pwd) >> $cufflinks_utlization
 #  for dir in tophat_*; do
 #    f=$dir/cufflinks.e*
