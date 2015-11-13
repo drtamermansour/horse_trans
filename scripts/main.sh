@@ -504,8 +504,14 @@ while read work_dir; do
   #bash ${script_path}/run_cufflinks_wRef.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
   bash ${script_path}/run_cufflinks_noRef.sh "$sample_list" "$script_path/cufflinks_noRef_mask.sh";
 done < $horse_trans/working_list_Cerebellum.txt    #working_list_NoPBMCs.txt
-
-
+## relocate the cufflinks analysis results
+while read work_dir; do
+  while read sample_dir;do if [ -d $sample_dir ];then
+    echo $sample_dir
+    target_dir=$work_dir/tophat_output/$(basename $sample_dir)
+    cp $sample_dir/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $target_dir/.
+  fi; done < $work_dir/tophat_output/digi_tophat_output/sample_list.txt
+done < $horse_trans/working_list_Cerebellum.txt    #working_list_NoPBMCs.txt
 
 ############
 ## Assess computational utilization of cufflinks
@@ -572,10 +578,12 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/${cufflinks_run}_assemblies.txt
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
-mkdir -p all_tissues
-cuffmerge_output=$"all_tissues"/$cufflinks_run/$cuffmerge_run
-#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
+#isoformfrac=0.05    ## value 1-0.05 & default= 0.05
 isoformfrac=0.2    ## value 1-0.05 & default= 0.05
+dist_dir="all_tissues_isoformfrac$isoformfrac"
+mkdir -p $dist_dir
+cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
+#bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
 bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
 ###################
 ## create list of assemblies from each library
@@ -606,7 +614,7 @@ while read assembly; do
     echo $prepData/$assembly >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt;
 fi; done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
 
-while read assembly; do
+while read assembly; do if [ -d $tissue_Cuffmerge/$assembly ];then
   echo $assembly
   cd $tissue_Cuffmerge/$assembly
   targetAss=$"merged.gtf"

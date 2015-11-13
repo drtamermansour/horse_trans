@@ -99,28 +99,28 @@ longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/nonGuide
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-priority 8
+priority 6
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
-track all_tissues
-bigDataUrl BigBed/all_tissues_nonGuided_Cufflinks_nonGuided_Cuffmerge.miss1.isoform0.2.BigBed
-shortLabel all_tissues
-longLabel all_tissues/nonGuided_Cufflinks/nonGuided_Cuffmerge.miss1.isoform0.2
+track all_tissues_isoformfrac0.05
+bigDataUrl BigBed/all_tissues_isoformfrac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel all_tissues_isoformfrac0.05
+longLabel all_tissues_isoformfrac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 9
-html all_tissues_nonGuided_Cufflinks_nonGuided_Cuffmerge.miss1.isoform0.2
+html all_tissues_isoformfrac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
-track all_tissues
-bigDataUrl BigBed/all_tissues_nonGuided_Cufflinks_nonGuided_Cuffmerge.miss2.isoform0.05.BigBed
-shortLabel all_tissues
-longLabel all_tissues/nonGuided_Cufflinks/nonGuided_Cuffmerge.miss2.isoform0.05
+track all_tissues_isoformfrac0.2
+bigDataUrl BigBed/all_tissues_isoformfrac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel all_tissues_isoformfrac0.2
+longLabel all_tissues_isoformfrac0.2/nonGuided_Cufflinks/nonGuided_Cuffmerge
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 10
-html all_tissues_nonGuided_Cufflinks_nonGuided_Cuffmerge.miss2.isoform0.05
+html all_tissues_isoformfrac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
 track digiMulti.k20.C10
 bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks.BigBed
