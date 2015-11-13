@@ -99,7 +99,7 @@ longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/nonGuide
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-priority 6
+priority 8
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
 track all_tissues_isoformfrac0.05
