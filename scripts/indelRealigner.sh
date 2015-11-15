@@ -12,7 +12,7 @@ java -Xmx78g -jar $GATK/GenomeAnalysisTK.jar \
 -T IndelRealigner \
 -R $gatk_ref \
 -I $sample \
--targetIntervals gatk.intervals \
+-targetIntervals $intervals \
 -nWayOut '.realigned.bam' \
 -known $indels \
 -model USE_SW \

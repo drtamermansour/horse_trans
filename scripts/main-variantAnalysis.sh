@@ -61,74 +61,41 @@ done < $horse_trans/working_list_Cerebellum.txt
 #### This step used to be very important when the the variant callers were position-based (such as UnifiedGenotyper) but now that we have assembly-based variant callers (such as HaplotypeCaller) it is less important. We still perform indel realignment because we think it may improve the accuracy of the base recalibration model in the next step, but this step may be made obsolete in the near future.
 
 ## RealignerTargetCreator
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.bam"
-  bash ${script_path}/run_RealignerTargetCreator.sh "$knownIndels" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/realignerTargetCreator.sh";
-done < $horse_trans/working_list_Retina.txt
-
+#while read work_dir; do
+#  echo $work_dir
+#  cd $work_dir/tophat_output
+#  sample_list=$work_dir/tophat_output/sample_list.txt
+#  target_bam=$"split.bam"
+#  bash ${script_path}/run_RealignerTargetCreator.sh "$knownIndels" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/realignerTargetCreator.sh";
+#done < $horse_trans/working_list_Retina.txt
 
 ## indelRealigner
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.bam"
-  bash ${script_path}/run_indelRealigner.sh "$knownIndels" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/indelRealigner.sh";
-done < $horse_trans/working_list_Retina.txt
-
-##########################
-#### Base Recalibration
-#### We do recommend running base recalibration (BQSR). Even though the effect is also marginal when applied to good quality data, it can absolutely save your butt in cases where the qualities have systematic error modes.
-
-
-## baseRecalibrator- 1st round
-## it might be better to pass all the library samples into one recalibaryion job
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.realigned.bam"
-  bash ${script_path}/run_baseRecalibrator.sh "$knownSNPs" "$knownIndels" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_1st.sh";
-done < $horse_trans/working_list_Retina.txt
-
-## baseRecalibrator- 2nd round
-## it might be better to pass all the library samples into one recalibaryion job
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.realigned.bam"
-  bash ${script_path}/run_baseRecalibrator.sh "$knownSNPs" "$knownIndels" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_2nd.sh";
-done < $horse_trans/working_list_Retina.txt
-
-
-## Generate before/after plots
-
-## Apply the recalibration to your sequence data
-
-
+#while read work_dir; do
+#  echo $work_dir
+#  cd $work_dir/tophat_output
+#  sample_list=$work_dir/tophat_output/sample_list.txt
+#  target_bam=$"split.bam"
+#  bash ${script_path}/run_indelRealigner.sh "$knownIndels" "gatk.intervals" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/indelRealigner.sh";
+#done < $horse_trans/working_list_Retina.txt
 ##########################
 ## Variant calling per sample
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.bam"
-  bash ${script_path}/run_haplotypeCaller.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller.sh";
-done < $horse_trans/working_list_Retina.txt
+#while read work_dir; do
+#  echo $work_dir
+#  cd $work_dir/tophat_output
+#  sample_list=$work_dir/tophat_output/sample_list.txt
+#  target_bam=$"split.bam"
+#  bash ${script_path}/run_haplotypeCaller.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller.sh";
+#done < $horse_trans/working_list_Retina.txt
 
 ##########################
 ## Variant calling per library
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.bam"
-  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh";
-done < $horse_trans/working_list_Retina.txt
+#while read work_dir; do
+#  echo $work_dir
+#  cd $work_dir/tophat_output
+#  sample_list=$work_dir/tophat_output/sample_list.txt
+#  target_bam=$"split.bam"
+#  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh";
+#done < $horse_trans/working_list_Retina.txt
 
 ##########################
 ## combined Variant calling
@@ -149,6 +116,10 @@ grep -v "PASS" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_
 
 grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_indels.vcf
 grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)>1 || length($5)>1' >> HC_output_ploidy1_haplo1_PASS_indels.vcf
+grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_snps.vcf
+grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)==1 && length($5)==1' >> HC_output_ploidy1_haplo1_PASS_snps.vcf
+
+
 ##########################
 ## explore the frequency of the ALT alleles
 cd $horse_trans/Var_merge
@@ -166,6 +137,76 @@ grep "^#" HC_output_ploidy1_haplo1_PASS_indels.vcf > HC_output_ploidy1_haplo1_PA
 grep -v "^#" HC_output_ploidy1_haplo1_PASS_indels.vcf | awk -F '[\t=;]' '$11 >= 0.9'  >> HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf
 
 grep -v "^#" HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf | wc -l  ##4725
+
+## isolate common SNPs (AF >= 0.9)
+grep "^#" HC_output_ploidy1_haplo1_PASS_snps.vcf > HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf
+grep -v "^#" HC_output_ploidy1_haplo1_PASS_snps.vcf | awk -F '[\t=;]' '$11 >= 0.9'  >> HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf
+
+grep -v "^#" HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf | wc -l  ##4725
+
+##########################
+## RealignerTargetCreator
+cd $horse_trans/Var_merge
+bash ${script_path}/run_RealignerTargetCreator_forKnowns.sh "HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf" "$gatk_ref" "$script_path/realignerTargetCreator_forKnowns.sh";
+
+## indelRealigner
+indels=$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf
+intervals=$horse_trans/Var_merge/gatk.intervals
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  target_bam=$"split.bam"
+  bash ${script_path}/run_indelRealigner.sh "$indels" "$intervals" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/indelRealigner_forKnowns.sh";
+done < $horse_trans/working_list_NoPBMCs.txt
+
+# Check for successful BAM indexing
+## To be added
+## for f in $prepData/*/*/tophat_output/tophat_*/indelRealigner.e*; do grep "Total runtime" $f | wc -l; done
+
+##########################
+#### Base Recalibration
+#### We do recommend running base recalibration (BQSR). Even though the effect is also marginal when applied to good quality data, it can absolutely save your butt in cases where the qualities have systematic error modes.
+
+## create list of known variants
+known_var=$horse_trans/Var_merge/known_var.txt
+> $known_var
+echo "$knownSNPs" >> $known_var
+echo "$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf" >> $known_var
+echo "$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf" >> $known_var
+
+## baseRecalibrator- 1st round
+## it might be better to pass all the library samples into one recalibaryion job
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  target_bam=$"split.realigned.bam"
+  bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_1st.sh"
+done < $horse_trans/working_list_SpinalCord.txt
+
+# Check for successful BAM indexing
+## To be added
+## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "Total runtime" $f | wc -l; done
+## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "reads were filtered out during the traversal" $f; done
+
+## baseRecalibrator- 2nd round
+## it might be better to pass all the library samples into one recalibaryion job
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  target_bam=$"split.realigned.bam"
+  bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_2nd.sh";
+done < $horse_trans/working_list_Muscle.txt
+
+
+## Generate before/after plots
+
+## Apply the recalibration to your sequence data
+
+
+
 ###########################
 #### liftover the genome variance file to the transcriptome
 assembly="$tissue_Cuffmerge/all_tissues/nonGuided_Cufflinks/nonGuided_Cuffmerge"
