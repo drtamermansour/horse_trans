@@ -198,7 +198,7 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/sample_list.txt
   target_bam=$"split.realigned.bam"
   bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_2nd.sh";
-done < $horse_trans/working_list_Muscle.txt
+done < $horse_trans/working_list_SpinalCord.txt
 
 
 ## Generate before/after plots

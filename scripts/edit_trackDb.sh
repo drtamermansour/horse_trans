@@ -5,8 +5,8 @@ lib_assemblies="$4"
 tiss_assemblies="$5"
 
 
-libs_root=$(dirname $lib_assemblies)
-tiss_root=$(dirname $tiss_assemblies)
+#libs_root=$(dirname $lib_assemblies)
+#tiss_root=$(dirname $tiss_assemblies)
 
 ## load the current track data
 lib_assembly_array=()
@@ -28,7 +28,7 @@ if [ -f $current_tissues ]; then
 fi
 
 ## add the new data
-while read assembly; do
+while read ass_path assembly; do
   echo $assembly
   ## ensure the assembly was not loaded before
   if [ $(echo ${lib_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
@@ -37,7 +37,7 @@ while read assembly; do
     tissue_array+=($tissue)
 fi; done < $lib_assemblies
 
-while read assembly; do
+while read ass_path assembly; do
   echo $assembly
   ## ensure the assembly was not loaded before
   if [ $(echo ${tiss_assembly_array[@]} | grep -o $assembly | wc -l) -eq 0 ]; then
@@ -56,7 +56,9 @@ index=0
 priority=1
 composite_array=()
 for t in ${tissue_array[@]}; do
-  if [ $(echo ${tissue_array[@]} | grep -o $t | wc -l) -gt 1 ]; then
+  n1=$(echo ${tissue_array[@]} | grep -o $t | wc -l)
+  n2=$(echo ${multi_tissue_array[@]} | grep -o $t | wc -l)
+  if [[ "$n1" -gt 1 || "$n2" -eq 1 ]]; then
     echo "$t has many libraries"
     if [ $(echo ${composite_array[@]} | grep -o $t | wc -l) -eq 0 ]; then
       echo "This is the first $t library"

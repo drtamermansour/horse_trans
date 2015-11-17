@@ -579,13 +579,29 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/${cufflinks_run}_assemblies.txt
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
-#isoformfrac=0.05    ## value 1-0.05 & default= 0.05
-isoformfrac=0.2    ## value 1-0.05 & default= 0.05
-dist_dir="all_tissues_isoformfrac$isoformfrac"
+isoformfrac=0.05    ## value 1-0.05 & default= 0.05
+#isoformfrac=0.2    ## value 1-0.05 & default= 0.05
+dist_dir="all_tissues_frac$isoformfrac"
 mkdir -p $dist_dir
 cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
 #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
 bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
+
+## filtering of single exon transfrag completely present within introns of other multiexon transcripts (class code i,e,o)
+cd $tissue_Cuffmerge/$cuffmerge_output
+bash $script_path/gtfToBed.sh "merged.gtf" "$script_path"
+cat merged.bed | awk '{if($10>1) print $4}' > multiExon_id
+mkdir -p filtered/NoIntronicFrag/prep
+grep -F -w -f multiExon_id merged.gtf > filtered/NoIntronicFrag/prep/multiExon.gtf
+cd filtered/NoIntronicFrag/prep
+assembly="$tissue_Cuffmerge/$cuffmerge_output/merged.gtf"
+identifier="nonGuided_Cufflinks_multiExon"
+bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "multiExon.gtf" "$script_path/cuffcompare.sh"
+mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+tail -n+2 nonGuided_Cufflinks_multiExon.merged.gtf.tmap | awk '{if($3!="e" && $3!="i" && $3!="o") print $5}' > keepit.id
+grep -F -w -f keepit.id $assembly > ../merged.gtf
+
+
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
@@ -593,38 +609,43 @@ rm -f $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
 while read work_dir; do
   dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run
   if [ -d $dir ]; then
-    echo ${dir#$prepData/} >> $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt;
+    echo "$prepData" "${dir#$prepData/}" >> $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt;
 fi; done < $horse_trans/working_list_NoPBMCs.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
 for tissue in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run; do if [ -d $tissue ]; then
-  echo ${tissue#$tissue_Cuffmerge/} >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt;
+  echo "$tissue_Cuffmerge" "${tissue#$tissue_Cuffmerge/}" >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt;
+fi; done
+
+## create list of assemblies for tissues of multiple libraries
+rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt
+for tissue in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run/filtered/*; do if [ -d $tissue ]; then
+  echo "$tissue_Cuffmerge" "${tissue#$tissue_Cuffmerge/}" >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt;
 fi; done
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=0    ## 0 means do not update Bigbed files & 1 means update
 rm -f $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt
-while read assembly; do
+while read ass_path assembly; do
   echo $assembly
-  cd $prepData/$assembly
-  targetAss=$"merged.gtf"
-  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-  if [ -f $"merged.BigBed" ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $prepData/$assembly >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt;
-fi; done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-
-while read assembly; do if [ -d $tissue_Cuffmerge/$assembly ];then
-  echo $assembly
-  cd $tissue_Cuffmerge/$assembly
-  targetAss=$"merged.gtf"
-  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-  if [ -f $"merged.BigBed" ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $tissue_Cuffmerge/$assembly >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt;
-fi; done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
+  if [ -d "$ass_path/$assembly" ];then
+    cd $ass_path/$assembly
+  else echo "can not find $ass_path/$assembly"; break;fi
+  if [[ ! -f "merged.BigBed" || "$update" -eq 1 ]];then
+    targetAss=$"merged.gtf"
+    if [ -f "$targetAss" ];then
+      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+    else echo "can not find merged.gtf"; break;fi
+    if [ -f $"merged.BigBed" ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make merged.BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt;
+done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt)
 
 ## run icommand to push the file to iplant
 ## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
@@ -636,21 +657,9 @@ fi; done < $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies
 #done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
 
 ## initiate a given track hub for cufflinks_run="refGeneGuided_Cufflinks"
-hub_name=$"HorseTrans_TopGuidedCuff"
-shortlabel=$"TopGuidedCuff"
-longlabel=$"Single samlpe refGuided Tophat/Cufflinks - Guided Cuffmerge"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-## edit the trackDb
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-tiss_assemblies=$tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-##########################
+#hub_name=$"HorseTrans_TopGuidedCuff"
+#shortlabel=$"TopGuidedCuff"
+#longlabel=$"Single samlpe refGuided Tophat/Cufflinks - Guided Cuffmerge"
 ## initiate a given track hub for cufflinks_run="nonGuided_Cufflinks"
 hub_name=$"HorseTrans_TopNonGuidCuff"
 shortlabel=$"TopNonGuidCuff"
@@ -663,9 +672,11 @@ bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$l
 current_libs=$track_hub/current_libs_$shortlabel
 current_tissues=$track_hub/current_tiss_$shortlabel
 trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
+#lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
 tiss_assemblies=$tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
+        <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
+            $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt) $tiss_assemblies
 ###########################################################################################
 ## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
 bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
@@ -713,28 +724,35 @@ done
 ## Add to the list of assemblies for tissues of multiple libraries
 > $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
 for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run; do if [ -d $tissue ]; then
-  echo ${tissue#$tissue_Digimerge/} >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
+  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}" >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
 fi; done
 
 > $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
 for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run/filtered/*; do if [ -d $tissue ]; then
-  echo ${tissue#$tissue_Digimerge/} >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
+  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}"  >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
 fi; done
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=0    ## 0 means do not update Bigbed files & 1 means update
 rm -f $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt
-while read assembly; do
+while read ass_path assembly; do
   echo $assembly
-  cd $tissue_Digimerge/$assembly
-  targetAss=$(ls *transcripts.gtf)
-  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-  if [ -f $(ls *transcripts.BigBed) ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp *transcripts.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $tissue_Digimerge/$assembly >> $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt;
-fi; done < <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt)
-
-#cat $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt
+  if [ -d "$ass_path/$assembly" ];then
+    cd $ass_path/$assembly
+  else echo "can not find $ass_path/$assembly"; break;fi
+  if [[ ! -f $(ls *transcripts.BigBed) || "$update" -eq 1 ]];then
+    targetAss=$(ls *transcripts.gtf)
+    if [ -f "$targetAss" ];then
+      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+    else echo "can not find merged.gtf"; break;fi
+    if [ -f $(ls *transcripts.BigBed) ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp *transcripts.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make merged.BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt;
+done < <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt \
+             $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt)
 
 ## Add to the HorseTrans_TopNonGuidCuff track hub
 shortlabel=$"TopNonGuidCuff"

@@ -15,7 +15,7 @@ cd $PBS_O_WORKDIR
 #$(echo $variants) \
 #-o recal_data.table
 
-java -Xmx42g -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx20g -jar $GATK/GenomeAnalysisTK.jar \
 -T BaseRecalibrator \
 -R $gatk_ref \
 $(echo $samples) \

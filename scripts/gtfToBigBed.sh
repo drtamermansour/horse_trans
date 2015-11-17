@@ -2,7 +2,7 @@
 
 if [ $# -lt 3 ]
 then
-printf "\nUsage gtfToBigBed.sh [BED file] [genome chrom sizes] [script path]\n"
+printf "\nUsage gtfToBigBed.sh [GTF file] [genome chrom sizes] [script path]\n"
 exit 0
 fi
 

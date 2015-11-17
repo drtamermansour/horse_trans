@@ -102,13 +102,45 @@ visibility dense
 priority 8
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
+track all_tissues_frac0.05
+compositeTrack on
+shortLabel all_tissues_frac0.05
+longLabel composite track for all_tissues_frac0.05 libraries
+type bigBed 12
+visibility dense
+priority 9
+allButtonPair on
+html all_tissues_frac0.05
+ 
+     track all_tissues_frac0.05.merge
+     parent all_tissues_frac0.05 on
+     bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel all_tissues_frac0.05.merge
+     longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 9
+     html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track all_tissues_frac0.05.1
+     parent all_tissues_frac0.05 off
+     bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag.BigBed
+     shortLabel all_tissues_frac0.05
+     longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/NoIntronicFrag
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 9
+     html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag
+ 
 track digiMulti.k20.C10
 compositeTrack on
 shortLabel digiMulti.k20.C10
 longLabel composite track for digiMulti.k20.C10 libraries
 type bigBed 12
 visibility dense
-priority 9
+priority 10
 allButtonPair on
 html digiMulti.k20.C10
  
@@ -120,7 +152,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks
  
      track digiMulti.k20.C10.1
@@ -131,7 +163,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_contained
  
      track digiMulti.k20.C10.2
@@ -142,7 +174,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intergenic
  
      track digiMulti.k20.C10.3
@@ -153,7 +185,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intron
  
      track digiMulti.k20.C10.4
@@ -164,7 +196,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_matching
  
      track digiMulti.k20.C10.5
@@ -175,7 +207,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_novelIsoform
  
      track digiMulti.k20.C10.6
@@ -186,7 +218,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExon
  
      track digiMulti.k20.C10.7
@@ -197,7 +229,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExonOppSt
  
      track digiMulti.k20.C10.8
@@ -208,7 +240,7 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_polymeraseRunOn
  
      track digiMulti.k20.C10.9
@@ -219,26 +251,16 @@ html digiMulti.k20.C10
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 9
+     priority 10
      html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_premRNA
  
-track all_tissues_isoformfrac0.05
-bigDataUrl BigBed/all_tissues_isoformfrac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
-shortLabel all_tissues_isoformfrac0.05
-longLabel all_tissues_isoformfrac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 18
-html all_tissues_isoformfrac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
- 
-track all_tissues_isoformfrac0.2
-bigDataUrl BigBed/all_tissues_isoformfrac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
-shortLabel all_tissues_isoformfrac0.2
-longLabel all_tissues_isoformfrac0.2/nonGuided_Cufflinks/nonGuided_Cuffmerge
+track all_tissues_frac0.2
+bigDataUrl BigBed/all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel all_tissues_frac0.2
+longLabel all_tissues_frac0.2/nonGuided_Cufflinks/nonGuided_Cuffmerge
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 19
-html all_tissues_isoformfrac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge
+html all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
