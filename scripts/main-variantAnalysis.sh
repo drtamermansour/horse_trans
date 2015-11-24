@@ -1,6 +1,11 @@
 #!/bin/sh
-myRoot=$"/mnt/ls12/Tamer"
+myRoot=$"/mnt/ls15/scratch/users/mansourt/Tamer"
 source $myRoot/config.txt
+
+## http://gatkforums.broadinstitute.org/discussion/3891/calling-variants-in-rnaseq
+## https://www.broadinstitute.org/gatk/guide/article?id=3893
+## What is a VCF and how should I interpret it?
+## http://gatkforums.broadinstitute.org/discussion/1268/what-is-a-vcf-and-how-should-i-interpret-it
 ###########################################################################################
 ## Both Tophat and MergeSamFiles from picard tools sort the output BAM file by coordinates by default
 ## to double check you can run this samttol command for the target BAM file
@@ -102,7 +107,7 @@ done < $horse_trans/working_list_Cerebellum.txt
 > $horse_trans/all_samples.txt
 while read work_dir; do
   echo $work_dir
-  cat $work_dir/tophat_output/sample_list.txt >> $horse_trans/all_samples.txt
+  cat $work_dir/tophat_output/sample_list.txt >> $horse_trans/all_samples.txt ## for the 1st run, I used only 49 samples (6 cerebellum samples were not included). This list of samples are saved as $horse_trans/all_samples_temp.txt
 done < $horse_trans/working_list_NoPBMCs.txt
 mkdir $horse_trans/Var_merge
 cd $horse_trans/Var_merge
@@ -183,9 +188,9 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/sample_list.txt
   target_bam=$"split.realigned.bam"
   bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_1st.sh"
-done < $horse_trans/working_list_SpinalCord.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 
-# Check for successful BAM indexing
+# Check for successful baseRecalibrator
 ## To be added
 ## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "Total runtime" $f | wc -l; done
 ## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "reads were filtered out during the traversal" $f; done
@@ -198,13 +203,70 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/sample_list.txt
   target_bam=$"split.realigned.bam"
   bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_2nd.sh";
-done < $horse_trans/working_list_SpinalCord.txt
-
+done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Generate before/after plots
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  bash ${script_path}/run_createRecalPlots.sh "$gatk_ref" "$script_path/createRecalPlots.sh";
+done < $horse_trans/working_list_NoPBMCs.txt
 
 ## Apply the recalibration to your sequence data
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  target_bam=$"split.realigned.bam"
+  bash ${script_path}/run_applyRecalib.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/applyRecalib.sh"
+done < $horse_trans/working_list_NoPBMCs.txt
+###########################
+## variant calling by library
+while read work_dir; do
+  echo $work_dir
+  cd $work_dir/tophat_output
+  sample_list=$work_dir/tophat_output/sample_list.txt
+  target_bam=$"recal_reads.bam"
+  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
+done < $horse_trans/working_list_NoPBMCs.txt
 
+# Check for successful baseRecalibrator
+## To be added
+## for f in $prepData/*/*/tophat_output/haplotypeCaller_multi.e*; do echo $f; grep "Total runtime" $f | wc -l; done
+## for f in $prepData/*/*/tophat_output/haplotypeCaller_multi.e*; do echo $f; grep "reads were filtered out during the traversal" $f; done
+
+## Combine Variants
+> $horse_trans/all_variants.txt
+while read work_dir; do
+  echo $work_dir/tophat_output/HC_output_ploidy1_haplo1.vcf >> $horse_trans/all_variants.txt
+done < $horse_trans/working_list_NoPBMCs.txt
+mkdir -p $horse_trans/Var_merge2
+cd $horse_trans/Var_merge2
+sample_list=$horse_trans/all_variants.txt
+bash ${script_path}/run_combineVariants.sh "$gatk_ref" "$sample_list" "$script_path/combineVariants.sh"   ## output is merge_HC_output_ploidy1_haplo1.vcf
+
+## fix annoatation
+target_bam="recal_reads.bam"
+sample_list="$horse_trans/all_samples.txt"
+bash ${script_path}/run_variantAnnotator.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/variantAnnotator.sh"   ## output is HC_output_ploidy1_haplo1_Ann.vcf
+###########################
+## combined Variant calling
+#mkdir $horse_trans/Var_merge3
+#cd $horse_trans/Var_merge3
+#sample_list=$horse_trans/all_samples.txt
+#target_bam=$"recal_reads.bam"
+#bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
+###########################
+
+bash $script_path/variantFiltration.sh "$gatk_ref" "HC_output_ploidy1_haplo1.vcf"
+grep "^#" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_PASS.vcf
+grep "PASS" HC_output_ploidy1_haplo1_filtered.vcf >> HC_output_ploidy1_haplo1_PASS.vcf
+grep -v "PASS" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_FAILED.vcf
+
+grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_indels.vcf
+grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)>1 || length($5)>1' >> HC_output_ploidy1_haplo1_PASS_indels.vcf
+grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_snps.vcf
+grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)==1 && length($5)==1' >> HC_output_ploidy1_haplo1_PASS_snps.vcf
 
 
 ###########################

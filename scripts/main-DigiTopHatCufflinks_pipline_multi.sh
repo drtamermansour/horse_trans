@@ -1,5 +1,5 @@
 #!/bin/sh
-myRoot=$"/mnt/ls12/Tamer"
+myRoot=$"/mnt/ls15/scratch/users/mansourt/Tamer"
 source $myRoot/config.txt
 ###########################################################################################
 ## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks

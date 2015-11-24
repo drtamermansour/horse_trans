@@ -124,7 +124,7 @@ html all_tissues_frac0.05
      html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
      track all_tissues_frac0.05.1
-     parent all_tissues_frac0.05 off
+     parent all_tissues_frac0.05 on
      bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag.BigBed
      shortLabel all_tissues_frac0.05
      longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/NoIntronicFrag
@@ -134,133 +134,14 @@ html all_tissues_frac0.05
      priority 9
      html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag
  
-track digiMulti.k20.C10
-compositeTrack on
-shortLabel digiMulti.k20.C10
-longLabel composite track for digiMulti.k20.C10 libraries
-type bigBed 12
-visibility dense
-priority 10
-allButtonPair on
-html digiMulti.k20.C10
- 
-     track digiMulti.k20.C10.merge
-     parent digiMulti.k20.C10 on
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks.BigBed
-     shortLabel digiMulti.k20.C10.merge
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks
+     track all_tissues_frac0.05.2
+     parent all_tissues_frac0.05 on
+     bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_highExp.BigBed
+     shortLabel all_tissues_frac0.05
+     longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/highExp
      type bigBed 12
      colorByStrand 255,0,0 0,0,255
      visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks
- 
-     track digiMulti.k20.C10.1
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_contained.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/contained
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_contained
- 
-     track digiMulti.k20.C10.2
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intergenic.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/intergenic
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intergenic
- 
-     track digiMulti.k20.C10.3
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intron.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/intron
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_intron
- 
-     track digiMulti.k20.C10.4
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_matching.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/matching
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_matching
- 
-     track digiMulti.k20.C10.5
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_novelIsoform.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/novelIsoform
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_novelIsoform
- 
-     track digiMulti.k20.C10.6
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExon.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/overlappingExon
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExon
- 
-     track digiMulti.k20.C10.7
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExonOppSt.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/overlappingExonOppSt
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_overlappingExonOppSt
- 
-     track digiMulti.k20.C10.8
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_polymeraseRunOn.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/polymeraseRunOn
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_polymeraseRunOn
- 
-     track digiMulti.k20.C10.9
-     parent digiMulti.k20.C10 off
-     bigDataUrl BigBed/digiMulti.k20.C10_nonGuided_Cufflinks_filtered_premRNA.BigBed
-     shortLabel digiMulti.k20.C10
-     longLabel digiMulti.k20.C10/nonGuided_Cufflinks/filtered/premRNA
-     type bigBed 12
-     colorByStrand 255,0,0 0,0,255
-     visibility dense
-     priority 10
-     html digiMulti.k20.C10_nonGuided_Cufflinks_filtered_premRNA
- 
-track all_tissues_frac0.2
-bigDataUrl BigBed/all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
-shortLabel all_tissues_frac0.2
-longLabel all_tissues_frac0.2/nonGuided_Cufflinks/nonGuided_Cuffmerge
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 19
-html all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge
+     priority 9
+     html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_highExp
  

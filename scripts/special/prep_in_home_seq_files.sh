@@ -168,6 +168,14 @@ for f in *.fastq; do gzip $f; done
 bash ${script_path}/run_fastqc.sh "$rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/temp3"
 mkdir -p $prepData/Skin/SE_95_fr.unstranded_Bellone_01012015/fastq_data
 mv $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/temp3/* $prepData/Skin/SE_95_fr.unstranded_Bellone_01012015/fastq_data/.
+###############################################################################################
+mkdir -p $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/rawdata
+cd $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/rawdata
+rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/*" .
+
+
+
+
 
 
 

@@ -190,7 +190,7 @@ source $myRoot/config.txt
 ## create liftover files
 ## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
 
-# Download the genome files
+# Download the genome files (useless for the new implementation of mapGenome)
 mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
 wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
 gunzip eca_ref_EquCab2.0_*.fa.gz
@@ -286,6 +286,49 @@ chromSizes=$genome_dir/$UCSCgenome.chrom.sizes
 bash ${script_path}/calcChromSizes.sh $UCSCgenome $chromSizes
 ## Create the basic directory structure of the track hubs
 mkdir -p $track_hub/$UCSCgenome/BigBed
+###########################################################################################
+## Track for public assemblies
+mkdir -p $pubAssemblies/Hestand_2014 && cd $pubAssemblies/Hestand_2014
+wget http://server1.intrepidbio.com/FeatureBrowser/gtffilereader/record/-4027466309079733025/7666675698.gtf
+
+mkdir -p $pubAssemblies/NCBI && cd $pubAssemblies/NCBI
+cp $ncbiGTF_file ncbiAnn.gtf
+
+## create list of public assemblies
+rm -f $pubAssemblies/public_assemblies.txt
+for tissue in $pubAssemblies/*; do
+  echo ${tissue#$pubAssemblies/} >> $pubAssemblies/public_assemblies.txt;
+done
+
+####################
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+rm -f $horse_trans/public_assemblies.txt
+while read assembly; do
+  echo $assembly
+  cd $pubAssemblies/$assembly
+  targetAss=$(ls *.gtf)
+  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+  if [ -f *.BigBed ];then
+    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+    cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    echo $prepData/$assembly >> $horse_trans/public_assemblies.txt;
+fi; done < $pubAssemblies/public_assemblies.txt
+
+## initiate a given track hub
+hub_name=$"HorseTrans_public_assemblies"
+shortlabel=$"public_assemblies"
+longlabel=$"Publically available assemblies"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$pubAssemblies/public_assemblies.txt
+tiss_assemblies=$horse_trans/emptyTemp.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
 ###########################################################################################
 ### Install homology search databases
 ## download protein database such as Swissprot (fast) or Uniref90 (slow but more comprehensive)
@@ -587,7 +630,7 @@ cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
 #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
 bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
 
-## filtering of single exon transfrag completely present within introns of other multiexon transcripts (class code i,e,o)
+## filtering of single exon transfrag completely present within introns of other multiexon transcripts (class code i,e,o): 37464 transcripts
 cd $tissue_Cuffmerge/$cuffmerge_output
 bash $script_path/gtfToBed.sh "merged.gtf" "$script_path"
 cat merged.bed | awk '{if($10>1) print $4}' > multiExon_id
@@ -601,7 +644,60 @@ mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
 tail -n+2 nonGuided_Cufflinks_multiExon.merged.gtf.tmap | awk '{if($3!="e" && $3!="i" && $3!="o") print $5}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
 
+## filtering of short transfrag (less than 200bp): 598 transcript
+#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
+#$script_path/UCSC_kent_commands/gtfToGenePred merged.gtf merged.gpred
+#$script_path/UCSC_kent_commands/genePredToFakePsl -chromSize=$genome_dir/$UCSCgenome.chrom.sizes file merged.gpred merged.psl /dev/null
+#assemblyPsl="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.psl"
+#assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
+#mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
+#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
+#cat $assemblyPsl | awk '{if($11 >= 200)print $10}' > keepit.id
+#grep -F -w -f keepit.id $assembly > ../merged.gtf
 
+## Using Salmon to eliminate low-expressed transcripts
+## exclude isoforms with TPM less than 5% of the total TPM of each locus: 41543 transcript
+mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
+cd $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
+assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
+bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+bash ${script_path}/salmonIndex.sh "horse_index" "transcripts.fa"
+while read work_dir; do
+  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
+  strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
+  identifier=$(echo $work_dir | rev | cut -d"/" -f 1,2 | rev | sed 's/\//_/')
+  seq_dir=$work_dir/trimmed_RNA_reads
+  bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
+done < $horse_trans/working_list_NoPBMCs.txt
+find . -name \*.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+python $script_path/gather-counts.py -i "$(pwd)"
+echo "transcript"$'\t'"length" > transcripts.lengthes
+sf=$(find . -name \*.sf | head -n1)
+cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
+grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
+module load R/3.0.1
+Rscript ${script_path}/calcTPM.R "$(pwd)"
+cat dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > keepit.id
+grep -F -w -f keepit.id $assembly > ../merged.gtf
+
+## Using transrate/transfuse
+#mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/transrate/prep
+#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/transrate/prep
+#assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
+#bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "hiExpTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+#bash $script_path/run_genome_to_cdna_fasta.sh "$ncbiGTF_file" "$genome" "ncbiTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+#bash $script_path/run_genome_to_cdna_fasta.sh "$ensGTF_file" "$genome" "ensTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+#Hestand_2014GTF=$(ls $pubAssemblies/Hestand_2014/*.gtf)
+#bash $script_path/run_genome_to_cdna_fasta.sh "$Hestand_2014GTF" "$genome" "HesTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+#cat $prepData/*/*/trimmed_RNA_reads/*_R1_001.pe.fq $prepData/*/*/trimmed_RNA_reads/*_R_001.se.fq $prepData/*/*/trimmed_RNA_reads/*_SR_001.se.fq > left_single.fq
+#cat $prepData/*/*/trimmed_RNA_reads/*_R2_001.pe.fq > right.fq
+#module load transrate/1.0.1
+#transrate --assembly transcripts.fa,ncbiTranscripts.fa,ensTranscripts.fa,HesTranscripts.fa \
+#--left $prepData/*/*/trimmed_RNA_reads/*_R1_001.pe.fq \
+#--right $prepData/*/*/trimmed_RNA_reads/*_R2_001.pe.fq \
+#--threads 2
+
+## back mapping of specific tissue libraries to final transcriptome to develop the tissue specific assemblies
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
@@ -618,7 +714,7 @@ for tissue in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run; do if [ -d $tis
   echo "$tissue_Cuffmerge" "${tissue#$tissue_Cuffmerge/}" >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt;
 fi; done
 
-## create list of assemblies for tissues of multiple libraries
+## create list of filtered assemblies
 rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt
 for tissue in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run/filtered/*; do if [ -d $tissue ]; then
   echo "$tissue_Cuffmerge" "${tissue#$tissue_Cuffmerge/}" >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt;
@@ -764,50 +860,7 @@ trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
 bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
   <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt) \
   <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
-###########################################################################################
-## Other public assemblies
-mkdir -p $pubAssemblies/Hestand_2014 && cd $pubAssemblies/Hestand_2014
-wget http://server1.intrepidbio.com/FeatureBrowser/gtffilereader/record/-4027466309079733025/7666675698.gtf
-
-mkdir -p $pubAssemblies/NCBI && cd $pubAssemblies/NCBI
-cp $ncbiGTF_file ncbiAnn.gtf
-
-## create list of public assemblies
-rm -f $pubAssemblies/public_assemblies.txt
-for tissue in $pubAssemblies/*; do
-  echo ${tissue#$pubAssemblies/} >> $pubAssemblies/public_assemblies.txt;
-done
-
-####################
-## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-#rm -f $horse_trans/public_assemblies.txt
-while read assembly; do
-  echo $assembly
-  cd $pubAssemblies/$assembly
-  targetAss=$(ls *.gtf)
-  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-  if [ -f *.BigBed ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    #echo $prepData/$assembly >> $horse_trans/public_assemblies.txt;
-fi; done < $pubAssemblies/public_assemblies.txt
-
-## initiate a given track hub
-hub_name=$"HorseTrans_public_assemblies"
-shortlabel=$"public_assemblies"
-longlabel=$"Publically available assemblies"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-## edit the trackDb
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$pubAssemblies/public_assemblies.txt
-tiss_assemblies=$horse_trans/emptyTemp.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-###########################################################################################
+##########################################################################################
 ## Run Cuffcompare with public annotations
 for cufflinks_run in nonGuided_Cufflinks refGeneGuided_Cufflinks;do
   for reference in refGTF_file ncbiGTF_file ensGTF_file;do
@@ -959,8 +1012,11 @@ alltissueGFF_file=${filename}.gff
 
 module load BEDTools/2.24.0
 
+###########################################################################################
+## correct the assembled trascriptome to fix genome errors
+bash ${script_path}/main-variantAnalysis.sh
 
-#######################
+###########################################################################################
 ## run Transdecoder to predict UTRs with homology options
 sample_list="$horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt"
 bash $script_path/run_transdecoder.sh $sample_list $genome $refPtn $refPfam $script_path/transdecoder.sh
@@ -1029,11 +1085,6 @@ tiss_assemblies=$tissue_Cuffmerge/tissue_decoder_assemblies.txt
 bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
 
 ###########################################################################################
-## correct the assembled trascriptome to fix genome errors
-bash ${script_path}/main-variantAnalysis.sh
-
-
-###########################################################################################
 ###########################################################################################
 ###########################################################################################
 ###########################################################################################
@@ -1046,4 +1097,11 @@ bash ${script_path}/DigiTopHatCufflinks_pipline.sh
 ## pipeline_mapped_diginormAllsamples_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
 bash ${script_path}/MapDigiTopHatCufflinks_pipline.sh
 
+cufflinks_run="nonGuided_Cufflinks"
+cuffmerge_run="nonGuided_Cuffmerge"
+tissue_Cuffmerge=$tissue_merge/cuffmerge
+isoformfrac=0.05    ## value 1-0.05 & default= 0.05
+#isoformfrac=0.2    ## value 1-0.05 & default= 0.05
+dist_dir="all_tissues_frac$isoformfrac"
+cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
 
