@@ -26,11 +26,11 @@ Coding guidelines in this project
       - Then the date of sequencing as MMDDYYYY
    * The raw data files should be kept in a folder named fastq_data in the libarary folder
    * The raw data files should fullfill these criteria 
-      - The file names should fit the format *_R1_*.fastq.gz & *_R2_*.fastq.gz for PE reads or *_SR_*.fastq.gz for SE
+      - The file names should fit the format \*\_R1_\*.fastq.gz & \*\_R2_\*.fastq.gz for PE reads or \*\_SR_\*.fastq.gz for SE
       - All reads in every given file should belong to ONE sequencing lane.
       - All sample replicates from the same lane should be merged into one sample 
-      - If there are sample replicates from different lanes, you can add a text file called "replicates.txt". Each line in this file should have the names of one sample replicates with space separation. (only the *_R1_*.fastq.gz for PE reads or *_SR_*.fastq.gz for SE)
-      - The first syllbus (the part of the file name before _R1_ , _R2_ or _SR_) should be unique
+      - If there are sample replicates from different lanes, you can add a text file called "replicates.txt". Each line in this file should have the names of one sample replicates with space separation. (only the \*\_R1_\*.fastq.gz for PE reads or \*\_SR_\*.fastq.gz for SE)
+      - The first syllbus (the part of the file name before \_R1_ , \_R2_ or \_SR_) should be unique
       - All samples should be prepared so that they have enconding "Sanger / illumina 1.9"
    * prep_proj.sh script can autmatically convert an SRA reposatory into the appropriate format (the script assume no sample replicates)
 - All the analysis was done on the High performance computer of Michigan state university. The main script represents an abstarction adminstroter. It does not run any of programs but always initiate daughter scripts to do the job. This allows new forks or branches to provide different implementations of the daughter scripts to run the same pipeline with different versions or on different machines.
