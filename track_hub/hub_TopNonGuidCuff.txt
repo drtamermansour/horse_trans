@@ -13,3 +13,8 @@ shortLabel TopNonGuidCuff
 longLabel Single samlpe refGuided Tophat - nonGuided Cufflinks/Cuffmerge
 genomesFile genomes_TopNonGuidCuff.txt
 email drtamermansour@gmail.com
+hub HorseTrans_TopNonGuidCuff
+shortLabel TopNonGuidCuff
+longLabel Single samlpe refGuided Tophat - nonGuided Cufflinks/Cuffmerge
+genomesFile genomes_TopNonGuidCuff.txt
+email drtamermansour@gmail.com
