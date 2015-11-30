@@ -48,6 +48,17 @@ priority 5
 allButtonPair on
 html Skin
  
+     track Skin.merge
+     parent Skin on
+     bigDataUrl BigBed/Skin_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Skin.merge
+     longLabel Skin/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 5
+     html Skin_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
      track Skin.1
      parent Skin off
      bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
@@ -88,7 +99,7 @@ longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/nonGuide
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-priority 6
+priority 8
 html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
 track all_tissues_frac0.05
@@ -101,8 +112,19 @@ priority 9
 allButtonPair on
 html all_tissues_frac0.05
  
+     track all_tissues_frac0.05.merge
+     parent all_tissues_frac0.05 on
+     bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel all_tissues_frac0.05.merge
+     longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 9
+     html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
      track all_tissues_frac0.05.1
-     parent all_tissues_frac0.05 off
+     parent all_tissues_frac0.05 on
      bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_highExp.BigBed
      shortLabel all_tissues_frac0.05
      longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/highExp
@@ -113,7 +135,7 @@ html all_tissues_frac0.05
      html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_highExp
  
      track all_tissues_frac0.05.2
-     parent all_tissues_frac0.05 off
+     parent all_tissues_frac0.05 on
      bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag.BigBed
      shortLabel all_tissues_frac0.05
      longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/NoIntronicFrag
@@ -122,4 +144,14 @@ html all_tissues_frac0.05
      visibility dense
      priority 9
      html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_NoIntronicFrag
+ 
+track all_tissues_frac0.2
+bigDataUrl BigBed/all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel all_tissues_frac0.2
+longLabel all_tissues_frac0.2/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 11
+html all_tissues_frac0.2_nonGuided_Cufflinks_nonGuided_Cuffmerge
  
