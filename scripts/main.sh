@@ -72,7 +72,7 @@ while read work_dir; do
   tissue=$(dirname $work_dir | xargs basename)
   no=$(cat $sample_list | wc -l)
   echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/raw_statistics.txt
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list_Embryo.txt
 
 ###########################################################################################
 ## prepare sorted working list accoding to read length
@@ -91,7 +91,7 @@ while read work_dir; do
   lib=$(basename $work_dir | cut -d"_" -f 1)                   ## PE or SE
   sample_list=$work_dir/fastq_data/sample_list.txt
   bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
-done < $horse_trans/working_list.txt
+done < $horse_trans/working_list_Embryo.txt
 
 ## Check for successful trimming and trouble shooting the failed trimming jobs (requires T_Trim.e)
 while read work_dir; do
@@ -104,7 +104,7 @@ while read work_dir; do
     echo "Failed jobs in: "$work_dir
     bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
   fi
-done < $horse_trans/working_list.txt
+done < $horse_trans/working_list_Embryo.txt
 
 #### merge singletones
 while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
@@ -116,7 +116,7 @@ while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
   for f in $work_dir/trimmed_RNA_reads/*_R1_*.pe.fq; do if [ -f $f ]; then echo $f; fr=$(basename $f | sed 's/_R1_/_R_/'); fr2=$(echo $fr | sed 's/.pe.fq/.se.fq/'); newf=$(basename $f | sed 's/.pe.fq/.pe.se.fq/'); cat $f $fr2 > $newf; fi; done;
   #rm {*_R1_*.pe.fq,*.se.fq}   ## all what you need *_R1_*.pe.se.fq and *_R2_*.pe.fq
 fi
-done < $horse_trans/working_list.txt
+done < $horse_trans/working_list_Embryo.txt
 
 ## define the list samples for subsequent analysis
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
@@ -124,7 +124,7 @@ while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
   rm -f $work_dir/trimmed_RNA_reads/sample_list.txt
   for f in $work_dir/trimmed_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
     echo $f >> $work_dir/trimmed_RNA_reads/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 
 ###########################################################################################
 ## Assess read length statistics after trimming
@@ -157,7 +157,7 @@ while read work_dir; do
     cat sample_list.txt | xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed.readslength.txt
     stat=$(Rscript -e 'd<-scan("trimmed.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
     echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 ###########################################################################################
 ## get the referenece genome
 cd $genome_dir
@@ -221,10 +221,12 @@ source $myRoot/config.txt
 ## Get the NCBI annotation files
 wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/GFF/ref_EquCab2.0_top_level.gff3.gz
 gunzip ref_EquCab2.0_top_level.gff3.gz
+#sed 's/28908588/28908590/' ref_EquCab2.0_top_level.gff3 > ref_EquCab2.0_top_level_edit.gff3
+#$script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level_edit.gff3 ref_EquCab2.0_top_level.gpred
 $script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 egrep "^rna|^NM|^NR|^XM|^XR" ref_EquCab2.0_top_level.gpred > ref_EquCab2.0_top_level_rna.gpred
-$script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
+$script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred $genome_dir/ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
 $script_path/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_rna.gpred ref_EquCab2.0_top_level_rna.gtf
 echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level_rna.gtf" >> $myRoot/config.txt
 cat ref_EquCab2.0_top_level_mapped_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_rna.bed
@@ -370,7 +372,7 @@ while read work_dir; do
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
   sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
   bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"   ## Tophat sort by coordinate
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list_Embryo.txt
 
 ## Check for successful tophat runs and trouble shooting the failed tophat jobs
 while read work_dir; do

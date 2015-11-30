@@ -2,7 +2,7 @@
 #PBS -l walltime=4:00:00,nodes=1:ppn=2,mem=12Gb
 #mdiag -A ged
 #PBS -m abe
-#PBS -N haplotypeCaller_multi
+#PBS -N combineVariants
 
 module load GATK/3.4.46
 

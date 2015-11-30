@@ -169,15 +169,61 @@ bash ${script_path}/run_fastqc.sh "$rawData/Skin/SE_95_fr.unstranded_Bellone_010
 mkdir -p $prepData/Skin/SE_95_fr.unstranded_Bellone_01012015/fastq_data
 mv $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/temp3/* $prepData/Skin/SE_95_fr.unstranded_Bellone_01012015/fastq_data/.
 ###############################################################################################
-mkdir -p $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/rawdata
-cd $rawData/Skin/SE_95_fr.unstranded_Bellone_01012015/rawdata
-rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/*" .
+## Cell lineages of mammalian pre-implantation development: trophectoderm (TE), epiblast (EPI) & primitive endoderm (PE)
+## The first cell fate decision segregates the TE from the inner cell mass (ICM).
+## Prior to implantation, ICM gives rise to PE, which is a monolayer separating the blastocoel from the cluster of pluripotent EPI cells.
+## The EPI forms the future fetus, the TE develops into the fetal placenta, and the PE becomes the visceral and parietal endoderm of the yolk sacs.
+## The ICM/EPI is the source of pluripotent embryonic stem cells (ESCs)
 
+mkdir -p $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/rawdata
+cd $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/rawdata
+rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/Equine\ ICM-TE\ RNAseq\ March\ 2012/{Sample_JEQ_index10,Sample_JEQ_index1,Sample_JEQ_index7}" .
+mkdir -p $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1
+cat Sample_JEQ_index10/*_R1_*.fastq.gz > $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1/ICM22_JEQ1_index10_SR_001.fastq.gz
+cat Sample_JEQ_index1/*_R1_*.fastq.gz > $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1/ICM15_JEQ3_index1_SR_001.fastq.gz
+cat Sample_JEQ_index7/*_R1_*.fastq.gz > $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1/ICM25_JEQ4_index7_SR_001.fastq.gz
+bash ${script_path}/run_fastqc.sh "$rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1"
+mkdir -p $prepData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/fastq_data
+mv $rawData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/temp1/* $prepData/Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/fastq_data/.
 
+mkdir -p $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/rawdata
+cd $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/rawdata
+rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/Equine\ ICM-TE\ RNAseq\ March\ 2012/{Sample_JEQ_index11,Sample_JEQ_index8,Sample_JEQ_index9}" .
+mkdir -p $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1
+cat Sample_JEQ_index11/*_R1_*.fastq.gz > $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1/TE2412_JEQ2_index11_SR_001.fastq.gz
+cat Sample_JEQ_index8/*_R1_*.fastq.gz > $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1/TE16_JEQ5_index8_SR_001.fastq.gz
+cat Sample_JEQ_index9/*_R1_*.fastq.gz > $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1/TE2312_JEQ6_index9_SR_001.fastq.gz
+bash ${script_path}/run_fastqc.sh "$rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1"
+mkdir -p $prepData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/fastq_data
+mv $rawData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/temp1/* $prepData/Embryo.TE/SE_100_fr.unstranded_Ross_01032012/fastq_data/.
 
+mkdir -p $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/rawdata
+cd $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/rawdata
+rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/Project_Ross_P/{Sample_PRKI001A_index1,Sample_PRKI001B_index3,Sample_PRKI001C_index4}" .
+mkdir -p $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1
+cat Sample_PRKI001A_index1/*_R1_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM23_A_index1_R1_001.fastq.gz
+cat Sample_PRKI001A_index1/*_R2_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM23_A_index1_R2_001.fastq.gz
+cat Sample_PRKI001B_index3/*_R1_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM24_B_index3_R1_001.fastq.gz
+cat Sample_PRKI001B_index3/*_R2_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM24_B_index3_R2_001.fastq.gz
+cat Sample_PRKI001C_index4/*_R1_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM31_C_index4_R1_001.fastq.gz
+cat Sample_PRKI001C_index4/*_R2_*.fastq.gz > $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/ICM31_C_index4_R2_001.fastq.gz
+bash ${script_path}/run_fastqc.sh "$rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1"
+mkdir -p $prepData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/fastq_data
+mv $rawData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/temp1/* $prepData/Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/fastq_data/.
 
-
-
+mkdir -p $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/rawdata
+cd $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/rawdata
+rsync -avzP -e ssh "tmansour@kaiden.genomecenter.ucdavis.edu:/finno/data/Ross_Data/Project_Ross_P/{Sample_PRKI001D_index5,Sample_PRKI001E_index6,Sample_PRKI001F_index7}" .
+mkdir -p $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1
+cat Sample_PRKI001D_index5/*_R1_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE2313_D_index5_R1_001.fastq.gz
+cat Sample_PRKI001D_index5/*_R2_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE2313_D_index5_R2_001.fastq.gz
+cat Sample_PRKI001E_index6/*_R1_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE2413_E_index6_R1_001.fastq.gz
+cat Sample_PRKI001E_index6/*_R2_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE2413_E_index6_R2_001.fastq.gz
+cat Sample_PRKI001F_index7/*_R1_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE31_F_index7_R1_001.fastq.gz
+cat Sample_PRKI001F_index7/*_R2_*.fastq.gz > $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/TE31_F_index7_R2_001.fastq.gz
+bash ${script_path}/run_fastqc.sh "$rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1"
+mkdir -p $prepData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/fastq_data
+mv $rawData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/temp1/* $prepData/Embryo.TE/PE_100_fr.unstranded_Ross_01022013/fastq_data/.
 
 
 

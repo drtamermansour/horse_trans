@@ -13,15 +13,17 @@ cat ref_EquCab2.0_top_level.gff3.nohash | awk -F $'\t' '{A[$2"\t"$3]++}END{for(i
 grep -v "NC_001640.1" ref_EquCab2.0_top_level.gff3.nohash > ref_EquCab2.0_top_level.gff3.nohash.noMT
 grep "NC_001640.1" ref_EquCab2.0_top_level.gff3.nohash > ref_EquCab2.0_top_level.gff3.nohash.MT
 
-#cat ref_EquCab2.0_top_level.gff3.nohash.noMT | awk -F $'\t' '{A[$2"\t"$3]++}END{for(i in A)print i,A[i]}' | sort > id_type.count2
-#cat ref_EquCab2.0_top_level.gff3.nohash.MT | awk -F $'\t' '{A[$2"\t"$3]++}END{for(i in A)print i,A[i]}' | sort > id_type.count3
+cat ref_EquCab2.0_top_level.gff3.nohash.noMT | awk -F $'\t' '{A[$2"\t"$3]++}END{for(i in A)print i,A[i]}' | sort > id_type.count2
+cat ref_EquCab2.0_top_level.gff3.nohash.MT | awk -F $'\t' '{A[$2"\t"$3]++}END{for(i in A)print i,A[i]}' | sort > id_type.count3
 
 grep "gbkey=Gene;" ref_EquCab2.0_top_level.gff3 | wc -l
 cat ref_EquCab2.0_top_level.gff3 | awk -F $'\t' '$3 == "mRNA"'| wc -l
 cat ref_EquCab2.0_top_level.gff3 | awk -F $'\t' '$3 == "mRNA"' | awk -F $';' '{print $3}' | sort | uniq | wc -l
+## for the new annotation 11/25/2015
+#cat ref_EquCab2.0_top_level.gff3 | awk -F $'\t' '$3 == "mRNA"' | awk -F $';' '{print $2}' | sort | uniq | wc -l
 
-cat ensamble_biomart.tab.noheader | awk -F $'\t' '$4 == "protein_coding"' > ensamble_biomart.tab.noheader.ptn
-cat ensamble_biomart.tab.noheader.ptn | awk -F $'\t' '{print $1}' | sort | uniq | wc -l ## no of protein coding genes
+## pseudo genes
+grep pseudo=true ref_EquCab2.0_top_level.gff3 | wc -l
 
 cat ref_EquCab2.0_top_level.gff3.nohash | awk -F $'\t' '$3 == "cDNA_match"' > cDNA_match
 cat cDNA_match | awk -F $'\t' '{print $9}' | awk -F $';' '{for(i=1;i<=NF;i++)printf "%s ",$i; print ""}' | sort -u -k1,1 --merge > uniq_cDNA_match

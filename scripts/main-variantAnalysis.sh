@@ -111,9 +111,9 @@ while read work_dir; do
 done < $horse_trans/working_list_NoPBMCs.txt
 mkdir $horse_trans/Var_merge
 cd $horse_trans/Var_merge
-sample_list=$horse_trans/all_samples.txt
+sample_list=$horse_trans/all_samples_temp.txt
 target_bam=$"split.bam"
-bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
+bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi_light.sh"   ## output is HC_output_ploidy1_haplo1.vcf
 bash $script_path/variantFiltration.sh "$gatk_ref" "HC_output_ploidy1_haplo1.vcf"
 grep "^#" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_PASS.vcf
 grep "PASS" HC_output_ploidy1_haplo1_filtered.vcf >> HC_output_ploidy1_haplo1_PASS.vcf
@@ -227,7 +227,7 @@ while read work_dir; do
   cd $work_dir/tophat_output
   sample_list=$work_dir/tophat_output/sample_list.txt
   target_bam=$"recal_reads.bam"
-  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
+  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi_light.sh"   ## output is HC_output_ploidy1_haplo1.vcf
 done < $horse_trans/working_list_NoPBMCs.txt
 
 # Check for successful baseRecalibrator
@@ -248,7 +248,12 @@ bash ${script_path}/run_combineVariants.sh "$gatk_ref" "$sample_list" "$script_p
 ## fix annoatation
 target_bam="recal_reads.bam"
 sample_list="$horse_trans/all_samples.txt"
-bash ${script_path}/run_variantAnnotator.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/variantAnnotator.sh"   ## output is HC_output_ploidy1_haplo1_Ann.vcf
+bash ${script_path}/run_variantAnnotator.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/variantAnnotator.sh"   ## output is HC_output_ploidy1_haplo1_ann.vcf
+grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -c -v FS=
+grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -v FS= > noFS
+grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -c -v QD=
+grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -v QD= > noQD
+
 ###########################
 ## combined Variant calling
 #mkdir $horse_trans/Var_merge3
@@ -258,7 +263,7 @@ bash ${script_path}/run_variantAnnotator.sh "$gatk_ref" "$sample_list" "$target_
 #bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
 ###########################
 
-bash $script_path/variantFiltration.sh "$gatk_ref" "HC_output_ploidy1_haplo1.vcf"
+bash $script_path/variantFiltration.sh "$gatk_ref" "HC_output_ploidy1_haplo1_ann.vcf"
 grep "^#" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_PASS.vcf
 grep "PASS" HC_output_ploidy1_haplo1_filtered.vcf >> HC_output_ploidy1_haplo1_PASS.vcf
 grep -v "PASS" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_FAILED.vcf

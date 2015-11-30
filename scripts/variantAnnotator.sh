@@ -2,7 +2,7 @@
 #PBS -l walltime=10:00:00,nodes=1:ppn=8,mem=48Gb
 #mdiag -A ged
 #PBS -m abe
-#PBS -N haplotypeCaller_multi
+#PBS -N variantAnnotator
 
 module load GATK/3.4.46
 
@@ -21,7 +21,6 @@ $(echo $samples) \
 
 
 qstat -f ${PBS_JOBID}
-
 
 
 
