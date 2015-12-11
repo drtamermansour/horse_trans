@@ -28,7 +28,6 @@ Coding guidelines in this project
    * The raw data files should fullfill these criteria 
       - The file names should fit the format \*\_R1_\*.fastq.gz & \*\_R2_\*.fastq.gz for PE reads or \*\_SR_\*.fastq.gz for SE
       - All reads in every given file should belong to ONE sequencing lane.
-      - All sample replicates from the same lane should be merged into one sample 
       - If there are sample replicates from different lanes, you can add a text file called "replicates.txt". Each line in this file should have the names of one sample replicates with space separation. (only the \*\_R1_\*.fastq.gz for PE reads or \*\_SR_\*.fastq.gz for SE)
       - The first syllbus (the part of the file name before \_R1_ , \_R2_ or \_SR_) should be unique
       - All samples should be prepared so that they have enconding "Sanger / illumina 1.9"
