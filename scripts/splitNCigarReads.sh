@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#PBS -l walltime=02:00:00,nodes=1:ppn=2,mem=12Gb
+#PBS -l walltime=04:00:00,nodes=1:ppn=2,mem=12Gb
 #mdiag -A ged
 #PBS -m abe
 #PBS -N splitNCigarReads

@@ -18,3 +18,13 @@ visibility dense
 priority 2
 html NCBI
  
+track ISME.PBMC
+bigDataUrl BigBed/ISME.PBMC.BigBed
+shortLabel ISME.PBMC
+longLabel ISME.PBMC
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 3
+html ISME.PBMC
+ 

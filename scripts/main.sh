@@ -38,7 +38,6 @@ chmod 755 *
 ## The raw data files should be prepared so that they have enconding "Sanger / illumina 1.9"
 ## The file names should fit the format *_R1_*.fastq.gz & *_R2_*.fastq.gz for PE reads or *_SR_*.fastq.gz for SE
 ## All reads in every given file should belong to ONE sequencing lane.
-## All sample replicates from the same lane should be merged into one sample
 ## If there are sample replicates from different lanes, you can add a text file called "replicates.txt"
 ## A line in this file should have the names of one sample replicates with space separation. (only the *_R1_*.fastq.gz for PE reads or *_SR_*.fastq.gz for SE)
 ## The first syllbus (the part of the file name before _R1_ , _R2_ or _SR_) should be unique
@@ -221,9 +220,8 @@ source $myRoot/config.txt
 ## Get the NCBI annotation files
 wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/GFF/ref_EquCab2.0_top_level.gff3.gz
 gunzip ref_EquCab2.0_top_level.gff3.gz
-#sed 's/28908588/28908590/' ref_EquCab2.0_top_level.gff3 > ref_EquCab2.0_top_level_edit.gff3
-#$script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level_edit.gff3 ref_EquCab2.0_top_level.gpred
-$script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level.gpred
+sed 's/28908588/28908590/' ref_EquCab2.0_top_level.gff3 > ref_EquCab2.0_top_level_edit.gff3
+$script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level_edit.gff3 ref_EquCab2.0_top_level.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 egrep "^rna|^NM|^NR|^XM|^XR" ref_EquCab2.0_top_level.gpred > ref_EquCab2.0_top_level_rna.gpred
 $script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred $genome_dir/ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
@@ -232,7 +230,7 @@ echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level_rna.gtf" >> $myRoot/confi
 cat ref_EquCab2.0_top_level_mapped_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_rna.bed
 echo "ncbiBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_rna.bed" >> $myRoot/config.txt
 
-$script_path/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level.gff3 ref_EquCab2.0_top_level_noName.gpred
+$script_path/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level_edit.gff3 ref_EquCab2.0_top_level_noName.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 grep "^rna" ref_EquCab2.0_top_level_noName.gpred > ref_EquCab2.0_top_level_noName_rna.gpred
 $script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_noName_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_noName_rna.gpred unMapped_noName -genePred
@@ -296,25 +294,35 @@ wget http://server1.intrepidbio.com/FeatureBrowser/gtffilereader/record/-4027466
 mkdir -p $pubAssemblies/NCBI && cd $pubAssemblies/NCBI
 cp $ncbiGTF_file ncbiAnn.gtf
 
+mkdir -p $pubAssemblies/ISME.PBMC && cd $pubAssemblies/ISME.PBMC
+wget http://europepmc.org/articles/PMC4366165/bin/pone.0122011.s005.zip
+unzip *.zip
+
+
 ## create list of public assemblies
 rm -f $pubAssemblies/public_assemblies.txt
 for tissue in $pubAssemblies/*; do
-  echo ${tissue#$pubAssemblies/} >> $pubAssemblies/public_assemblies.txt;
+  echo "$pubAssemblies" "${tissue#$pubAssemblies/}" >> $pubAssemblies/public_assemblies.txt;
 done
-
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=0    ## 0 means do not update Bigbed files & 1 means update
 rm -f $horse_trans/public_assemblies.txt
-while read assembly; do
+while read ass_path assembly; do
   echo $assembly
-  cd $pubAssemblies/$assembly
-  targetAss=$(ls *.gtf)
-  bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-  if [ -f *.BigBed ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $prepData/$assembly >> $horse_trans/public_assemblies.txt;
-fi; done < $pubAssemblies/public_assemblies.txt
+  cd $ass_path/$assembly
+  if [[ ! -f "*.BigBed" || "$update" -eq 1 ]];then
+    targetAss=$(ls *.gtf)
+    if [ -f "$targetAss" ];then
+      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+    else echo "can not find target assembly"; break;fi
+    if [ -f *.BigBed ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make merged.BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/public_assemblies.txt;
+done < $pubAssemblies/public_assemblies.txt
 
 ## initiate a given track hub
 hub_name=$"HorseTrans_public_assemblies"
@@ -379,8 +387,8 @@ while read work_dir; do
   cd $work_dir/tophat_output
   sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
   failedSample_list=$work_dir/trimmed_RNA_reads/tophat_failedSamples.txt
-  > $failedSample_list                                          ## erase previouslly failed samples if any
-  bash $script_path/check_tophat.sh "$failedSample_list"        ## require tophat-[SP]E.e & .o
+  > $failedSample_list                                        ## erase previouslly failed samples if any
+  ##bash $script_path/check_tophat.sh "$failedSample_list"    ## require tophat-[SP]E.e & .o
   bash $script_path/check2_tophat.sh "$sample_list" "$failedSample_list"   ## check output log files
   x=$(cat $failedSample_list | wc -l)
   if [ $x -ne 0 ]; then
@@ -389,7 +397,7 @@ while read work_dir; do
     echo "Failed tophat jobs in: "$work_dir
     bash ${script_path}/run_tophat.sh "$failedSample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
   fi
-done < $horse_trans/working_list_Cerebellum.txt
+done < $horse_trans/working_list_Embryo.txt
 ##################
 ## create summary for tophat run
 headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "min_concordance", "max_concordance", sep="\t");')
@@ -407,7 +415,7 @@ while read work_dir; do
   lib=$(basename $work_dir)
   tissue=$(dirname $work_dir | xargs basename)
   echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/tophat_summary.txt
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list_Embryo.txt
 ##################
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
@@ -415,15 +423,17 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   rm -f $work_dir/tophat_output/preMerge_sample_list.txt
   for f in $work_dir/tophat_output/tophat_*/accepted_hits.bam; do if [ -f $f ]; then
     echo $f >> $work_dir/tophat_output/preMerge_sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_Cerebellum.txt
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 ###########################################################################################
 ## Add Read group headers
 while read work_dir; do
   echo $work_dir
   lib=$(basename $work_dir)
   sample_list=$work_dir/tophat_output/preMerge_sample_list.txt
-  bash ${script_path}/run_readGroupInfo_illumina.sh "$sample_list" "$lib" "${script_path}/readGroupInfo_illumina.sh"
-done < $horse_trans/working_list_NoPBMCs_NoCereb_NoRetina.txt  ## done with cerebellum
+  replicates_list=$work_dir/fastq_data/replicates.txt
+  bash ${script_path}/run_readGroupInfo_illumina.sh "$sample_list" "$replicates_list" "$lib" "${script_path}/readGroupInfo_illumina.sh"
+#done < $horse_trans/working_list_NoPBMCs_NoCereb_NoRetina.txt  ## done with cerebellum
+done < $horse_trans/working_list_Cerebellum.txt
 
 ## Check for successful adding of groupread
 ## To be added
@@ -449,7 +459,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   rm -f $work_dir/tophat_output/sample_list.txt
   for f in $work_dir/tophat_output/tophat_*; do if [ -d $f ]; then
     echo $f >> $work_dir/tophat_output/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_Cerebellum.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 ###########################################################################################
 #### pipeline_OneSampleAtaTime_Tophat2.Cufflinks.Cuffmerge
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
@@ -461,7 +471,7 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/sample_list.txt
   #bash ${script_path}/run_cufflinks_wRef.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
   bash ${script_path}/run_cufflinks_noRef.sh "$sample_list" "$script_path/cufflinks_noRef.sh";
-done < $horse_trans/working_list_Cerebellum.txt    #working_list_NoPBMCs.txt
+done < $horse_trans/working_list_Embryo.txt
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
 while read work_dir; do
@@ -474,7 +484,7 @@ while read work_dir; do
     cat $failedSample_list
     #bash ${script_path}/run_cufflinks_wRef.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks.sh";
     bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$script_path/cufflinks_noRef2.sh"
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 
 ## downsample the failed samples to peak coverage 1000x
 ## convert the tophat output BAM files into Fastq files
@@ -576,7 +586,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
     cd $dir
     mkdir $cufflinks_run && \
     mv "$dir"/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $cufflinks_run/.; fi; done
-fi; done < $horse_trans/working_list_Cerebellum.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 ########################
 ### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/$cufflinks_run/$cuffmerge_run
 #cuffmerge_run="refGeneGuided_Cuffmerge"
@@ -590,7 +600,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt" "$refGTF_file"
   isoformfrac=0.05    ## value 1-0.05 & default= 0.05
   bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "${cufflinks_run}_assemblies.txt"
-fi; done < $horse_trans/working_list_Cerebellum.txt
+fi; done < $horse_trans/working_list_Embryo.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
 ### cuffmerge the lab-specific tissue assemblies into tissue specific assemblies

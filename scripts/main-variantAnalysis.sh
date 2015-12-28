@@ -19,7 +19,7 @@ while read work_dir; do
   cd $work_dir/tophat_output
   sample_list=$work_dir/tophat_output/sample_list.txt
   bash ${script_path}/run_markDuplicates.sh "$sample_list" "$script_path/markDuplicates.sh";
-done < $horse_trans/working_list_Cerebellum.txt
+done < $horse_trans/working_list_Retina.txt
 
 ## Check for successful mark duplicates
 ## To be added
@@ -60,7 +60,10 @@ while read work_dir; do
   bash ${script_path}/run_SplitNCigarReads.sh "$gatk_ref" "$sample_list" "$script_path/splitNCigarReads.sh";
 done < $horse_trans/working_list_Cerebellum.txt
 
-
+# Check for successful split
+## To be added
+## Tip: the line before last in .e file has "BuildBamIndex done"
+## for f in $prepData/*/*/tophat_output/tophat_*/splitNCigarReads.e*; do echo $f; grep "Total runtime" $f | wc -l; done > temp
 ##########################
 ####  Realign Indels
 #### This step used to be very important when the the variant callers were position-based (such as UnifiedGenotyper) but now that we have assembly-based variant callers (such as HaplotypeCaller) it is less important. We still perform indel realignment because we think it may improve the accuracy of the base recalibration model in the next step, but this step may be made obsolete in the near future.

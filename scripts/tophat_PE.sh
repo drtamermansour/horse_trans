@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#PBS -l walltime=24:00:00,nodes=1:ppn=4,mem=32Gb
+#PBS -l walltime=7:00:00:00,nodes=1:ppn=16,mem=64Gb
 #mdiag -A ged
 #PBS -m abe			
 #PBS -N tophat		
@@ -16,7 +16,7 @@ module load TopHat2/2.0.14
 cd $PBS_O_WORKDIR
 tophat \
 --transcriptome-index "${transcriptome_index}" \
---num-threads 3 \
+--num-threads 15 \
 --output-dir "${output_dir}" \
 --microexon-search \
 --library-type "${lib_type}" \

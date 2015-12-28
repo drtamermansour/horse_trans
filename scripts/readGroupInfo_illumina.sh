@@ -8,7 +8,7 @@ module load picardTools/1.113
 
 cd $PBS_O_WORKDIR
 
-java -Xmx10g -jar $PICARD/AddOrReplaceReadGroups.jar INPUT=$bam OUTPUT=$output RGID=$ID RGLB=$LB RGPL=$PL RGPU=$PU RGSM=$SM
+java -Xmx10g -jar $PICARD/AddOrReplaceReadGroups.jar INPUT=$bam OUTPUT=$output RGID=$RGID RGLB=$LB RGPL=$PL RGPU=$PU RGSM=$SM
 
 qstat -f ${PBS_JOBID}
 
