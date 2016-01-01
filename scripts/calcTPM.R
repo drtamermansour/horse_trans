@@ -14,7 +14,7 @@ files <- dir(path=pathToCountFiles,pattern="*\\.quant.counts$")
 print(files)
 data <- readDGE(files)
 head(data$counts)
-rawCounts=rowSums(data$counts)
+rawCounts=rowSums(data$counts)  ## raw counts mapping to transcripts
 
 data2=read.table("transcripts.lengthes", header=T)
 length=data2$length
@@ -30,13 +30,15 @@ head(dataSummary2)
 
 data3=read.table("gene_transcript.map")
 genes=data3$V2
-dataSummary3=data.frame(genes,dataSummary2)
+stopifnot(all(rownames(dataSummary2)==data3$V1))
+dataSummary3=data.frame(genes,dataSummary2)      ## Add gene names
 head(dataSummary3)
 write.table(dataSummary3, file='dataSummary', sep='\t', quote=F, row.names=T, col.names=NA)
 
 transcripts=rownames(dataSummary3)
 dataSummary4=data.frame(transcripts,dataSummary3)
 
+## calculate gene statistics
 sumTPM=aggregate(dataSummary3$calcTPM, by=list(Category=dataSummary3$genes), FUN=sum)
 colnames(sumTPM)=c("genes","sumTPM")
 sumCounts=aggregate(dataSummary3$rawCounts, by=list(Category=dataSummary3$genes), FUN=sum)
@@ -48,6 +50,7 @@ dataSummary5=merge(dataSummary4,sumTPM,by.x="genes",by.y="genes",sort=F)
 dataSummary6=merge(dataSummary5,sumCounts,by.x="genes",by.y="genes",sort=F)
 dataSummary7=merge(dataSummary6,maxLength,by.x="genes",by.y="genes",sort=F)
 
+## calculate the TPM ration per gene for each transcript
 isoformTPM=(dataSummary7$calcTPM/dataSummary7$sumTPM)*100
 isoformTPM[is.nan(isoformTPM)] <- 0
 isoformTPM=format(round(isoformTPM, 3), nsmall = 3)

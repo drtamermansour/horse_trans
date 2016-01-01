@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ $# -lt 3 ]
+if [ $# -lt 2 ]
 then
 printf "\nUsage gtfToBed.sh [GTF file] [script path]\n"
 exit 0

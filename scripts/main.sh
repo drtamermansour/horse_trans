@@ -655,6 +655,10 @@ bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "multiExon.gtf"
 mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
 tail -n+2 nonGuided_Cufflinks_multiExon.merged.gtf.tmap | awk '{if($3!="e" && $3!="i" && $3!="o") print $5}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
+cat $assembly | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 117083
+cat $assembly | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 211562
+cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75084
+cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 162261
 
 ## filtering of short transfrag (less than 200bp): 598 transcript
 #cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
@@ -673,7 +677,8 @@ mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
 bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-bash ${script_path}/salmonIndex.sh "horse_index" "transcripts.fa"
+#bash ${script_path}/salmonIndex.sh "horse_index" "transcripts.fa"
+qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex2.sh
 while read work_dir; do
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
@@ -681,16 +686,18 @@ while read work_dir; do
   seq_dir=$work_dir/trimmed_RNA_reads
   bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
 done < $horse_trans/working_list_NoPBMCs.txt
-find . -name \*.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+find ./*.quant -name \*.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
 python $script_path/gather-counts.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
-sf=$(find . -name \*.sf | head -n1)
+sf=$(find ./*.quant -name \*.sf | head -n1)
 cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
 grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
 module load R/3.0.1
 Rscript ${script_path}/calcTPM.R "$(pwd)"
 cat dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
+cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75067
+cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 114830
 
 ## Using transrate/transfuse
 #mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/transrate/prep
@@ -710,6 +717,42 @@ grep -F -w -f keepit.id $assembly > ../merged.gtf
 #--threads 2
 
 ## back mapping of specific tissue libraries to final transcriptome to develop the tissue specific assemblies
+#for tissue in $prepData/*;do echo $tissue;done > $horse_trans/tissues.txt
+assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
+cd $(dirname $assembly)
+bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
+qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex2.sh
+while read work_dir; do
+  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
+  strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
+  identifier=$(echo $work_dir | rev | cut -d"/" -f 1,2 | rev | sed 's/\//_/')
+  seq_dir=$work_dir/trimmed_RNA_reads
+  bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
+done < $horse_trans/working_list_NoPBMCs.txt
+find ./*.quant -name *.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+python $script_path/gather-counts2.py -i "$(pwd)"
+echo "transcript"$'\t'"length" > transcripts.lengthes
+sf=$(find ./*.quant -name \*.sf | head -n1)
+cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
+grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
+module load R/3.0.1
+while read work_dir; do
+  tissue=$(basename $(dirname $work_dir))
+  lib=$(basename $work_dir)
+  target=$tissue"_"$lib
+  echo $target
+  Rscript ${script_path}/calcTPM_tis.R "$(pwd)" "$target"
+  dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/filtered
+  mkdir -p $dir
+  cat $tissue.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $tissue.keepit.id
+  grep -F -w -f $tissue.keepit.id $assembly > $dir/merged.gtf
+  echo $tissue
+  cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
+  cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
+done < $horse_trans/working_list_Retina.txt > $horse_trans/tissuesStats.txt
+
+
+
 ###################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
