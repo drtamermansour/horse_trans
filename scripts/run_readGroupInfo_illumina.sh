@@ -20,6 +20,7 @@ while read bam; do
   if [ -f $replicates_list ];then
     repLib_temp=$(grep $SM $replicates_list | awk '{ print $1 }')
     repLib=${repLib_temp%_R1_*.fastq.gz}
+    SM=$repLib
     if [ "$repLib" != "" ];then echo "found in replicates_list";
     else echo "Not found in replicates_list";fi
   else repLib=$SM;fi

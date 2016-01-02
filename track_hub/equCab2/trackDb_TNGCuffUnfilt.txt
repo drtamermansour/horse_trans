@@ -1,0 +1,200 @@
+track BrainStem
+bigDataUrl BigBed/BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel BrainStem
+longLabel BrainStem/PE_100_fr.firststrand_Finno_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 1
+html BrainStem_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Cerebellum
+bigDataUrl BigBed/Cerebellum_PE_100_fr.firststrand_Scott.Murray.Penedo_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel Cerebellum
+longLabel Cerebellum/PE_100_fr.firststrand_Scott.Murray.Penedo_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 2
+html Cerebellum_PE_100_fr.firststrand_Scott.Murray.Penedo_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Embryo.ICM
+compositeTrack on
+shortLabel Embryo.ICM
+longLabel composite track for Embryo.ICM libraries
+type bigBed 12
+visibility dense
+priority 3
+allButtonPair on
+html Embryo.ICM
+ 
+     track Embryo.ICM.merge
+     parent Embryo.ICM on
+     bigDataUrl BigBed/Embryo.ICM_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.ICM.merge
+     longLabel Embryo.ICM/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 3
+     html Embryo.ICM_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Embryo.ICM.1
+     parent Embryo.ICM off
+     bigDataUrl BigBed/Embryo.ICM_PE_100_fr.unstranded_Ross_01022013_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.ICM
+     longLabel Embryo.ICM/PE_100_fr.unstranded_Ross_01022013/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 3
+     html Embryo.ICM_PE_100_fr.unstranded_Ross_01022013_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Embryo.ICM.2
+     parent Embryo.ICM off
+     bigDataUrl BigBed/Embryo.ICM_SE_100_fr.unstranded_Ross_01032012_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.ICM
+     longLabel Embryo.ICM/SE_100_fr.unstranded_Ross_01032012/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 3
+     html Embryo.ICM_SE_100_fr.unstranded_Ross_01032012_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Embryo.TE
+compositeTrack on
+shortLabel Embryo.TE
+longLabel composite track for Embryo.TE libraries
+type bigBed 12
+visibility dense
+priority 4
+allButtonPair on
+html Embryo.TE
+ 
+     track Embryo.TE.merge
+     parent Embryo.TE on
+     bigDataUrl BigBed/Embryo.TE_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.TE.merge
+     longLabel Embryo.TE/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 4
+     html Embryo.TE_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Embryo.TE.1
+     parent Embryo.TE off
+     bigDataUrl BigBed/Embryo.TE_PE_100_fr.unstranded_Ross_01022013_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.TE
+     longLabel Embryo.TE/PE_100_fr.unstranded_Ross_01022013/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 4
+     html Embryo.TE_PE_100_fr.unstranded_Ross_01022013_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Embryo.TE.2
+     parent Embryo.TE off
+     bigDataUrl BigBed/Embryo.TE_SE_100_fr.unstranded_Ross_01032012_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Embryo.TE
+     longLabel Embryo.TE/SE_100_fr.unstranded_Ross_01032012/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 4
+     html Embryo.TE_SE_100_fr.unstranded_Ross_01032012_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Muscle
+bigDataUrl BigBed/Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel Muscle
+longLabel Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 5
+html Muscle_PE_125_fr.firststrand_Valberg.Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Retina
+bigDataUrl BigBed/Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel Retina
+longLabel Retina/PE_81_fr.unstranded_Bellone_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 6
+html Retina_PE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track Skin
+compositeTrack on
+shortLabel Skin
+longLabel composite track for Skin libraries
+type bigBed 12
+visibility dense
+priority 7
+allButtonPair on
+html Skin
+ 
+     track Skin.merge
+     parent Skin on
+     bigDataUrl BigBed/Skin_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Skin.merge
+     longLabel Skin/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 7
+     html Skin_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Skin.1
+     parent Skin off
+     bigDataUrl BigBed/Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Skin
+     longLabel Skin/PE_81_fr.unstranded_Bellone_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 7
+     html Skin_PE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Skin.2
+     parent Skin off
+     bigDataUrl BigBed/Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Skin
+     longLabel Skin/SE_81_fr.unstranded_Bellone_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 7
+     html Skin_SE_81_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+     track Skin.3
+     parent Skin off
+     bigDataUrl BigBed/Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+     shortLabel Skin
+     longLabel Skin/SE_95_fr.unstranded_Bellone_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+     type bigBed 12
+     colorByStrand 255,0,0 0,0,255
+     visibility dense
+     priority 7
+     html Skin_SE_95_fr.unstranded_Bellone_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track SpinalCord
+bigDataUrl BigBed/SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel SpinalCord
+longLabel SpinalCord/PE_100_fr.firststrand_Finno_01012015/tophat_output/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 8
+html SpinalCord_PE_100_fr.firststrand_Finno_01012015_tophat_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 
+track all_tissues_frac0.05
+bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge.BigBed
+shortLabel all_tissues_frac0.05
+longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 13
+html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge
+ 

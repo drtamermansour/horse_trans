@@ -1,0 +1,5 @@
+hub HorseTrans_TNGCuffUnfilt
+shortLabel TNGCuffUnfilt
+longLabel Single samlpe refGuided Tophat - nonGuided Cufflinks/Cuffmerge - Unfiltered
+genomesFile genomes_TNGCuffUnfilt.txt
+email drtamermansour@gmail.com
