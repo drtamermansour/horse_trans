@@ -187,17 +187,12 @@ elif [ $len -eq 1 ]; then cp ${samples[0]} merged.bam;
 else echo "can find bam files"; fi
 
 
-
-
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 cufflinks_run="nonGuided_Cufflinks"
 cd $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}
 sample=$tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/merged.bam
 label="digiMulti.k${kmer}.C${cutoff}"
 bash ${script_path}/run_cufflinks_noRef_single.sh "$sample" "$label" "$script_path/cufflinks_noRef2.sh";
-
-
-
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
 cd $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}
@@ -215,5 +210,88 @@ cd $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}
 mkdir $cufflinks_run && \
 mv $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $cufflinks_run/.
 
+###########################################################################################
+tissue_Digimerge=$tissue_merge/digimerge
+## Run Cuffcompare with of diginorm assembly vs cuffmerge assembly
+reference="$tissue_Cuffmerge/all_tissues_isoformfrac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/merged.gtf"
+assembly="$tissue_Digimerge/digiMulti.k20.C10/nonGuided_Cufflinks/transcripts.gtf"
+mkdir -p $horse_trans/cuffcompare/digiMultiK20C10_allTissues0.05
+cd $horse_trans/cuffcompare/digiMultiK20C10_allTissues0.05
+identifier="digiMulti.k20.C10_nonGuided_Cufflinks"
+bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "$reference" "$script_path/cuffcompare.sh"
+mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+head -n1 $identifier.*.tmap > tmap.intergenic
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "u"' >> tmap.intergenic             #99077
+head -n1 $identifier.*.tmap > tmap.matching
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "="' >> tmap.matching               #25785
+head -n1 $identifier.*.tmap > tmap.novelIsoform
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "j"' >> tmap.novelIsoform           #17387
+head -n1 $identifier.*.tmap > tmap.overlappingExon
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "o"' >> tmap.overlappingExon        #2454
+head -n1 $identifier.*.tmap > tmap.overlappingExonOppSt
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "x"' >> tmap.overlappingExonOppSt   #4120
 
+head -n1 $identifier.*.tmap > tmap.contained
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "c"' >> tmap.contained              #2348
+head -n1 $identifier.*.tmap > tmap.intron
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "i"' >> tmap.intron                 #201426
+head -n1 $identifier.*.tmap > tmap.premRNA
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "e"' >> tmap.premRNA                #3815
+head -n1 $identifier.*.tmap > tmap.polymeraseRunOn
+cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "p"' >> tmap.polymeraseRunOn        #4632
 
+filtered=$(dirname $assembly)/filtered
+mkdir -p $filtered
+for f in tmap.*;do
+  subdigi=${f#tmap.}
+  echo $subdigi
+  mkdir -p $filtered/$subdigi
+  tail -n+2 $f | awk '{ print $5 }' > $subdigi.id
+  grep -F -w -f $subdigi.id $assembly > $filtered/$subdigi/$subdigi.transcripts.gtf
+done
+
+##################
+## Add to the list of assemblies for tissues of multiple libraries
+> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
+for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run; do if [ -d $tissue ]; then
+  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}" >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
+fi; done
+
+> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
+for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run/filtered/*; do if [ -d $tissue ]; then
+  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}"  >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
+fi; done
+####################
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=0    ## 0 means do not update Bigbed files & 1 means update
+rm -f $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt
+while read ass_path assembly; do
+  echo $assembly
+  if [ -d "$ass_path/$assembly" ];then
+    cd $ass_path/$assembly
+  else echo "can not find $ass_path/$assembly"; break;fi
+  if [[ ! -f $(ls *transcripts.BigBed) || "$update" -eq 1 ]];then
+    targetAss=$(ls *transcripts.gtf)
+    if [ -f "$targetAss" ];then
+      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+    else echo "can not find merged.gtf"; break;fi
+    if [ -f $(ls *transcripts.BigBed) ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp *transcripts.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make merged.BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt;
+done < <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt \
+             $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt)
+
+## Add to the HorseTrans_TopNonGuidCuff track hub
+shortlabel=$"TopNonGuidCuff"
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+#lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
+#tiss_assemblies=$tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
+  <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt) \
+  <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
+##########################################################################################

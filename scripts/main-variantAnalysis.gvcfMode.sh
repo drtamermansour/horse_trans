@@ -284,6 +284,9 @@ done
 cat subset*.varFixed.psl >> ../varFixed.psl
 cd ../
 sort -k10,10 -k1,1rg varFixed.psl | sort -u -k10,10 --merge > varFixed_best.psl
+$script_path/UCSC_kent_commands/pslToBed varFixed_best.psl varFixed_best.bed
+$script_path/UCSC_kent_commands/bedToGenePred varFixed_best.bed varFixed_best.GenePred
+$script_path/UCSC_kent_commands/genePredToGtf file varFixed_best.GenePred varFixed_best.gtf
 
 
 

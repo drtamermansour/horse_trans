@@ -893,93 +893,6 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
 #        <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
 #            $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt) $tiss_assemblies
-###########################################################################################
-## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
-bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
-
-tissue_Digimerge=$tissue_merge/digimerge
-## Run Cuffcompare with of diginorm assembly vs cuffmerge assembly
-reference="$tissue_Cuffmerge/all_tissues_isoformfrac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/merged.gtf"
-assembly="$tissue_Digimerge/digiMulti.k20.C10/nonGuided_Cufflinks/transcripts.gtf"
-mkdir -p $horse_trans/cuffcompare/digiMultiK20C10_allTissues0.05
-cd $horse_trans/cuffcompare/digiMultiK20C10_allTissues0.05
-identifier="digiMulti.k20.C10_nonGuided_Cufflinks"
-bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "$reference" "$script_path/cuffcompare.sh"
-mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-head -n1 $identifier.*.tmap > tmap.intergenic
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "u"' >> tmap.intergenic             #99077
-head -n1 $identifier.*.tmap > tmap.matching
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "="' >> tmap.matching               #25785
-head -n1 $identifier.*.tmap > tmap.novelIsoform
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "j"' >> tmap.novelIsoform           #17387
-head -n1 $identifier.*.tmap > tmap.overlappingExon
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "o"' >> tmap.overlappingExon        #2454
-head -n1 $identifier.*.tmap > tmap.overlappingExonOppSt
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "x"' >> tmap.overlappingExonOppSt   #4120
-
-head -n1 $identifier.*.tmap > tmap.contained
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "c"' >> tmap.contained              #2348
-head -n1 $identifier.*.tmap > tmap.intron
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "i"' >> tmap.intron                 #201426
-head -n1 $identifier.*.tmap > tmap.premRNA
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "e"' >> tmap.premRNA                #3815
-head -n1 $identifier.*.tmap > tmap.polymeraseRunOn
-cat $identifier.*.tmap | awk -F "\t" -v OFS='\t' '$3 == "p"' >> tmap.polymeraseRunOn        #4632
-
-filtered=$(dirname $assembly)/filtered
-mkdir -p $filtered
-for f in tmap.*;do
-  subdigi=${f#tmap.}
-  echo $subdigi
-  mkdir -p $filtered/$subdigi
-  tail -n+2 $f | awk '{ print $5 }' > $subdigi.id
-  grep -F -w -f $subdigi.id $assembly > $filtered/$subdigi/$subdigi.transcripts.gtf
-done
-
-##################
-## Add to the list of assemblies for tissues of multiple libraries
-> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
-for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run; do if [ -d $tissue ]; then
-  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}" >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt;
-fi; done
-
-> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
-for tissue in $tissue_Digimerge/digiMulti.k${kmer}.C${cutoff}/$cufflinks_run/filtered/*; do if [ -d $tissue ]; then
-  echo "$tissue_Digimerge" "${tissue#$tissue_Digimerge/}"  >> $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt;
-fi; done
-####################
-## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-update=0    ## 0 means do not update Bigbed files & 1 means update
-rm -f $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt
-while read ass_path assembly; do
-  echo $assembly
-  if [ -d "$ass_path/$assembly" ];then
-    cd $ass_path/$assembly
-  else echo "can not find $ass_path/$assembly"; break;fi
-  if [[ ! -f $(ls *transcripts.BigBed) || "$update" -eq 1 ]];then
-    targetAss=$(ls *transcripts.gtf)
-    if [ -f "$targetAss" ];then
-      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-    else echo "can not find merged.gtf"; break;fi
-    if [ -f $(ls *transcripts.BigBed) ];then
-      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-      cp *transcripts.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    else echo "could not make merged.BigBed file"; break; fi
-  fi
-  echo $ass_path/$assembly >> $horse_trans/digi_Tophat_${cufflinks_run}_assemblies.txt;
-done < <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt \
-             $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt)
-
-## Add to the HorseTrans_TopNonGuidCuff track hub
-shortlabel=$"TopNonGuidCuff"
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-#lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-#tiss_assemblies=$tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
-  <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digiSubset_assemblies.txt $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt) \
-  <(cat $tissue_Digimerge/${cufflinks_run}_${cuffmerge_run}_digi_assemblies.txt $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 ##########################################################################################
 ## Run Cuffcompare with public annotations
 mkdir -p $horse_trans/cuffcompare
@@ -1114,13 +1027,12 @@ bash $script_path/run_genome_to_cdna_fasta.sh "$assembly/merged.gtf" "$genome" "
 # extract the long open reading frames
 bash $script_path/run_getLongORFs.sh "transcripts.fasta" "$script_path/getLongORFs.sh"
 ## identify ORFs with homology to known proteins via blast and pfam searches.
-mkdir tempTrans && cd tempTrans
-cp ../transcripts.fasta .
-$script_path/splitFasta.pl transcripts.fasta 50
-pep="../transcripts.fasta.transdecoder_dir/longest_orfs.pep"
-for f in subset*_transcripts.fasta;do
-  label=${f%_transcripts.fasta}
-  bash $script_path/run_blastp.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
+mkdir tempPep && cd tempPep
+cp ../transcripts.fasta.transdecoder_dir/longest_orfs.pep .
+$script_path/splitFasta.pl longest_orfs.pep 50
+for pep in subset[1-5][0-9]_longest_orfs.pep;do
+  label=${pep%_longest_orfs.pep}
+#  bash $script_path/run_blastp.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
   bash $script_path/run_hmmscan.sh "$pep" "$refPfam" $label."pfam.domtblout" "$script_path/hmmscan.sh"
 done
 cat subset*.blastp.outfmt6 >> ../blastp.outfmt6
@@ -1131,6 +1043,7 @@ bash $script_path/run_transdecoderPredict.sh "transcripts.fasta" "pfam.domtblout
 
 # convert the transcript structure GTF file to an alignment-GFF3 formatted file
 module load TransDecoder/2.0.1
+decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
 $decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "$assembly/merged.gtf" > transcripts.gff3
 # generate a genome-based coding region annotation file
 $decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
@@ -1140,7 +1053,7 @@ $decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > tr
 
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
-bash ${script_path}/main-variantAnalysis.sh
+bash ${script_path}/main-variantAnalysis.gvcfMode.sh
 
 ###########################################################################################
 ## run Transdecoder to predict UTRs with homology options
@@ -1155,8 +1068,8 @@ bash $script_path/run_getLongORFs.sh "transcripts.fasta" "$script_path/getLongOR
 mkdir tempPep && cd tempPep
 cp ../transcripts.fasta.transdecoder_dir/longest_orfs.pep .
 $script_path/splitFasta.pl longest_orfs.pep 50
-for pep in subset*_longest_orfs.pep;do
-  label=${f%_longest_orfs.pep}
+for pep in subset10[a-b]_longest_orfs.pep;do
+  label=${pep%_longest_orfs.pep}
 #  bash $script_path/run_blastp.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
   bash $script_path/run_hmmscan.sh "$pep" "$refPfam" $label."pfam.domtblout" "$script_path/hmmscan.sh"
 done
@@ -1165,7 +1078,15 @@ cat subset*.pfam.domtblout >> ../pfam.domtblout
 ## predict the likely coding regions
 cd ../
 bash $script_path/run_transdecoderPredict.sh "transcripts.fasta" "pfam.domtblout" "blastp.outfmt6" "$script_path/transdecoderPredict.sh"
-
+# create an alignment-GFF3 formatted file
+module load TransDecoder/2.0.1
+decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
+$decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "../varFixed_best.gtf" > transcripts.gff3
+# generate a genome-based coding region annotation file
+$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+grep "Warning" sterr > warnings.txt && rm sterr
+# convert the genome-based gene-gff3 file to bed
+$decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 
 
 ## calculate the phase of Transdecoder GFF3 files
@@ -1177,43 +1098,30 @@ bash $script_path/run_transdecoderPredict.sh "transcripts.fasta" "pfam.domtblout
 #######################
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
-rm -f $prepData/merged_decoder_assemblies.txt
-while read work_dir; do
-  for dir in $work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/transdecoder; do if [ -d $dir ]; then
-    echo ${dir#$prepData/} >> $prepData/merged_decoder_assemblies.txt;
-  fi; done;
-done < $horse_trans/working_list_NoPBMCs_NoCereb.txt
-
-## create list of assemblies for tissues of multiple libraries
-rm -f $tissue_Cuffmerge/tissue_decoder_assemblies.txt
-for tissue in $tissue_Cuffmerge/*; do
-  echo ${tissue#$tissue_Cuffmerge/}/withoutGTF/transdecoder >> $tissue_Cuffmerge/tissue_decoder_assemblies.txt;
-done
-
-## convert the bed files into BigBed files & copy to the track hub directory & create assembly list
-rm -f $horse_trans/merged_and_tissue_decoder_assemblies.txt
-while read assembly; do
+rm -f $tissue_Cuffmerge/decoder_assemblies.txt
+echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
+echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/varFixed/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
+####################
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=0    ## 0 means do not update Bigbed files & 1 means update
+rm -f $horse_trans/decoder_assemblies.txt
+while read ass_path assembly; do
   echo $assembly
-  cd $prepData/$assembly
-  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
-  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
-  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
-    identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-    cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-    echo $prepData/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
-fi; done < $prepData/merged_decoder_assemblies.txt
-
-while read assembly; do
-  echo $assembly
-  cd $tissue_Cuffmerge/$assembly
-  targetAss=$"transcripts.fasta.transdecoder.genome.bed"
-  bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
-  if [ -f $"transcripts.fasta.transdecoder.genome.BigBed" ];then
-  identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-  cp transcripts.fasta.transdecoder.genome.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-  echo $tissue_Cuffmerge/$assembly >> $horse_trans/merged_and_tissue_decoder_assemblies.txt;
-fi; done < $tissue_Cuffmerge/tissue_decoder_assemblies.txt
-
+  if [ -d "$ass_path/$assembly" ];then
+    cd $ass_path/$assembly
+  else echo "can not find $ass_path/$assembly"; break;fi
+  if [[ ! -f "*.BigBed" || "$update" -eq 1 ]];then
+    targetAss=$"transcripts.fasta.transdecoder.genome.bed"
+    if [ -f "$targetAss" ];then
+      bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
+    else echo "can not find the target BED file"; break;fi
+    if [ -f *.BigBed ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/decoder_assemblies.txt;
+done < $tissue_Cuffmerge/decoder_assemblies.txt
 #########################
 ## initiate a given track hub
 hub_name=$"HorseTrans2"
@@ -1227,28 +1135,13 @@ bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$l
 current_libs=$track_hub/current_libs_$shortlabel
 current_tissues=$track_hub/current_tiss_$shortlabel
 trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$prepData/merged_decoder_assemblies.txt
-tiss_assemblies=$tissue_Cuffmerge/tissue_decoder_assemblies.txt
+#lib_assemblies=$prepData/merged_decoder_assemblies.txt
+lib_assemblies=$horse_trans/emptyTemp.txt
+tiss_assemblies=$tissue_Cuffmerge/decoder_assemblies.txt
 bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-
 ###########################################################################################
 ###########################################################################################
 ###########################################################################################
 ###########################################################################################
-###########################################################################################
-###########################################################################################
-## pipeline_diginormAllsamples_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
-bash ${script_path}/DigiTopHatCufflinks_pipline.sh
-
-###########################################################################################
-## pipeline_mapped_diginormAllsamples_Tophat2.refGTFguided_Cufflinks.refGTFguided.Cuffmerge
-bash ${script_path}/MapDigiTopHatCufflinks_pipline.sh
-
-cufflinks_run="nonGuided_Cufflinks"
-cuffmerge_run="nonGuided_Cuffmerge"
-tissue_Cuffmerge=$tissue_merge/cuffmerge
-isoformfrac=0.05    ## value 1-0.05 & default= 0.05
-#isoformfrac=0.2    ## value 1-0.05 & default= 0.05
-dist_dir="all_tissues_frac$isoformfrac"
-cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
-
+## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
+bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
