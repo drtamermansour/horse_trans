@@ -1050,6 +1050,8 @@ $decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.
 grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
 $decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
+## exclude transcripts with single exon for better visualization
+cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
@@ -1083,10 +1085,13 @@ module load TransDecoder/2.0.1
 decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
 $decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "../varFixed_best.gtf" > transcripts.gff3
 # generate a genome-based coding region annotation file
-$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+#$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+$script_path/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
 grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
 $decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
+## exclude transcripts with single exon for better visualization
+cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
 
 ## calculate the phase of Transdecoder GFF3 files
@@ -1111,7 +1116,7 @@ while read ass_path assembly; do
     cd $ass_path/$assembly
   else echo "can not find $ass_path/$assembly"; break;fi
   if [[ ! -f "*.BigBed" || "$update" -eq 1 ]];then
-    targetAss=$"transcripts.fasta.transdecoder.genome.bed"
+    targetAss=$"transcripts.fasta.transdecoder.genome.multiexon.bed"
     if [ -f "$targetAss" ];then
       bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
     else echo "can not find the target BED file"; break;fi
