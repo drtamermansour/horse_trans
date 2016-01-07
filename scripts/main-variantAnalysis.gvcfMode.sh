@@ -104,182 +104,100 @@ while read work_dir; do
 done < $horse_trans/working_list_Retina.txt
 
 # Check for successful variant calling
-#cd $work_dir/bwa_align
-for f in bwa_*/haplotypeCaller_multi.e*;do echo $f; grep "done" $f | wc -l; done > haplotypeCaller_multi.temp
-grep -B1 "^0" haplotypeCaller_multi.temp | grep -v "^--" | grep -v "^0" > haplotypeCaller_multi.temp.redo
-while read f;do ls -tral $f;done < haplotypeCaller_multi.temp.redo > haplotypeCaller_multi.temp.redo.size
+while read work_dir; do
+  cd $work_dir/tophat_output
+  for f in tophat_*/haplotypeCaller_multi.e*;do if [ -f $f ];then echo $f; grep "done" $f | wc -l;fi; done > haplotypeCaller_gvcf.temp
+  grep -B1 "^0" haplotypeCaller_gvcf.temp | grep -v "^--" | grep -v "^0" > haplotypeCaller_gvcf.temp.redo
+  while read f;do ls -tral $f;done < haplotypeCaller_gvcf.temp.redo > haplotypeCaller_gvcf.temp.redo.size
+  for f in tophat_*;do if [ ! -f $f/haplotypeCaller_multi.e* ];then echo $work_dir/tophat_output/$f;fi; done > haplotypeCaller_gvcf.sample_list2.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 
-for f in bwa_*;do if [ ! -f $f/haplotypeCaller_multi.e* ];then echo $work_dir/bwa_align/$f;fi; done > haplotypeCaller_multi.sample_list2.txt
+while read work_dir; do
+  cd $work_dir/tophat_output
+  while read f;do
+    output=$(echo $f | awk -F "/" '{ print $1 }');
+    name=${output#tophat_};
+    echo $work_dir/tophat_output/$output
+    rm $output/{split.g.vcf,haplotypeCaller_multi.e*,haplotypeCaller_multi.o*}
+  done < haplotypeCaller_gvcf.temp.redo > haplotypeCaller_gvcf.sample_list.txt
+  target_bam=$"split.bam"
+  bash ${script_path}/run_haplotypeCaller_GVCF.sh "$knownSNPs" "$gatk_ref" "haplotypeCaller_gvcf.sample_list.txt" "$target_bam" "$script_path/haplotypeCaller_GVCF.sh"
+  bash ${script_path}/run_haplotypeCaller_GVCF.sh "$knownSNPs" "$gatk_ref" "haplotypeCaller_gvcf.sample_list2.txt" "$target_bam" "$script_path/haplotypeCaller_GVCF.sh"
+done < $horse_trans/working_list_NoPBMCs.txt
 
-while read f;do
-output=$(echo $f | awk -F "/" '{ print $1 }');
-name=${output#bwa_};
-echo $work_dir/bwa_align/$output
-rm $output/{dedup_reads.g.vcf,haplotypeCaller_multi.e*,haplotypeCaller_multi.o*}
-done < haplotypeCaller_multi.temp.redo > haplotypeCaller_multi.sample_list.txt
+## define the list samples.
+## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
+while read work_dir; do if [ -d $work_dir/tophat_output ]; then
+  rm -f $work_dir/tophat_output/gvcf_list.txt
+  for f in $work_dir/tophat_output/tophat_*/*.g.vcf; do if [ -f $f ]; then
+    echo $f >> $work_dir/tophat_output/gvcf_list.txt; fi; done;
+fi; done < $horse_trans/working_list_NoPBMCs.txt
 
-target_bam=$"dedup_reads.bam"
-bash ${script_path}/run_haplotypeCaller_GVCF.sh "$knownSNPs" "$gatk_ref" "haplotypeCaller_multi.sample_list.txt" "$target_bam" "$script_path/haplotypeCaller_GVCF.sh"
+> $horse_trans/all_g.vcfs.txt
+while read work_dir; do
+  cat $work_dir/tophat_output/gvcf_list.txt >> $horse_trans/all_g.vcfs.txt
+done < $horse_trans/working_list_NoPBMCs.txt
 
-bash ${script_path}/run_haplotypeCaller_GVCF.sh "$knownSNPs" "$gatk_ref" "haplotypeCaller_multi.sample_list2.txt" "$target_bam" "$script_path/haplotypeCaller_GVCF.sh"
+## joint genotyping
+mkdir $horse_trans/Var_gvcf
+cd $horse_trans/Var_gvcf
+sample_list=$horse_trans/all_g.vcfs.txt
+bash ${script_path}/run_genotypeGVCF.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$script_path/genotypeGVCF.sh"
+##########################
+bash $script_path/variantFiltration.sh "$gatk_ref" "GenotypeGVCFs_output.vcf"
+grep "^#" GenotypeGVCFs_output_filtered.vcf > GenotypeGVCFs_PASS.vcf
+grep "PASS" GenotypeGVCFs_output_filtered.vcf >> GenotypeGVCFs_PASS.vcf
+grep -v "PASS" GenotypeGVCFs_output_filtered.vcf > GenotypeGVCFs_FAILED.vcf
 
+awk '/#/{print;next}{if($5 !~ /,/){print}}' GenotypeGVCFs_PASS.vcf > GenotypeGVCFs_monoAllel.vcf
+#awk '/#/{print;next}{if($5 ~ /,/){print}}' GenotypeGVCFs_PASS.vcf > GenotypeGVCFs_multiAllel.vcf
 
+awk '/#/{print;next}{if($5 !~ /,/ && (length($5)>1 || length($4)>1)){print}}' GenotypeGVCFs_PASS.vcf > GenotypeGVCFs_monoAllel_indels.vcf
+#grep "^#" GenotypeGVCFs_PASS.vcf > GenotypeGVCFs_PASS_indels.vcf
+#grep -v "^#" GenotypeGVCFs_PASS.vcf | awk 'length($4)>1 || length($5)>1' >> GenotypeGVCFs_PASS_indels.vcf
 
+awk '/#/{print;next}{if($5 !~ /,/ && length($5)==1 && length($4)==1){print}}' GenotypeGVCFs_PASS.vcf > GenotypeGVCFs_monoAllel_SNPs.vcf
+#grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_snps.vcf
+#grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)==1 && length($5)==1' >> HC_output_ploidy1_haplo1_PASS_snps.vcf
 
 ##########################
 ## explore the frequency of the ALT alleles
-cd $horse_trans/Var_merge
+#INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes, for each ALT allele, in the same order as listed">
+#INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
+#INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+## AF=AC/AN
 echo -e 'AC\tAF\tAN' > varFreq.txt
-grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk '{ print $8 }' | awk -F ';' -v OFS='\t' '{ print $1,$2,$3 }' | sed 's/..=//g' >> varFreq.txt
+grep -v "^#" GenotypeGVCFs_monoAllel.vcf | awk '{ print $8 }' | awk -F ';' -v OFS='\t' '{ print $1,$2,$3 }' | sed 's/..=//g' >> varFreq.txt
 tail -n+2 varFreq.txt | awk -F '\t' '{A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF.freq
+tail -n+2 varFreq.txt | awk -F '\t' '($1>2){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF2.freq
+tail -n+2 varFreq.txt | awk -F '\t' '($1>3){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF3.freq
+tail -n+2 varFreq.txt | awk -F '\t' '($1>4){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF4.freq
 
 echo -e 'AC\tAF\tAN' > varFreq_indels.txt
-grep -v "^#" HC_output_ploidy1_haplo1_PASS_indels.vcf | awk '{ print $8 }' | awk -F ';' -v OFS='\t' '{ print $1,$2,$3 }' | sed 's/..=//g' >> varFreq_indels.txt
+grep -v "^#" GenotypeGVCFs_monoAllel_indels.vcf | awk '{ print $8 }' | awk -F ';' -v OFS='\t' '{ print $1,$2,$3 }' | sed 's/..=//g' >> varFreq_indels.txt
 tail -n+2 varFreq_indels.txt | awk -F '\t' '{A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels.freq
-##########################
-## isolate common indels (AF >= 0.9)
-cd $horse_trans/Var_merge
-grep "^#" HC_output_ploidy1_haplo1_PASS_indels.vcf > HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf
-grep -v "^#" HC_output_ploidy1_haplo1_PASS_indels.vcf | awk -F '[\t=;]' '$11 >= 0.9'  >> HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf
-
-grep -v "^#" HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf | wc -l  ##4725
-
-## isolate common SNPs (AF >= 0.9)
-grep "^#" HC_output_ploidy1_haplo1_PASS_snps.vcf > HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf
-grep -v "^#" HC_output_ploidy1_haplo1_PASS_snps.vcf | awk -F '[\t=;]' '$11 >= 0.9'  >> HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf
-
-grep -v "^#" HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf | wc -l  ##4725
+tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>2){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels2.freq
+tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>3){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels3.freq
+tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>4){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels4.freq
 
 ##########################
-## RealignerTargetCreator
-cd $horse_trans/Var_merge
-bash ${script_path}/run_RealignerTargetCreator_forKnowns.sh "HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf" "$gatk_ref" "$script_path/realignerTargetCreator_forKnowns.sh";
+## isolate common variants (AF >= 0.9)
+grep "^#" GenotypeGVCFs_monoAllel.vcf > GenotypeGVCFs_monoAllel_sig.vcf
+grep -v "^#" GenotypeGVCFs_monoAllel.vcf | awk -F '[\t=;]' '($9 >3 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_sig.vcf
 
-## indelRealigner
-indels=$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf
-intervals=$horse_trans/Var_merge/gatk.intervals
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.bam"
-  bash ${script_path}/run_indelRealigner.sh "$indels" "$intervals" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/indelRealigner_forKnowns.sh";
-done < $horse_trans/working_list_NoPBMCs.txt
+grep -v "^#" GenotypeGVCFs_monoAllel_sig.vcf | wc -l  ##227717
 
-# Check for successful BAM indexing
-## To be added
-## for f in $prepData/*/*/tophat_output/tophat_*/indelRealigner.e*; do grep "Total runtime" $f | wc -l; done
+grep "^#" GenotypeGVCFs_monoAllel_indels.vcf > GenotypeGVCFs_monoAllel_indels_sig.vcf
+grep -v "^#" GenotypeGVCFs_monoAllel_indels.vcf | awk -F '[\t=;]' '($9 >3 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_indels_sig.vcf
 
-##########################
-#### Base Recalibration
-#### We do recommend running base recalibration (BQSR). Even though the effect is also marginal when applied to good quality data, it can absolutely save your butt in cases where the qualities have systematic error modes.
-
-## create list of known variants
-known_var=$horse_trans/Var_merge/known_var.txt
-> $known_var
-echo "$knownSNPs" >> $known_var
-echo "$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_snps_AF0.9.vcf" >> $known_var
-echo "$horse_trans/Var_merge/HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf" >> $known_var
-
-## baseRecalibrator- 1st round
-## it might be better to pass all the library samples into one recalibaryion job
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.realigned.bam"
-  bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_1st.sh"
-done < $horse_trans/working_list_NoPBMCs.txt
-
-# Check for successful baseRecalibrator
-## To be added
-## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "Total runtime" $f | wc -l; done
-## for f in $prepData/*/*/tophat_output/baseRecalibrator-1stR.e*; do echo $f; grep "reads were filtered out during the traversal" $f; done
-
-## baseRecalibrator- 2nd round
-## it might be better to pass all the library samples into one recalibaryion job
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.realigned.bam"
-  bash ${script_path}/run_baseRecalibrator.sh "$known_var" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/baseRecalibrator_2nd.sh";
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Generate before/after plots
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  bash ${script_path}/run_createRecalPlots.sh "$gatk_ref" "$script_path/createRecalPlots.sh";
-done < $horse_trans/working_list_NoPBMCs.txt
-
-## Apply the recalibration to your sequence data
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"split.realigned.bam"
-  bash ${script_path}/run_applyRecalib.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/applyRecalib.sh"
-done < $horse_trans/working_list_NoPBMCs.txt
-###########################
-## variant calling by library
-while read work_dir; do
-  echo $work_dir
-  cd $work_dir/tophat_output
-  sample_list=$work_dir/tophat_output/sample_list.txt
-  target_bam=$"recal_reads.bam"
-  bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi_light.sh"   ## output is HC_output_ploidy1_haplo1.vcf
-done < $horse_trans/working_list_NoPBMCs.txt
-
-# Check for successful baseRecalibrator
-## To be added
-## for f in $prepData/*/*/tophat_output/haplotypeCaller_multi.e*; do echo $f; grep "Total runtime" $f | wc -l; done
-## for f in $prepData/*/*/tophat_output/haplotypeCaller_multi.e*; do echo $f; grep "reads were filtered out during the traversal" $f; done
-
-## Combine Variants
-> $horse_trans/all_variants.txt
-while read work_dir; do
-  echo $work_dir/tophat_output/HC_output_ploidy1_haplo1.vcf >> $horse_trans/all_variants.txt
-done < $horse_trans/working_list_NoPBMCs.txt
-mkdir -p $horse_trans/Var_merge2
-cd $horse_trans/Var_merge2
-sample_list=$horse_trans/all_variants.txt
-bash ${script_path}/run_combineVariants.sh "$gatk_ref" "$sample_list" "$script_path/combineVariants.sh"   ## output is merge_HC_output_ploidy1_haplo1.vcf
-
-## fix annoatation
-target_bam="recal_reads.bam"
-sample_list="$horse_trans/all_samples.txt"
-bash ${script_path}/run_variantAnnotator.sh "$gatk_ref" "$sample_list" "$target_bam" "$script_path/variantAnnotator.sh"   ## output is HC_output_ploidy1_haplo1_ann.vcf
-grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -c -v FS=
-grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -v FS= > noFS
-grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -c -v QD=
-grep -v -P "^#" HC_output_ploidy1_haplo1_ann.vcf | grep -v QD= > noQD
-
-###########################
-## combined Variant calling
-#mkdir $horse_trans/Var_merge3
-#cd $horse_trans/Var_merge3
-#sample_list=$horse_trans/all_samples.txt
-#target_bam=$"recal_reads.bam"
-#bash ${script_path}/run_haplotypeCaller_multi.sh "$knownSNPs" "$gatk_ref" "$sample_list" "$target_bam" "$script_path/haplotypeCaller_multi.sh"   ## output is HC_output_ploidy1_haplo1.vcf
-###########################
-
-bash $script_path/variantFiltration.sh "$gatk_ref" "HC_output_ploidy1_haplo1_ann.vcf"
-grep "^#" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_PASS.vcf
-grep "PASS" HC_output_ploidy1_haplo1_filtered.vcf >> HC_output_ploidy1_haplo1_PASS.vcf
-grep -v "PASS" HC_output_ploidy1_haplo1_filtered.vcf > HC_output_ploidy1_haplo1_FAILED.vcf
-
-grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_indels.vcf
-grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)>1 || length($5)>1' >> HC_output_ploidy1_haplo1_PASS_indels.vcf
-grep "^#" HC_output_ploidy1_haplo1_PASS.vcf > HC_output_ploidy1_haplo1_PASS_snps.vcf
-grep -v "^#" HC_output_ploidy1_haplo1_PASS.vcf | awk 'length($4)==1 && length($5)==1' >> HC_output_ploidy1_haplo1_PASS_snps.vcf
-
+grep -v "^#" GenotypeGVCFs_monoAllel_indels_sig.vcf | wc -l  ##38433
 
 ###########################
 #### liftover the genome variance file to the transcriptome
-assembly="$tissue_Cuffmerge/all_tissues/nonGuided_Cufflinks/nonGuided_Cuffmerge"
-assembly="$tissue_Cuffmerge/Skin/refGeneGuided_Cufflinks/nonGuided_Cuffmerge"
-cd $assembly
+assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered"
+mkdir $assembly/varFixed
+cp $assembly/{merged.gtf,merged.gpred} $assembly/varFixed/.
+cd $assembly/varFixed
 
 ## change merged.gtf to be all +ve starnded
 cat merged.gtf | awk -F "\t" -v OFS='\t' '{ $7 = "+"; print }' > merged_allPositive.gtf
@@ -289,26 +207,28 @@ $script_path/UCSC_kent_commands/gtfToGenePred merged_allPositive.gtf merged_allP
 $script_path/UCSC_kent_commands/genePredToFakePsl -chromSize=$genome_dir/$UCSCgenome.chrom.sizes file merged_allPositive.gpred merged_allPositive.psl /dev/null
 $script_path/UCSC_kent_commands/pslToChain merged_allPositive.psl genomeToTrans_map.chain ## should I use "pslToChain" or "axtChain" ??
 $script_path/UCSC_kent_commands/chainSort genomeToTrans_map.chain genomeToTrans_map.sorted.chain
-chain=$assembly/genomeToTrans_map.sorted.chain
+chain=$assembly/varFixed/genomeToTrans_map.sorted.chain
 
 ## Construct the transcript fasta file by decoderUtil
 bash $script_path/run_genome_to_cdna_fasta.sh "merged_allPositive.gtf" "$genome" "transcripts_allPositive.fa" "$script_path/genome_to_cdna_fasta.sh"
 
-## correct the transcripts with VCF
+## lift over the variants from the genome to the transcriptome
 bash ${script_path}/run_gatk-index.sh transcripts_allPositive.fa
-dict=$assembly/transcripts_allPositive.dict
-inputVCF="HC_output_ploidy1_haplo1_PASS_indels_AF0.9.vcf"
-outputVCF=$assembly/${inputVCF%.vcf}_trans.vcf
-bash $script_path/liftoverVariants.sh "$gatk_ref" "$horse_trans/Var_merge/$inputVCF" "$chain" "$dict" "$outputVCF"
-index=$assembly/transcripts_allPositive.fa.fai
-outputVCF_refSorted=$assembly/${inputVCF%.vcf}_transRefSorted.vcf
+dict=$assembly/varFixed/transcripts_allPositive.dict
+inputVCF="GenotypeGVCFs_monoAllel_sig.vcf"
+outputVCF=$assembly/varFixed/${inputVCF%.vcf}_trans.vcf
+bash $script_path/liftoverVariants.sh "$gatk_ref" "$horse_trans/Var_gvcf/$inputVCF" "$chain" "$dict" "$outputVCF" ## Converted 32249 records; failed to convert 195468 records.
+index=$assembly/varFixed/transcripts_allPositive.fa.fai
+outputVCF_refSorted=$assembly/varFixed/${inputVCF%.vcf}_transRefSorted.vcf
 grep -v "^#" $outputVCF > temp
 perl $script_path/sortByRef.pl temp $index > temp2
 grep "^#" $outputVCF > $outputVCF_refSorted
 cat temp2 >> $outputVCF_refSorted
 rm temp*
-finalVCF=$assembly/${inputVCF%.vcf}_transFinal.vcf
-bash $script_path/filterLiftedVariants.sh "transcripts_allPositive.fa" "$outputVCF_refSorted" "$finalVCF"
+finalVCF=$assembly/varFixed/${inputVCF%.vcf}_transFinal.vcf
+bash $script_path/filterLiftedVariants.sh "transcripts_allPositive.fa" "$outputVCF_refSorted" "$finalVCF"  ## Filtered 1 records out of 32249 total records
+
+## correct the transcripts with VCF
 bash $script_path/fastaAlternateReferenceMaker.sh "transcripts_allPositive.fa" "$finalVCF" "corTranscripts_allPositive.fa"
 
 ## transfer the fasta header names to the new file
@@ -341,15 +261,29 @@ filter_fasta.py --input_fasta_fp corTranscripts_allPositive_fixed.fa --output_fa
 
 ## reverese complement the negativeStrandTrans then unwrap
 module load EMBOSS/6.5.7
-seqret fastq-illumina::s1_pe.fq fastq::${out_path}/quake_data/s1_pe33.fq
 revseq fasta::corNegativeStrandTrans.fa corNegativeStrandTrans_rev.fa
 cat corNegativeStrandTrans_rev.fa | awk '/^>/ {if(N>0) printf("\n"); printf("%s\n",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' > corNegativeStrandTrans_rev_unwrap.fa
 
 ## merge the files to restore one corrected fasta file
-mkdir $assembly/corTransdecoder
-cat corNonNegativeStrandTrans.fa corNegativeStrandTrans_rev_unwrap.fa > $assembly/corTransdecoder/transcripts.fasta
+cat corNonNegativeStrandTrans.fa corNegativeStrandTrans_rev_unwrap.fa > transcripts.fasta
 ## may be we need to sort according to gff3 produced by transdecoder
 
+cd $genome_dir
+$script_path/UCSC_kent_commands/faToTwoBit $genome genome.2bit
+## http://crc.ibest.uidaho.edu/help/Applications/BLAT.html
+blat -makeOoc=11.ooc $genome_dir/genome.2bit /dev/null /dev/null
+
+mkdir $assembly/varFixed/splitTrans
+cd $assembly/varFixed/splitTrans
+cp ../transcripts.fasta .
+$script_path/splitFasta.pl transcripts.fasta 30
+for f in subset*_transcripts.fasta;do
+label=${f%_transcripts.fasta}
+qsub -v genome="$genome_dir/genome.2bit",transcriptome=$f,oocFile="$genome_dir/11.ooc",output=$label."varFixed.psl" $script_path/blat.sh;
+done
+cat subset*.varFixed.psl >> ../varFixed.psl
+cd ../
+sort -k10,10 -k1,1rg varFixed.psl | sort -u -k10,10 --merge > varFixed_best.psl
 
 
 

@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#PBS -l walltime=12:00:00,nodes=1:ppn=4,mem=12Gb
+#PBS -l walltime=12:00:00,nodes=1:ppn=4,mem=124Gb
 #mdiag -A ged
 #PBS -m abe
 #PBS -N haplotypeCaller_multi
@@ -8,7 +8,7 @@ module load GATK/3.4.46
 
 cd $PBS_O_WORKDIR
 
-java -Xmx10g -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx120g -jar $GATK/GenomeAnalysisTK.jar \
 -T HaplotypeCaller \
 -R $gatk_ref \
 -I $sample \
