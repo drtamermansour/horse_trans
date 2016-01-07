@@ -1,4 +1,4 @@
-track all_tissues_frac0.05
+track Filtered
 bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder.BigBed
 shortLabel all_tissues_frac0.05
 longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/transdecoder
@@ -8,7 +8,7 @@ visibility dense
 priority 1
 html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder
  
-track all_tissues_frac0.05
+track Filtered_Fixed 
 bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_varFixed_transdecoder.BigBed
 shortLabel all_tissues_frac0.05
 longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/varFixed/transdecoder
