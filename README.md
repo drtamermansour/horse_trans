@@ -60,8 +60,8 @@ https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hu
 --->
 To add a hub, go to the genome browser home bage. In the My Data menu, open the Track Hubs page and click the [My Hubs](https://genome.ucsc.edu/cgi-bin/hgHubConnect) tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button.
 
-Links for Downloads
--------------------
+Links for Downloads:
+--------------------
 -  [GTF file of filtered assembly](http://de.iplantcollaborative.org/dl/d/DFB23E2B-F749-4AC9-99BB-BC05BEDFAF79/filtered_Alltissues_Assembly.GTF)
 -  [Transcriptome edited by common variants](http://de.iplantcollaborative.org/dl/d/5F00CC13-5775-4AD5-A814-E3AFC768E2D9/varFixed_Transcriptome.fa)
 -  [Tabulated gene TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/8AD5668A-02C3-4E54-AEE3-509E15C54594/allTissues_geneTPM)  
