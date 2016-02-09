@@ -181,7 +181,7 @@ tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>3){A[$2]++}END{for(i in A)print 
 tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>4){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels4.freq
 
 ##########################
-## isolate common variants (AF >= 0.9)
+## isolate common variants (AF >= 0.8)
 grep "^#" GenotypeGVCFs_monoAllel.vcf > GenotypeGVCFs_monoAllel_sig.vcf
 grep -v "^#" GenotypeGVCFs_monoAllel.vcf | awk -F '[\t=;]' '($9 >3 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_sig.vcf
 
@@ -227,6 +227,8 @@ cat temp2 >> $outputVCF_refSorted
 rm temp*
 finalVCF=$assembly/varFixed/${inputVCF%.vcf}_transFinal.vcf
 bash $script_path/filterLiftedVariants.sh "transcripts_allPositive.fa" "$outputVCF_refSorted" "$finalVCF"  ## Filtered 1 records out of 32249 total records
+## Count the no of indels
+grep -v "^#" GenotypeGVCFs_monoAllel_sig_transFinal.vcf | awk '{if($5 !~ /,/ && (length($5)>1 || length($4)>1)){print}}' | wc -l  ## 5628
 
 ## correct the transcripts with VCF
 bash $script_path/fastaAlternateReferenceMaker.sh "transcripts_allPositive.fa" "$finalVCF" "corTranscripts_allPositive.fa"
@@ -287,6 +289,7 @@ sort -k10,10 -k1,1rg varFixed.psl | sort -u -k10,10 --merge > varFixed_best.psl
 $script_path/UCSC_kent_commands/pslToBed varFixed_best.psl varFixed_best.bed
 $script_path/UCSC_kent_commands/bedToGenePred varFixed_best.bed varFixed_best.GenePred
 $script_path/UCSC_kent_commands/genePredToGtf file varFixed_best.GenePred varFixed_best.gtf
+
 
 
 

@@ -816,6 +816,121 @@ while read work_dir; do
 done < $horse_trans/multi_lib_tissues.txt > $horse_trans/tisAsmStats.txt
 
 cp $assembly $tissue_Cuffmerge/$cuffmerge_output/filtered/.
+
+## copy tabulated expression files to the download folder
+cp $assembly $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
+###################
+## calculate tissue specific expression
+targets=()
+i=1
+rm temp.*
+for f in *.dataSummary_comp;do
+  cat $f | tail -n+2 | awk '{print $2,$7}' | uniq > $f.gene
+  cat $f | tail -n+2 | awk '{print $3,$6}' > $f.isoform
+  target=${f%.dataSummary_comp}
+  targets+=($target)
+  if [ $i -eq 1 ];then cat $f.gene > temp.$i;else join -t" " --nocheck-order temp.$((i-1)) $f.gene > temp.$i;fi
+  if [ $i -eq 1 ];then cat $f.isoform > isotemp.$i;else join -t" " --nocheck-order isotemp.$((i-1)) $f.isoform > isotemp.$i;fi
+  ((i+=1))
+done
+echo "geneName" "${targets[@]}" > allTargets_geneTPM
+cat temp.$((i-1)) >> allTargets_geneTPM
+cat allTargets_geneTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_geneTPM
+echo "isoformName" "${targets[@]}" > allTargets_isoformTPM
+cat isotemp.$((i-1)) >> allTargets_isoformTPM
+cat allTargets_isoformTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_isoformTPM
+
+> tissueSpecificSummary
+echo ##print no of gene/isoform expressed, expressed uniqelly, not expressed uniquelly
+echo "BrainStem" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Cerebellum" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Embryo.ICM" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Embryo.TE" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Muscle" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Retina" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "Skin" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
+
+echo "SpinalCord" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+
+echo "All Tissues" >> tissueSpecificSummary
+cat allTissues_geneTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
+
+cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+
+## copy tabulated expression files to the download folder
+cp allTissues_geneTPM allTissues_isoformTPM $horse_trans/downloads/.
 ###################
 ## create hub for filtered data
 ## create list of assemblies from each library
@@ -915,6 +1030,45 @@ while read asm_name ref_assembly;do
   mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
 done < assmblies.txt
 
+assembly=$pubAssemblies/Hestand_2014/7666675698.gtf
+while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+  mkdir -p $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
+  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
+  identifier="Hestand_2014.vs.$asm_name"
+  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+fi; done < assmblies.txt
+cd $horse_trans/cuffcompare
+while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
+  identifier="Hestand_2014.vs.$asm_name"
+  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+fi; done < assmblies.txt
+
+assembly=$pubAssemblies/ISME.PBMC/withoutLow.gtf
+while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+  mkdir -p $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
+  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
+  identifier="ISME.PBMC.vs.$asm_name"
+  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+fi; done < assmblies.txt
+cd $horse_trans/cuffcompare
+while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
+  identifier="ISME.PBMC.vs.$asm_name"
+  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+fi; done < assmblies.txt
+
+cd $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI
+## change of isoform length
+cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $2,$5,$11,$13}' > matchingIsoforms  ## ref_Id, cuff_Id, Cuff_len, ref_len
+cat matchingIsoforms | awk '{print $3-$4}' > matching_lenDif ## 10427
+cat matchingIsoforms | awk '($3-$4)>0' > matching_increased ## 9471
+cat matching_increased | awk '{total = total + ($3-$4)}END{print total}'  ## 31822943 (~3.3Kb on ave)
+cat matchingIsoforms | awk '($3-$4)<0' > matching_decreased ## 949
+cat matching_decreased | awk '{total = total + ($4-$3)}END{print total}'  ## 31822943 (~0.4Kb on ave)
+cat matchingIsoforms | awk '($3-$4)==0' > matching_noChange ## 7
+## novel transcripts
+cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
@@ -928,7 +1082,6 @@ for f in refGTF_file ncbiNoNameGTF_file ensGTF_file alltissueGTF_file; do
   cp ${!f} ${f}.gtf
   cat ${!f} | gzip > ${f}.gtf.gz
 done
-
 ## create ExonMerge trackhup
 ## merge transcripts per loci
 #for f in *GTF_file.gtf; do
@@ -1053,9 +1206,34 @@ $decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > tr
 ## exclude transcripts with single exon for better visualization
 cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
+tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_ID
+tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
+paste Trans_ID ORF_len > all_ORFs
+sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
+
+## check for the coding novel transcrips
+cat $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
+grep -F -f new_transcripts_key transcripts.fasta.transdecoder.genome.bed > new_transcripts_key.transdecoder.genome.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 == 1' > new_transcripts_key.transdecoder.genome.Singleexon.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 1' > tnew_transcripts_key.transdecoder.genome.multiexon.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 2' > tnew_transcripts_key.transdecoder.genome.multiexon2.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 3' > tnew_transcripts_key.transdecoder.genome.multiexon3.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 4' > tnew_transcripts_key.transdecoder.genome.multiexon4.bed
+cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 5' > tnew_transcripts_key.transdecoder.genome.multiexon5.bed
+
+
+cat new_transcripts_key.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 9726
+cat tnew_transcripts_key.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 1901
+cat tnew_transcripts_key.transdecoder.genome.multiexon2.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 837
+cat tnew_transcripts_key.transdecoder.genome.multiexon3.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 397
+cat tnew_transcripts_key.transdecoder.genome.multiexon4.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 220
+cat tnew_transcripts_key.transdecoder.genome.multiexon5.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 126
+
+
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
 bash ${script_path}/main-variantAnalysis.gvcfMode.sh
+cp $assembly/varFixed/transcripts.fasta $horse_trans/downloads/varFixed_Transcriptome.fa
 
 ###########################################################################################
 ## run Transdecoder to predict UTRs with homology options
@@ -1092,6 +1270,36 @@ grep "Warning" sterr > warnings.txt && rm sterr
 $decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 ## exclude transcripts with single exon for better visualization
 cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
+
+tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_ID
+tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
+paste Trans_ID ORF_len > all_ORFs
+sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
+join $assembly/transdecoder/longest_ORFs $assembly/varFixed/transdecoder/longest_ORFs > compare_fixation
+cat compare_fixation | awk '$3>$2' > increased_list   ## 472
+cat compare_fixation | awk '($3-$2)>1' | wc -l ## 428
+
+cat compare_fixation | awk '$3<$2' > decreased_list   ## 291
+join -v1 $assembly/transdecoder/longest_ORFs $assembly/varFixed/transdecoder/longest_ORFs > uniqforUnfixed   ## 188
+join -v2 $assembly/transdecoder/longest_ORFs $assembly/varFixed/transdecoder/longest_ORFs > uniqforFixed  ## 176
+
+cat increased_list uniqforFixed | awk '{print "ID="$1"|"}' > increase_keys  ## 648
+cat decreased_list uniqforUnfixed | awk '{print "ID="$1"|"}' > decrease_keys  ## 479
+
+## check for the increase_keys in the new assembly while check for decrease_keys in the old assembly
+grep -F -f increase_keys transcripts.fasta.transdecoder.genome.bed > increase_keys.transdecoder.genome.bed
+cat increase_keys.transdecoder.genome.bed | awk '$10 == 1' > increase_keys.transdecoder.genome.Singleexon.bed
+cat increase_keys.transdecoder.genome.bed | awk '$10 > 1' > increase_keys.transdecoder.genome.multiexon.bed
+cat increase_keys.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 562
+cat increase_keys.transdecoder.genome.Singleexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 112
+cat increase_keys.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 450
+
+grep -F -f decrease_keys $assembly/transdecoder/transcripts.fasta.transdecoder.genome.bed > decrease_keys.transdecoder.genome.bed
+cat decrease_keys.transdecoder.genome.bed | awk '$10 == 1' > decrease_keys.transdecoder.genome.Singleexon.bed
+cat decrease_keys.transdecoder.genome.bed | awk '$10 > 1' > decrease_keys.transdecoder.genome.multiexon.bed
+cat decrease_keys.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 452
+cat decrease_keys.transdecoder.genome.Singleexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 252
+cat decrease_keys.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 200
 
 
 ## calculate the phase of Transdecoder GFF3 files
