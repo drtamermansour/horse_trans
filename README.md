@@ -12,14 +12,13 @@ This github project contains all the scripts required to reproduce the analysis 
 
 Coding guidelines in this project
 ---------------------------------
-- All the scripts of the project are housed in the script folder
-- The "main.sh" script represents the index page of the whole project. Scripts that I used for any special functions which are not referenced in the main script are found in a subfolder called "special".
-- All the directory structure of the project goes back to a common working directory. You need to assess the path of your working directory to the variable myRoot at the beginning of the main script
+- Fork the horse_trans repository to your Github account, clone it to your local machine, and Configure Git to sync your fork with the original repository (if you want). To learn more about doing this, you can check the [github documenation](https://help.github.com/articles/fork-a-repo/)  
+- The "main.sh" script represents the index page of the whole project. The first section of the main script should construct the basic diretory structure for you.
 - Preparation of the input data:
       <p align="center">
          <img src="directory_structure.png" width="300"/>
       </p>
-   * Every tissue has a separate folder carrying its name (maximum 14 letter)
+   * Every tissue has a separate folder carrying its name (maximum 14 letter). All tissue folders should be housed in the prepdata folder (a folder that was created in the previous step)
    * Every RNAseq library should have a separate folder in the corresponding tissue folder.
    * The library folder name should have this format:
       - start with PE_ or SE_ according to the sequencing type
