@@ -1,6 +1,8 @@
 #!/bin/sh
 
 ## construction of the basic diretory structure
+git clone https://github.com/drtamermansour/horse_trans.git
+cd horse_trans
 horse_trans=$(pwd)
 mkdir -p $horse_trans/{resources,prepdata,tissue_merge,refGenome,public_assemblies} ## you should have 2 folders already (scripts&track_hub) by cloning the original repository.  
 
