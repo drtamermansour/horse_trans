@@ -1,21 +1,20 @@
 #!/bin/sh
 
 ## construction of the basic diretory structure
-myRoot=$(pwd)
-mkdir -p $myRoot/horse_trans/{resources,prepdata,tissue_merge,refGenome,public_assemblies} ## you should have 2 folders already (scripts&track_hub) by cloning the original repository.  
+horse_trans=$(pwd)
+mkdir -p $horse_trans/{resources,prepdata,tissue_merge,refGenome,public_assemblies} ## you should have 2 folders already (scripts&track_hub) by cloning the original repository.  
 
 ## create a config file to contain all the pathes to be used by all pipelines
-> $myRoot/config.txt
-echo "horse_trans=$myRoot/horse_trans" >> $myRoot/config.txt
-echo "script_path=$myRoot/horse_trans/scripts" >> $myRoot/config.txt
-echo "resources=$myRoot/horse_trans/resources" >> $myRoot/config.txt
-echo "rawData=$myRoot/horse_trans/rawdata" >> $myRoot/config.txt
-echo "prepData=$myRoot/horse_trans/prepdata" >> $myRoot/config.txt
-echo "tissue_merge=$myRoot/horse_trans/tissue_merge" >> $myRoot/config.txt
-echo "genome_dir=$myRoot/horse_trans/refGenome" >> $myRoot/config.txt
-echo "pubAssemblies=$myRoot/horse_trans/public_assemblies" >> $myRoot/config.txt
-echo "track_hub=$myRoot/horse_trans/track_hub" >> $myRoot/config.txt
-source $myRoot/config.txt
+> $horse_trans/config.txt
+echo "script_path=$horse_trans/scripts" >> $horse_trans/config.txt
+echo "resources=$horse_trans/resources" >> $horse_trans/config.txt
+echo "rawData=$horse_trans/rawdata" >> $horse_trans/config.txt
+echo "prepData=$horse_trans/prepdata" >> $horse_trans/config.txt
+echo "tissue_merge=$horse_trans/tissue_merge" >> $horse_trans/config.txt
+echo "genome_dir=$horse_trans/refGenome" >> $horse_trans/config.txt
+echo "pubAssemblies=$horse_trans/public_assemblies" >> $horse_trans/config.txt
+echo "track_hub=$horse_trans/track_hub" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 
 ## download the UCSC kent commands in the script path
 ## http://genome-source.cse.ucsc.edu/gitweb/?p=kent.git;a=blob;f=src/userApps/README
@@ -166,24 +165,24 @@ tar xvzf chromFa.tar.gz
 mkdir -p $genome_dir/Bowtie2Index && cd $genome_dir/Bowtie2Index
 cat ../*.fa > genome.fa
 bash ${script_path}/run_bowtie2-build.sh genome.fa genome
-echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $myRoot/config.txt
-echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $horse_trans/config.txt
+echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 
 ## prepare BWA index (for GATK variant analysis)
 mkdir -p $genome_dir/BwaIndex && cd $genome_dir/BwaIndex
 cat ../*.fa > genome.fa
 bash ${script_path}/run_bwa-index.sh genome.fa
-echo "Bwa_ref=$genome_dir/BwaIndex/genome.fa" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "Bwa_ref=$genome_dir/BwaIndex/genome.fa" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 
 ## prepare GATK dictionary and index (for GATK variant analysis)
 mkdir -p $genome_dir/gatkIndex && cd $genome_dir/gatkIndex
 cat ../*.fa > genome.fa
 bash ${script_path}/run_gatk-index.sh genome.fa
-echo "gatk_ref=$genome_dir/gatkIndex/genome.fa" >> $myRoot/config.txt
-echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "gatk_ref=$genome_dir/gatkIndex/genome.fa" >> $horse_trans/config.txt
+echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 ###########################################################################################
 ## create liftover files
 ## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
@@ -208,13 +207,13 @@ wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/refGene.txt.gz
 ucscTable=$"refGene.txt.gz"
 output_GTF=$"refGene.gtf"
 bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
-echo "refGTF_file=$genome_dir/refGene.gtf" >> $myRoot/config.txt
+echo "refGTF_file=$genome_dir/refGene.gtf" >> $horse_trans/config.txt
 output_GTF=$"refGene_transcripts.gtf"
 bash ${script_path}/ucscTableToGTF2.sh $ucscTable $output_GTF
-echo "refTransGTF_file=$genome_dir/refGene_transcripts.gtf" >> $myRoot/config.txt
+echo "refTransGTF_file=$genome_dir/refGene_transcripts.gtf" >> $horse_trans/config.txt
 zcat $ucscTable | cut -f2-16 | $script_path/genePredToBed > refGene.bed
-echo "refBED_file=$genome_dir/refGene.bed" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "refBED_file=$genome_dir/refGene.bed" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 
 ## Get the NCBI annotation files
 wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/GFF/ref_EquCab2.0_top_level.gff3.gz
@@ -225,33 +224,33 @@ $script_path/UCSC_kent_commands/gff3ToGenePred -useName ref_EquCab2.0_top_level_
 egrep "^rna|^NM|^NR|^XM|^XR" ref_EquCab2.0_top_level.gpred > ref_EquCab2.0_top_level_rna.gpred
 $script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_rna.gpred $genome_dir/ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_rna.gpred unMapped -genePred
 $script_path/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_rna.gpred ref_EquCab2.0_top_level_rna.gtf
-echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level_rna.gtf" >> $myRoot/config.txt
+echo "ncbiGTF_file=$genome_dir/ref_EquCab2.0_top_level_rna.gtf" >> $horse_trans/config.txt
 cat ref_EquCab2.0_top_level_mapped_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_rna.bed
-echo "ncbiBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_rna.bed" >> $myRoot/config.txt
+echo "ncbiBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_rna.bed" >> $horse_trans/config.txt
 
 $script_path/UCSC_kent_commands/gff3ToGenePred ref_EquCab2.0_top_level_edit.gff3 ref_EquCab2.0_top_level_noName.gpred
 ## exclude non RNA entries e.g. CDs with no parant transcripts, gene_segments, ..
 grep "^rna" ref_EquCab2.0_top_level_noName.gpred > ref_EquCab2.0_top_level_noName_rna.gpred
 $script_path/UCSC_kent_commands/liftOver ref_EquCab2.0_top_level_noName_rna.gpred ncbi/NCBItoUCSC_map.sorted.chain ref_EquCab2.0_top_level_mapped_noName_rna.gpred unMapped_noName -genePred
 $script_path/UCSC_kent_commands/genePredToGtf file ref_EquCab2.0_top_level_mapped_noName_rna.gpred ref_EquCab2.0_top_level_noName_rna.gtf
-echo "ncbiNoNameGTF_file=$genome_dir/ref_EquCab2.0_top_level_noName_rna.gtf" >> $myRoot/config.txt
+echo "ncbiNoNameGTF_file=$genome_dir/ref_EquCab2.0_top_level_noName_rna.gtf" >> $horse_trans/config.txt
 cat ref_EquCab2.0_top_level_mapped_noName_rna.gpred | $script_path/genePredToBed > ref_EquCab2.0_top_level_mapped_noName_rna.bed
-echo "ncbiNoNameBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_noName_rna.bed" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "ncbiNoNameBED_file=$genome_dir/ref_EquCab2.0_top_level_mapped_noName_rna.bed" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 
 ## Get the ensemble GTF files
 wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/ensGene.txt.gz
 ucscTable=$"ensGene.txt.gz"
 output_GTF=$"ensGene.gtf"
 bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
-echo "ensGTF_file=$genome_dir/ensGene.gtf" >> $myRoot/config.txt
+echo "ensGTF_file=$genome_dir/ensGene.gtf" >> $horse_trans/config.txt
 zcat $ucscTable | cut -f2-16 | $script_path/genePredToBed > ensGene.bed
-echo "ensBED_file=$genome_dir/ensGene.bed" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "ensBED_file=$genome_dir/ensGene.bed" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 #wget ftp://ftp.ensembl.org/pub/release-80/gtf/equus_caballus/Equus_caballus.EquCab2.80.gtf.gz
 #gunzip Equus_caballus.EquCab2.80.gtf.gz
-#echo "ensGTF_file=$genome_dir/Equus_caballus.EquCab2.80.gtf" >> $myRoot/config.txt
-#source $myRoot/config.txt
+#echo "ensGTF_file=$genome_dir/Equus_caballus.EquCab2.80.gtf" >> $horse_trans/config.txt
+#source $horse_trans/config.txt
 ###########################################################################################
 ## get known variants
 mkdir $genome_dir/knowVar
@@ -267,19 +266,19 @@ sed -i 's/chrMT/chrM/g' Equus_caballus_structural_variations_fixedChrNames.vcf
 perl $script_path/sortByRef.pl Equus_caballus_structural_variations_fixedChrNames.vcf $gatk_ref_index > Equus_caballus_structural_variations_fixedChrNames_sorted.vcf
 grep "^#" Equus_caballus_structural_variations.vcf > Equus_caballus_structural_variations_final.vcf
 cat Equus_caballus_structural_variations_fixedChrNames_sorted.vcf >> Equus_caballus_structural_variations_final.vcf
-echo "knownIndels=$genome_dir/knowVar/Equus_caballus_structural_variations_final.vcf" >> $myRoot/config.txt
+echo "knownIndels=$genome_dir/knowVar/Equus_caballus_structural_variations_final.vcf" >> $horse_trans/config.txt
 grep -v "^#" Equus_caballus.vcf | awk -F "\t" -v OFS='\t' '{ print "chr"$1,$2,$3,$4,$5,$6,$7,$8 }' > Equus_caballus_fixedChrNames.vcf
 sed -i 's/chrMT/chrM/g' Equus_caballus_fixedChrNames.vcf
 perl $script_path/sortByRef.pl Equus_caballus_fixedChrNames.vcf $gatk_ref_index > Equus_caballus_fixedChrNames_sorted.vcf
 grep "^#" Equus_caballus.vcf > Equus_caballus_final.vcf
 #cat Equus_caballus_fixedChrNames_sorted.vcf >> Equus_caballus_final.vcf
 grep "TSA=SNV" Equus_caballus_fixedChrNames_sorted.vcf >> Equus_caballus_final.vcf
-echo "knownSNPs=$genome_dir/knowVar/Equus_caballus_final.vcf" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "knownSNPs=$genome_dir/knowVar/Equus_caballus_final.vcf" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 ###########################################################################################
 ### Initiate the basic structure for horse track hubs
-echo "UCSCgenome=equCab2" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "UCSCgenome=equCab2" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 ## fetch the UCSC database to get the chromosome sizes
 chromSizes=$genome_dir/$UCSCgenome.chrom.sizes
 bash ${script_path}/calcChromSizes.sh $UCSCgenome $chromSizes
@@ -347,22 +346,22 @@ wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/c
 gunzip uniprot_sprot.fasta.gz
 #wget ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz
 #gunzip uniref90.fasta.gz
-echo "refPtn=$genome_dir/ptnDB/uniprot_sprot.fasta" >> $myRoot/config.txt
-#echo "refPtn=$genome_dir/ptnDB/uniref90.fasta" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "refPtn=$genome_dir/ptnDB/uniprot_sprot.fasta" >> $horse_trans/config.txt
+#echo "refPtn=$genome_dir/ptnDB/uniref90.fasta" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 bash $script_path/make_ptnDB.sh $refPtn
 #bash $script_path/make_ptnDB.sh $refPtn
 
 ## download pfam database
 wget ftp://ftp.broadinstitute.org/pub/Trinity/Trinotate_v2.0_RESOURCES/Pfam-A.hmm.gz
 gunzip Pfam-A.hmm.gz
-echo "refPfam=$genome_dir/ptnDB/Pfam-A.hmm" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "refPfam=$genome_dir/ptnDB/Pfam-A.hmm" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 bash $script_path/make_PfamDB.sh $refPfam
 ###########################################################################################
 ## build Tophat transcriptome-index
-echo "transcriptome_index=$genome_dir/trans_index/equ" >> $myRoot/config.txt
-source $myRoot/config.txt
+echo "transcriptome_index=$genome_dir/trans_index/equ" >> $horse_trans/config.txt
+source $horse_trans/config.txt
 bash ${script_path}/buildTransIndex.sh "$refGTF_file" "$transcriptome_index" "$Bowtie2_genome_index_base"
 ###########################################################################################
 #### Mapping
