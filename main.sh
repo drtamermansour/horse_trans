@@ -1,9 +1,8 @@
 #!/bin/sh
 
 ## construction of the basic diretory structure
-## you need to change myRoot to match you actual working directory
-myRoot=$"/mnt/ls15/scratch/users/mansourt/Tamer"
-mkdir -p $myRoot/horse_trans/{scripts,resources,rawdata,prepdata,tissue_merge,refGenome,public_assemblies,track_hub}
+myRoot=$(pwd)
+mkdir -p $myRoot/horse_trans/{resources,prepdata,tissue_merge,refGenome,public_assemblies} ## you should have 2 folders already (scripts&track_hub) by cloning the original repository.  
 
 ## create a config file to contain all the pathes to be used by all pipelines
 > $myRoot/config.txt
