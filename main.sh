@@ -69,7 +69,7 @@ while read work_dir; do
   tissue=$(dirname $work_dir | xargs basename)
   no=$(cat $sample_list | wc -l)
   echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/raw_statistics.txt
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 ###########################################################################################
 ## prepare sorted working list accoding to read length
@@ -88,7 +88,7 @@ while read work_dir; do
   lib=$(basename $work_dir | cut -d"_" -f 1)                   ## PE or SE
   sample_list=$work_dir/fastq_data/sample_list.txt
   bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 ## Check for successful trimming and trouble shooting the failed trimming jobs (requires T_Trim.e)
 while read work_dir; do
@@ -101,7 +101,7 @@ while read work_dir; do
     echo "Failed jobs in: "$work_dir
     bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
   fi
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 #### merge singletones
 while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
@@ -113,7 +113,7 @@ while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
   for f in $work_dir/trimmed_RNA_reads/*_R1_*.pe.fq; do if [ -f $f ]; then echo $f; fr=$(basename $f | sed 's/_R1_/_R_/'); fr2=$(echo $fr | sed 's/.pe.fq/.se.fq/'); newf=$(basename $f | sed 's/.pe.fq/.pe.se.fq/'); cat $f $fr2 > $newf; fi; done;
   #rm {*_R1_*.pe.fq,*.se.fq}   ## all what you need *_R1_*.pe.se.fq and *_R2_*.pe.fq
 fi
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 ## define the list samples for subsequent analysis
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
@@ -121,7 +121,7 @@ while read work_dir; do if [ -d $work_dir/trimmed_RNA_reads ]; then
   rm -f $work_dir/trimmed_RNA_reads/sample_list.txt
   for f in $work_dir/trimmed_RNA_reads/{*_R1_*.pe.se.fq,*_SR_*.se.fq}; do if [ -f $f ]; then
     echo $f >> $work_dir/trimmed_RNA_reads/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 
 ###########################################################################################
 ## Assess read length statistics after trimming
@@ -154,7 +154,7 @@ while read work_dir; do
     cat sample_list.txt | xargs cat | awk '{if(NR%4==2) print length($1)}' > trimmed.readslength.txt
     stat=$(Rscript -e 'd<-scan("trimmed.readslength.txt", quiet=TRUE); cat(round(length(d)/10^6,2), round(sum(d)/10^9,2), min(d), max(d), median(d), mean(d), sep="\t");')
     echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/trimmed_statistics.txt
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 ###########################################################################################
 ## get the referenece genome
 cd $genome_dir
@@ -378,7 +378,7 @@ while read work_dir; do
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
   sample_list=$work_dir/trimmed_RNA_reads/sample_list.txt
   bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"   ## Tophat sort by coordinate
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 ## Check for successful tophat runs and trouble shooting the failed tophat jobs
 while read work_dir; do
@@ -395,7 +395,7 @@ while read work_dir; do
     echo "Failed tophat jobs in: "$work_dir
     bash ${script_path}/run_tophat.sh "$failedSample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
   fi
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 ##################
 ## create summary for tophat run
 headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "min_concordance", "max_concordance", sep="\t");')
@@ -413,7 +413,7 @@ while read work_dir; do
   lib=$(basename $work_dir)
   tissue=$(dirname $work_dir | xargs basename)
   echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/tophat_summary.txt
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 ##################
 ## define the list samples.
 ## This is where you can edit the output list file(s) to restrict the processing for certain target(s)
@@ -421,7 +421,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   rm -f $work_dir/tophat_output/preMerge_sample_list.txt
   for f in $work_dir/tophat_output/tophat_*/accepted_hits.bam; do if [ -f $f ]; then
     echo $f >> $work_dir/tophat_output/preMerge_sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ###########################################################################################
 ## Add Read group headers
 while read work_dir; do
@@ -430,7 +430,7 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/preMerge_sample_list.txt
   replicates_list=$work_dir/fastq_data/replicates.txt
   bash ${script_path}/run_readGroupInfo_illumina.sh "$sample_list" "$replicates_list" "$lib" "${script_path}/readGroupInfo_illumina.sh"
-done < $horse_trans/working_list_Cerebellum.txt
+done < $horse_trans/working_list.txt
 
 ## Check for successful adding of groupread
 ## To be added
@@ -445,7 +445,7 @@ while read work_dir; do
   if [ -f $replicates_list ]; then
     bash ${script_path}/run_mergeBAM.sh "$replicates_list" "${script_path}/mergeBAM.sh" ## picard tools sort by coordinate
   else echo "No replicates file in" $work_dir;
-fi; done < $horse_trans/working_list_Cerebellum.txt
+fi; done < $horse_trans/working_list.txt
 
 ## check for successful merging
 ## To be added
@@ -456,7 +456,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   rm -f $work_dir/tophat_output/sample_list.txt
   for f in $work_dir/tophat_output/tophat_*; do if [ -d $f ]; then
     echo $f >> $work_dir/tophat_output/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 ###########################################################################################
 #### pipeline_OneSampleAtaTime_Tophat2.Cufflinks.Cuffmerge
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
@@ -468,7 +468,7 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/sample_list.txt
   #bash ${script_path}/run_cufflinks_wRef.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
   bash ${script_path}/run_cufflinks_noRef.sh "$sample_list" "$script_path/cufflinks_noRef.sh";
-done < $horse_trans/working_list_Embryo.txt
+done < $horse_trans/working_list.txt
 
 ## Check for successful Cufflinks runs and trouble shooting the failed Cufflinks jobs (requires cufflinks.e)
 while read work_dir; do
@@ -481,7 +481,7 @@ while read work_dir; do
     cat $failedSample_list
     #bash ${script_path}/run_cufflinks_wRef.sh "$failedSample_list" "$refGTF_file" "$script_path/cufflinks.sh";
     bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$script_path/cufflinks_noRef2.sh"
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 
 ## downsample the failed samples to peak coverage 1000x
 ## convert the tophat output BAM files into Fastq files
@@ -495,7 +495,7 @@ while read work_dir; do
     cat $failedSample_list
     lib=$(basename $work_dir | cut -d"_" -f 1)
     bash ${script_path}/run_BamToFastq.sh "$failedSample_list" "$lib" "-" "$script_path/restore_mapped_trimmed.sh"
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ## run digital normalization of lab specific tissues (need to be updated to use sample list and check for success)
 kmer=20
 cutoff=200
@@ -505,7 +505,7 @@ while read work_dir; do
     cd $data_dir
     bash ${script_path}/run_diginorm.sh "$lib" "$data_dir" "$kmer" "$cutoff" "$script_path"
   fi; done < $work_dir/tophat_output/failedSamples.txt
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt
 ## split the interleaved reads
 while read work_dir; do
   sample_list=$work_dir/tophat_output/failedSamples.txt
@@ -514,7 +514,7 @@ while read work_dir; do
   if [ $x -ne 0 ] && [ "$lib" = $"PE" ]; then
   echo $work_dir
   bash ${script_path}/run_split_reads.sh "$sample_list" $script_path/split_reads.sh
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ## merge singletons and change the file names to fir the tophat script
 while read work_dir; do
   sample_list=$work_dir/tophat_output/failedSamples.txt
@@ -527,7 +527,7 @@ while read work_dir; do
     cat $f allsingletons.fq.keep > "$base"_R1_001.pe.se.fq;
   elif [ $x -ne 0 ] && [ "$lib" = $"SE" ]; then
     mv allsingletons.fq.keep allsingletons_SR_001.se.fq
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ## run Tophat on each sample
 while read work_dir; do
   x=$(cat $work_dir/tophat_output/failedSamples.txt | wc -l)
@@ -542,13 +542,13 @@ while read work_dir; do
     strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
     sample_list=$work_dir/tophat_output/failedSamples_forTophat.txt
     bash ${script_path}/run_tophat.sh "$sample_list" "$lib" "$strand" "$Bowtie2_genome_index_base" "$transcriptome_index" "$script_path"
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ## define the list samples.
 while read work_dir; do if [ -d $work_dir/tophat_output/digi_tophat_output ]; then
   rm -f $work_dir/tophat_output/digi_tophat_output/sample_list.txt
   for f in $work_dir/tophat_output/digi_tophat_output/tophat_*; do if [ -d $f ]; then
     echo $f >> $work_dir/tophat_output/digi_tophat_output/sample_list.txt; fi; done;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
 while read work_dir; do
   echo $work_dir
@@ -556,7 +556,7 @@ while read work_dir; do
   sample_list=$work_dir/tophat_output/digi_tophat_output/sample_list.txt
   #bash ${script_path}/run_cufflinks_wRef.sh "$sample_list" "$refGTF_file" "$script_path/cufflinks.sh";
   bash ${script_path}/run_cufflinks_noRef.sh "$sample_list" "$script_path/cufflinks_noRef_mask.sh";
-done < $horse_trans/working_list_Cerebellum.txt    #working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt    
 ## relocate the cufflinks analysis results
 while read work_dir; do
   while read sample_dir;do if [ -d $sample_dir ];then
@@ -564,7 +564,7 @@ while read work_dir; do
     target_dir=$work_dir/tophat_output/$(basename $sample_dir)
     cp $sample_dir/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $target_dir/.
   fi; done < $work_dir/tophat_output/digi_tophat_output/sample_list.txt
-done < $horse_trans/working_list_Cerebellum.txt    #working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt
 
 ############
 ## Assess computational utilization of cufflinks
@@ -574,7 +574,7 @@ while read work_dir; do
   cd $work_dir/tophat_output
   sample_list=$work_dir/tophat_output/sample_list.txt
   bash ${script_path}/assess_cufflinks_utlization.sh "$sample_list" "$cufflinks_utlization"
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt
 ############
 ## relocate the cufflinks analysis results
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
@@ -583,7 +583,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
     cd $dir
     mkdir $cufflinks_run && \
     mv "$dir"/{transcripts.gtf,skipped.gtf,*.fpkm_tracking,cufflinks.[oe]*} $cufflinks_run/.; fi; done
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 ########################
 ### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/$cufflinks_run/$cuffmerge_run
 #cuffmerge_run="refGeneGuided_Cuffmerge"
@@ -597,7 +597,7 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "${cufflinks_run}_assemblies.txt" "$refGTF_file"
   isoformfrac=0.05    ## value 1-0.05 & default= 0.05
   bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "${cufflinks_run}_assemblies.txt"
-fi; done < $horse_trans/working_list_Embryo.txt
+fi; done < $horse_trans/working_list.txt
 ## http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#transfrag-class-codes
 ##################
 ### cuffmerge the lab-specific tissue assemblies into tissue specific assemblies
@@ -629,7 +629,7 @@ cd $tissue_Cuffmerge
 rm -f $prepData/${cufflinks_run}_assemblies.txt
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/${cufflinks_run}_assemblies.txt
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 
 isoformfrac=0.05    ## value 1-0.05 & default= 0.05
 #isoformfrac=0.2    ## value 1-0.05 & default= 0.05
@@ -647,7 +647,7 @@ while read work_dir; do
   dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run
   if [ -d $dir ]; then
     echo "$prepData" "${dir#$prepData/}" >> $prepData/${cufflinks_run}_${cuffmerge_run}_merged_raw.assemblies.txt;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_raw.assemblies.txt
@@ -736,7 +736,7 @@ while read work_dir; do
   identifier=$(echo $work_dir | rev | cut -d"/" -f 1,2 | rev | sed 's/\//_/')
   seq_dir=$work_dir/trimmed_RNA_reads
   bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt
 find ./*.quant -name \*.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
 python $script_path/gather-counts.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
@@ -778,7 +778,7 @@ while read work_dir; do
   identifier=$(echo $work_dir | rev | cut -d"/" -f 1,2 | rev | sed 's/\//_/')
   seq_dir=$work_dir/trimmed_RNA_reads
   bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
-done < $horse_trans/working_list_NoPBMCs.txt
+done < $horse_trans/working_list.txt
 find ./*.quant -name *.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
 python $script_path/gather-counts2.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
@@ -799,7 +799,7 @@ while read work_dir; do
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
-done < $horse_trans/working_list_NoPBMCs.txt > $horse_trans/libAsmStats.txt
+done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
 
 while read work_dir; do
   target=$(basename $work_dir)
@@ -938,7 +938,7 @@ while read work_dir; do
   dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/filtered
   if [ -d $dir ]; then
     echo "$prepData" "${dir#$prepData/}" >> $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt;
-fi; done < $horse_trans/working_list_NoPBMCs.txt
+fi; done < $horse_trans/working_list.txt
 
 ## create list of assemblies for tissues of multiple libraries
 rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt
