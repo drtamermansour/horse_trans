@@ -1,4 +1,4 @@
-bif [ $# -lt 3 ]
+if [ $# -lt 3 ]
 then
     printf "\nUsage run_bowtie2-build.sh [Genome file in fasta format] [Genome index base] [platform]\n"
     exit 0
