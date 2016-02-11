@@ -9,3 +9,4 @@ sudo apt-get -y install screen git curl gcc make g++ python-dev unzip \
 source $horse_trans/config.txt
 echo -e ">PrefixPE/1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PrefixPE/2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n" >  $script_path/TruSeq3-PE.fa
 
+sudo apt-get install bowtie2

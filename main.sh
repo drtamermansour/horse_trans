@@ -169,7 +169,7 @@ tar xvzf chromFa.tar.gz
 ## prepare Bowtie2Index (for Tophat mapping)
 mkdir -p $genome_dir/Bowtie2Index && cd $genome_dir/Bowtie2Index
 cat ../*.fa > genome.fa
-bash ${script_path}/run_bowtie2-build.sh genome.fa genome
+bash ${script_path}/run_bowtie2-build.sh genome.fa genome $platform
 echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $horse_trans/config.txt
 echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $horse_trans/config.txt
 source $horse_trans/config.txt
