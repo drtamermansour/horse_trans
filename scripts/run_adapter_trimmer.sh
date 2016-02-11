@@ -26,7 +26,7 @@ if [ $lib = $"PE" ]; then
       qsub -v R1_INPUT="$input_one",R2_INPUT="$input_two",output_pe1="$output_pe1",output_pe2="$output_pe2",output_se1="$output_se1",output_se2="$output_se2" $script_path/adapter_trimmer_PE.sh
     elif [ $platform == $"AMZ" ];then
       bash $script_path/adapter_trimmer_PE_AMZ.sh "$input_one" "$input_two" "$output_pe1" "$output_pe2" "$output_se1" "$output_se2" 
-    else echo "Platform should be either HPC or AMZ"
+    else echo "Platform should be either HPC or AMZ";fi
   done < $sample_list
 
 elif [ $lib = $"SE" ]; then
@@ -37,8 +37,9 @@ elif [ $lib = $"SE" ]; then
     output=$temp2".se.fq"
     if [ $platform == $"HPC" ];then 
       qsub -v INPUT="$f",output="$output" $script_path/adapter_trimmer_SE.sh
-    elif [ $platform == $"AMZ" ];then                                                                                                                          ## prep adapter_trimmer_SE_AMZ.sh
-    else echo "Platform should be either HPC or AMZ"
+    elif [ $platform == $"AMZ" ];then 
+    ## prep adapter_trimmer_SE_AMZ.sh
+    else echo "Platform should be either HPC or AMZ";fi
   done < $sample_list
 
 else echo $"Inappropriate format of target directory"; fi;
