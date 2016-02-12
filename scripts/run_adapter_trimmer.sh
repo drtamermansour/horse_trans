@@ -2,13 +2,14 @@
 
 if [ $# -lt 3 ]
 then
-    printf "\nUsage run_adapter_trimmer.sh [Sample List] [Library type] [script]\n"
+    printf "\nUsage run_adapter_trimmer.sh [Sample List] [Library type] [platform]\n"
     exit 0
 fi
 
 sample_list="$1"
 lib="$2"
-script_path="$3"
+platform="$3"
+script_path=$(dirname "${BASH_SOURCE[0]}")  
 
 if [ $lib = $"PE" ]; then
   while read f; do
@@ -21,7 +22,11 @@ if [ $lib = $"PE" ]; then
     output_pe2=$(echo "$output_pe1" | sed s/_R1_/_R2_/)
     output_se1=$temp2".se.fq"
     output_se2=$(echo "$output_se1" | sed s/_R1_/_R2_/)
-    qsub -v R1_INPUT="$input_one",R2_INPUT="$input_two",output_pe1="$output_pe1",output_pe2="$output_pe2",output_se1="$output_se1",output_se2="$output_se2" $script_path/adapter_trimmer_PE.sh
+    if [ $platform == $"HPC" ];then
+      qsub -v R1_INPUT="$input_one",R2_INPUT="$input_two",output_pe1="$output_pe1",output_pe2="$output_pe2",output_se1="$output_se1",output_se2="$output_se2" $script_path/adapter_trimmer_PE.sh
+    elif [ $platform == $"AMZ" ];then
+      bash $script_path/adapter_trimmer_PE_AMZ.sh "$input_one" "$input_two" "$output_pe1" "$output_pe2" "$output_se1" "$output_se2" 
+    else echo "Platform should be either HPC or AMZ";fi
   done < $sample_list
 
 elif [ $lib = $"SE" ]; then
@@ -30,7 +35,11 @@ elif [ $lib = $"SE" ]; then
     temp=$(basename "$f")
     temp2=${temp%.fastq.gz}
     output=$temp2".se.fq"
-    qsub -v INPUT="$f",output="$output" $script_path/adapter_trimmer_SE.sh
+    if [ $platform == $"HPC" ];then 
+      qsub -v INPUT="$f",output="$output" $script_path/adapter_trimmer_SE.sh
+    elif [ $platform == $"AMZ" ];then 
+    ## prep adapter_trimmer_SE_AMZ.sh
+    else echo "Platform should be either HPC or AMZ";fi
   done < $sample_list
 
 else echo $"Inappropriate format of target directory"; fi;

@@ -18,6 +18,9 @@ echo "pubAssemblies=$horse_trans/public_assemblies" >> $horse_trans/config.txt
 echo "track_hub=$horse_trans/track_hub" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 
+## define the run choices
+platform="AMZ" 						## It could be either AMZ for an EC2 like systems or HPC for cluster systems
+
 ## download the UCSC kent commands in the script path
 ## http://genome-source.cse.ucsc.edu/gitweb/?p=kent.git;a=blob;f=src/userApps/README
 ## http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/FOOTER
@@ -89,7 +92,7 @@ while read work_dir; do
   cd $work_dir/trimmed_RNA_reads
   lib=$(basename $work_dir | cut -d"_" -f 1)                   ## PE or SE
   sample_list=$work_dir/fastq_data/sample_list.txt
-  bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
+  bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $platform  
 done < $horse_trans/working_list.txt
 
 ## Check for successful trimming and trouble shooting the failed trimming jobs (requires T_Trim.e)
@@ -166,7 +169,7 @@ tar xvzf chromFa.tar.gz
 ## prepare Bowtie2Index (for Tophat mapping)
 mkdir -p $genome_dir/Bowtie2Index && cd $genome_dir/Bowtie2Index
 cat ../*.fa > genome.fa
-bash ${script_path}/run_bowtie2-build.sh genome.fa genome
+bash ${script_path}/run_bowtie2-build.sh genome.fa genome $platform
 echo "genome=$genome_dir/Bowtie2Index/genome.fa" >> $horse_trans/config.txt
 echo "Bowtie2_genome_index_base=$genome_dir/Bowtie2Index/genome" >> $horse_trans/config.txt
 source $horse_trans/config.txt
@@ -195,7 +198,7 @@ wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled
 gunzip eca_ref_EquCab2.0_*.fa.gz
 cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
 ## map the genomes
-bash $script_path/mapGenome.sh              ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
+bash $script_path/mapGenome.sh $genome          ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
 
 ###########################################################################################
 ## Create GTF file based of refGenes
