@@ -190,14 +190,14 @@ echo "gatk_ref=$genome_dir/gatkIndex/genome.fa" >> $horse_trans/config.txt
 echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 ###########################################################################################
-## create liftover files
+## create liftover files to allow mapping of NCBI annotation to UCSC tracks 
 ## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
 
 # Download the genome files (useless for the new implementation of mapGenome)
-mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
-wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
-gunzip eca_ref_EquCab2.0_*.fa.gz
-cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
+#mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
+#wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
+#gunzip eca_ref_EquCab2.0_*.fa.gz
+#cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
 ## map the genomes
 bash $script_path/mapGenome.sh $genome          ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
 
