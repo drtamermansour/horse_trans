@@ -198,7 +198,7 @@ wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled
 gunzip eca_ref_EquCab2.0_*.fa.gz
 cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
 ## map the genomes
-bash $script_path/mapGenome.sh              ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
+bash $script_path/mapGenome.sh $genome          ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
 
 ###########################################################################################
 ## Create GTF file based of refGenes
