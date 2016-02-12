@@ -6,6 +6,10 @@ cd horse_trans
 horse_trans=$(pwd)
 mkdir -p $horse_trans/{resources,prepdata,tissue_merge,refGenome,public_assemblies} ## you should have 2 folders already (scripts&track_hub) by cloning the original repository.  
 
+## read the user configurations
+source $horse_trans/user_config.txt
+cat $horse_trans/user_config.txt
+
 ## create a config file to contain all the pathes to be used by all pipelines
 > $horse_trans/config.txt
 echo "script_path=$horse_trans/scripts" >> $horse_trans/config.txt
@@ -17,9 +21,6 @@ echo "genome_dir=$horse_trans/refGenome" >> $horse_trans/config.txt
 echo "pubAssemblies=$horse_trans/public_assemblies" >> $horse_trans/config.txt
 echo "track_hub=$horse_trans/track_hub" >> $horse_trans/config.txt
 source $horse_trans/config.txt
-
-## define the run choices
-platform="AMZ" 						## It could be either AMZ for an EC2 like systems or HPC for cluster systems
 
 ## download the UCSC kent commands in the script path
 ## http://genome-source.cse.ucsc.edu/gitweb/?p=kent.git;a=blob;f=src/userApps/README
@@ -104,7 +105,7 @@ while read work_dir; do
   if [ $x -ne 0 ]; then
     lib=$(basename $work_dir | cut -d"_" -f 1)
     echo "Failed jobs in: "$work_dir
-    bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $script_path
+    bash ${script_path}/run_adapter_trimmer.sh $sample_list $lib $platform
   fi
 done < $horse_trans/working_list.txt
 
@@ -465,8 +466,6 @@ fi; done < $horse_trans/working_list.txt
 ###########################################################################################
 #### pipeline_OneSampleAtaTime_Tophat2.Cufflinks.Cuffmerge
 ### Run Cufflinks: output transcripts.gtf in the same tophat_sample folder
-#cufflinks_run="refGeneGuided_Cufflinks"
-cufflinks_run="nonGuided_Cufflinks"
 while read work_dir; do
   echo $work_dir
   cd $work_dir/tophat_output
@@ -488,7 +487,7 @@ while read work_dir; do
     bash ${script_path}/run_cufflinks_noRef.sh "$failedSample_list" "$script_path/cufflinks_noRef2.sh"
 fi; done < $horse_trans/working_list.txt
 
-## downsample the failed samples to peak coverage 1000x
+## downsample the failed samples to peak coverage 200x
 ## convert the tophat output BAM files into Fastq files
 while read work_dir; do
   cd $work_dir/tophat_output
@@ -591,8 +590,6 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
 fi; done < $horse_trans/working_list.txt
 ########################
 ### Run cuffmerge: merge the sample assemblies and output merged.gtf in tophat_output/$cufflinks_run/$cuffmerge_run
-#cuffmerge_run="refGeneGuided_Cuffmerge"
-cuffmerge_run="nonGuided_Cuffmerge"
 cuffmerge_output=$cufflinks_run/$cuffmerge_run
 while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cd $work_dir/tophat_output
