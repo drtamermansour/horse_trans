@@ -12,7 +12,8 @@ This github project contains all the scripts required to reproduce the analysis 
 
 Coding guidelines in this project
 ---------------------------------
-- Fork the horse_trans repository to your Github account, clone it to your local machine, and Configure Git to sync your fork with the original repository (if you want). To learn more about doing this, you can check the [github documenation](https://help.github.com/articles/fork-a-repo/)  
+- Fork the horse_trans repository to your Github account, clone it to your local machine, and Configure Git to sync your fork with the original repository (if you want). To learn more about doing this, you can check the [github documenation](https://help.github.com/articles/fork-a-repo/) 
+- Edit the user_config.txt file to determine your environment and pipeline choices 
 - The "main.sh" script represents the index page of the whole project. The first section of the main script should construct the basic diretory structure for you.
 - Preparation of the input data:
       <p align="center">
