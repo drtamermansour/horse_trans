@@ -1,0 +1,4 @@
+platform="AMZ"                                          ## It could be either "AMZ" for an EC2 like systems or "HPC" for cluster systems
+cufflinks_run="nonGuided_Cufflinks"                     ## It could be either "nonGuided_Cufflinks" for reference non guided Cufflinks analysis or "refGeneGuided_Cufflinks" for the guided one
+cuffmerge_run="nonGuided_Cuffmerge"                     ## It could be either "nonGuided_Cuffmerge" for reference non guided Cuffmerge analysis or "refGeneGuided_Cuffmerge" for the guided one
+
