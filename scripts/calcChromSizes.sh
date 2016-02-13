@@ -2,6 +2,6 @@
 
 UCSCgenome="$1"
 chromSizes="$2"
+script_path=$(dirname "${BASH_SOURCE[0]}")
 
-module load ucscUtils/262
-fetchChromSizes $UCSCgenome > $chromSizes
+$script_path/UCSC_kent_commands/fetchChromSizes $UCSCgenome > $chromSizes
