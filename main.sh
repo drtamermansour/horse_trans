@@ -14,7 +14,6 @@ cat $horse_trans/user_config.txt
 > $horse_trans/config.txt
 echo "script_path=$horse_trans/scripts" >> $horse_trans/config.txt
 echo "resources=$horse_trans/resources" >> $horse_trans/config.txt
-echo "rawData=$horse_trans/rawdata" >> $horse_trans/config.txt
 echo "prepData=$horse_trans/prepdata" >> $horse_trans/config.txt
 echo "tissue_merge=$horse_trans/tissue_merge" >> $horse_trans/config.txt
 echo "genome_dir=$horse_trans/refGenome" >> $horse_trans/config.txt
@@ -633,8 +632,6 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/${cufflinks_run}_assemblies.txt
 fi; done < $horse_trans/working_list.txt
 
-isoformfrac=0.05    ## value 1-0.05 & default= 0.05
-#isoformfrac=0.2    ## value 1-0.05 & default= 0.05
 dist_dir="all_tissues_frac$isoformfrac"
 mkdir -p $dist_dir
 cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
