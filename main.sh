@@ -1373,3 +1373,14 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ###########################################################################################
 ## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
 bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
+
+###########################################################################################
+## run icommand to push the file to iplant
+## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
+## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
+## copy the required files to home directory e.g. ~/temp/download
+## make sure you are on the gateway not on a dev-nodes
+iinit
+icd /iplant/home/drtamermansour/horseTrans
+iput *.reduced .
+
