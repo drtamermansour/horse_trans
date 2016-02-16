@@ -786,6 +786,9 @@ while read work_dir; do
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  ## copy the annotation to the download folder
+  cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
+  ## statistics 
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
@@ -799,13 +802,17 @@ while read work_dir; do
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  ## copy the annotation to the download folder
+  cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
+  ## statistics
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/multi_lib_tissues.txt > $horse_trans/tisAsmStats.txt
 
+## copy the final filtered assembly to the main directory 
 cp $assembly $tissue_Cuffmerge/$cuffmerge_output/filtered/.
 
-## copy tabulated expression files to the download folder
+## copy the final filtered assembly to the download folder
 cp $assembly $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
 ###################
 ## calculate tissue specific expression
@@ -1072,6 +1079,8 @@ while read asm_name assembly;do
   fi; done < $horse_trans/cuffcompare/assmblies.txt
 done < $horse_trans/cuffcompare/assmblies.txt
 
+## copy the cuffcompare merged tables to the download folder
+cp *.reduced $horse_trans/downloads/.
 
 cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
 ## change of isoform length
