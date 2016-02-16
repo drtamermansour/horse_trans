@@ -710,17 +710,6 @@ cat $assembly | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of t
 cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75084
 cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 162261
 
-## filtering of short transfrag (less than 200bp): 598 transcript
-#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
-#$script_path/UCSC_kent_commands/gtfToGenePred merged.gtf merged.gpred
-#$script_path/UCSC_kent_commands/genePredToFakePsl -chromSize=$genome_dir/$UCSCgenome.chrom.sizes file merged.gpred merged.psl /dev/null
-#assemblyPsl="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.psl"
-#assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
-#mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
-#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
-#cat $assemblyPsl | awk '{if($11 >= 200)print $10}' > keepit.id
-#grep -F -w -f keepit.id $assembly > ../merged.gtf
-
 ## Using Salmon to eliminate low-expressed transcripts
 ## exclude isoforms with TPM less than 5% of the total TPM of each locus: 41543 transcript
 mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
@@ -786,6 +775,7 @@ cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.
 grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
 module load R/3.0.1
 
+## library specific expression and assembly
 while read work_dir; do
   tissue=$(basename $(dirname $work_dir))
   lib=$(basename $work_dir)
@@ -800,6 +790,7 @@ while read work_dir; do
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
 
+## Tissue specific expression and assembly
 while read work_dir; do
   target=$(basename $work_dir)
   echo $target
@@ -974,15 +965,6 @@ done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
              $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 #             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt)
 
-## run icommand to push the file to iplant
-## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
-## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
-#icd /iplant/home/drtamermansour/horseTrans
-#while read assembly; do
-#  echo $assembly
-#  iput $assembly/*.BigBed
-#done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-
 ## initiate a given track hub for cufflinks_run="refGeneGuided_Cufflinks"
 #hub_name=$"HorseTrans_TopGuidedCuff"
 #shortlabel=$"TopGuidedCuff"
@@ -1012,52 +994,88 @@ cd $horse_trans/cuffcompare
 while read root_dir asm_dir; do echo $asm_dir $root_dir/$asm_dir/*.gtf >> assmblies.txt;done < $pubAssemblies/public_assemblies.txt
 echo ensGTF_file ${ensGTF_file}  >> assmblies.txt
 echo refGTF_file ${refGTF_file}  >> assmblies.txt
+echo $cufflinks_run.$cuffmerge_run $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf  >> assmblies.txt
 
-assembly=$tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf
-while read asm_name ref_assembly;do
-  mkdir -p $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  cd $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  identifier=${cufflinks_run}.vs.$asm_name
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-done < assmblies.txt
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    mkdir -p $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    #echo "$assembly" "$identifier" "${ref_assembly}" >> $horse_trans/cuffcompare/temp
+    bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
+
 cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do
-  cd $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  identifier=${cufflinks_run}.vs.$asm_name
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-done < assmblies.txt
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    identifier=$asm_name.vs.$ref_name
+    mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
 
-assembly=$pubAssemblies/Hestand_2014/7666675698.gtf
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  mkdir -p $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  identifier="Hestand_2014.vs.$asm_name"
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-fi; done < assmblies.txt
+## identify complex loci: We define the transcripts in the quary assembly that align with complex loci in the reference. A locus would be complex if it has an overlapping genes already or if one quary transcript (or more) align with more than one reference gene
 cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  identifier="Hestand_2014.vs.$asm_name"
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-fi; done < assmblies.txt
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    #cat *.loci | awk '{print $3}' | sed 's/|.*,/ /g' | sed 's/|.*//' | awk '{delete refs;for (i = 1; i <= NF; i++) {refs[$i]++}; if (length(refs) > 1) {for(gene in refs) {print gene;} } }' > loci.ref.crowded
+    cat *.loci | awk '{print $3}' | sed 's/|.*,/ /g' | sed 's/|.*//' | awk '{delete refs;for (i = 1; i <= NF; i++) {refs[$i]++}; print length(refs);}' > loci.ref.freq
+    paste *.loci loci.ref.freq > loci.ref.freq2
+    cat loci.ref.freq2 | awk '($5>1){print $4}' | tr "\," "\n" > $asm_name.vs.$ref_name.complex
+    wc -l $asm_name.vs.$ref_name.complex
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt > $horse_trans/cuffcompare/summary_complexTrans.txt
 
-assembly=$pubAssemblies/ISME.PBMC/withoutLow.gtf
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  mkdir -p $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  identifier="ISME.PBMC.vs.$asm_name"
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-fi; done < assmblies.txt
-cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  identifier="ISME.PBMC.vs.$asm_name"
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-fi; done < assmblies.txt
+mkdir $horse_trans/cuffcompare_Ann
+## count the genes/transcripts  of each assembly
+## Note: Cuffcompare discard some transcripts from ref & quary (but with different algorithms so that the no discarded transcripts from the same annotation differs if it is used as reference or quary
+cd $horse_trans/cuffcompare_Ann
+echo "## gene name duplications happen on different chromosomes and on the same chromosomes in one locus but with different orintations or in multiple loci but there is no name duplictation for transcripts" > summary_counts
+while read ref_name ref_assembly;do
+  ## no of genes
+  echo $ref_name "Genes:actual no and uniqe names"
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$10}' | uniq | wc -l   ## 24483
+  cat $ref_assembly | awk -F '[\t"]' '{print $10}' | sort | uniq | wc -l   ## 24317
+  ## frequency fo gene name duplication on the same chr with the same orinataion but different loci
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$10}' | sort | uniq -c | sort -nr > $ref_name.genesDup_count
 
-cd $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI
+  ## no of transcripts (there is no name duplictation for transcripts)
+  echo $ref_name "Transcripts:actual no and uniqe names"
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$12}' | uniq | wc -l   ## 43417
+
+  ## make a transcript to gene map
+  echo -e "transcript.ID\tgene.ID\tchr\tstrand" > $ref_name.transTogene
+  cat $ref_assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $ref_name.transTogene
+done < $horse_trans/cuffcompare/assmblies.txt >> summary_counts
+
+## marge all the tmap files for each annoation as a quary aganist all other annotations as references
+while read asm_name assembly;do
+  cp $asm_name.transTogene $asm_name.merge
+  while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge $horse_trans/cuffcompare/$identifier/$identifier.*.tmap $ref_name
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+  cat $asm_name.merge | cut -f 1-10,13-16,19-22,25-28,31-34 > $asm_name.merge.reduced
+done < $horse_trans/cuffcompare/assmblies.txt
+
+## add index for complex regions
+while read asm_name assembly;do
+  while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    identifier2=$ref_name.vs.$asm_name
+    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=F,row.names=NULL,sep="\t"); data2$V2="c"; colnames(data2)=c("transcript.ID",args[3]); dataMerge=merge(data1,data2,by="transcript.ID",all.x=T); data3=read.table(args[4], header=F,row.names=NULL,sep="\t"); data3$V2="c"; colnames(data3)=c("transcript.ID",args[5]);dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);write.table(dataMerge2,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge.reduced $horse_trans/cuffcompare/$identifier/$identifier.complex $identifier.complex $horse_trans/cuffcompare/$identifier2/$identifier2.complex $identifier2.complex
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
+
+
+cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
 ## change of isoform length
-cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $2,$5,$11,$13}' > matchingIsoforms  ## ref_Id, cuff_Id, Cuff_len, ref_len
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $2,$5,$11,$13}' > matchingIsoforms  ## ref_Id, cuff_Id, Cuff_len, ref_len
 cat matchingIsoforms | awk '{print $3-$4}' > matching_lenDif ## 10427
 cat matchingIsoforms | awk '($3-$4)>0' > matching_increased ## 9471
 cat matching_increased | awk '{total = total + ($3-$4)}END{print total}'  ## 31822943 (~3.3Kb on ave)
@@ -1065,7 +1083,7 @@ cat matchingIsoforms | awk '($3-$4)<0' > matching_decreased ## 949
 cat matching_decreased | awk '{total = total + ($4-$3)}END{print total}'  ## 31822943 (~0.4Kb on ave)
 cat matchingIsoforms | awk '($3-$4)==0' > matching_noChange ## 7
 ## novel transcripts
-cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
@@ -1209,7 +1227,7 @@ paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 
 ## check for the coding novel transcrips
-cat $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
+cat $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
 grep -F -f new_transcripts_key transcripts.fasta.transdecoder.genome.bed > new_transcripts_key.transdecoder.genome.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 == 1' > new_transcripts_key.transdecoder.genome.Singleexon.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 1' > tnew_transcripts_key.transdecoder.genome.multiexon.bed
