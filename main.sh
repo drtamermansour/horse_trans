@@ -994,6 +994,13 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
 #        <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
 #            $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt) $tiss_assemblies
+
+## copy the annotation to the download folder
+while read ass_path assembly; do
+  id=$(echo $assembly | cut -d "/" -f1,2 | sed 's|/|.|')
+  cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/$id.bed
+done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 ##########################################################################################
 ## Run Cuffcompare with public annotations
 mkdir -p $horse_trans/cuffcompare
