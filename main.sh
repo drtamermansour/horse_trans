@@ -819,110 +819,54 @@ cp $assembly $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
 targets=()
 i=1
 rm temp.*
-for f in *.dataSummary_comp;do
+while read target;do
+  f="$target".dataSummary_comp
+  if [ ! -f $f ];then f="$target"_*.dataSummary_comp;fi
   cat $f | tail -n+2 | awk '{print $2,$7}' | uniq > $f.gene
   cat $f | tail -n+2 | awk '{print $3,$6}' > $f.isoform
-  target=${f%.dataSummary_comp}
   targets+=($target)
   if [ $i -eq 1 ];then cat $f.gene > temp.$i;else join -t" " --nocheck-order temp.$((i-1)) $f.gene > temp.$i;fi
   if [ $i -eq 1 ];then cat $f.isoform > isotemp.$i;else join -t" " --nocheck-order isotemp.$((i-1)) $f.isoform > isotemp.$i;fi
   ((i+=1))
-done
-echo "geneName" "${targets[@]}" > allTargets_geneTPM
-cat temp.$((i-1)) >> allTargets_geneTPM
-cat allTargets_geneTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_geneTPM
-echo "isoformName" "${targets[@]}" > allTargets_isoformTPM
-cat isotemp.$((i-1)) >> allTargets_isoformTPM
-cat allTargets_isoformTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_isoformTPM
+done < <(ls *_*.dataSummary_comp | awk -F '_' '{print $1}' | sort | uniq)
+echo "geneName" "${targets[@]}" > allTissues_geneTPM
+cat temp.$((i-1)) >> allTissues_geneTPM
+echo "isoformName" "${targets[@]}" > allTissues_isoformTPM
+cat isotemp.$((i-1)) >> allTissues_isoformTPM
 
-> tissueSpecificSummary
-echo ##print no of gene/isoform expressed, expressed uniqelly, not expressed uniquelly
-echo "BrainStem" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
+##print no of gene/isoform expressed, expressed uniqely, not expressed uniquely
+i=0
+n=${#targets[@]}
+while [ $i -lt $n ];do
+ echo ${targets[$i]}
+ cat allTissues_geneTPM | awk -v x=$((i+2)) '$x>0' | wc -l
+ cat allTissues_isoformTPM | awk -v x=$((i+2)) '$x>0' | wc -l
 
-cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+ cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > isoform;
+ for x in `seq 2 $((n+1))`;do 
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x>0' tempGene > tempGene2; else awk -v x=$x '$x==0' tempGene > tempGene2;fi
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x>0' isoform > isoform2; else awk -v x=$x '$x==0' isoform > isoform2;fi
+   mv tempGene2 tempGene; mv isoform2 isoform;done
+  cat tempGene | wc -l; cat isoform | wc -l;
 
-cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Cerebellum" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Embryo.ICM" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Embryo.TE" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Muscle" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Retina" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Skin" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "SpinalCord" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+ cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > tempIsoform;
+ for x in `seq 2 $((n+1))`;do 
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x==0' tempGene > tempGene2; else awk -v x=$x '$x>0' tempGene > tempGene2;fi
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x==0' tempIsoform > tempIsoform2; else awk -v x=$x '$x>0' tempIsoform > tempIsoform2;fi
+   mv tempGene2 tempGene; mv tempIsoform2 tempIsoform;done
+  cat tempGene | wc -l; cat tempIsoform | wc -l;
+  
+ ((i+=1))
+done > tissueSpecificSummary
+rm tempGene tempIsoform
 
 echo "All Tissues" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > tempIsoform;
+for x in `seq 2 $((n+1))`;do 
+  awk -v x=$x '$x>0' allTissues_geneTPM > tempGene.$x; awk -v x=$x '$x>0' allTissues_isoformTPM > tempIsoform.$x;
+  awk -v x=$x '$x>0' tempGene > tempGene2; awk -v x=$x '$x>0' tempIsoform > tempIsoform2; mv tempGene2 tempGene; mv tempIsoform2 tempIsoform;done
+cat tempGene.* | sort | uniq | wc -l  >> tissueSpecificSummary; cat tempIsoform.* | sort | uniq | wc -l  >> tissueSpecificSummary;
+cat tempGene | wc -l  >> tissueSpecificSummary; cat tempIsoform | wc -l  >> tissueSpecificSummary;
 
 ## copy tabulated expression files to the download folder
 cp allTissues_geneTPM allTissues_isoformTPM $horse_trans/downloads/.
