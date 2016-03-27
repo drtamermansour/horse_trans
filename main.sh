@@ -986,7 +986,22 @@ while read ref_name ref_assembly;do
     wc -l $asm_name.vs.$ref_name.complex
   fi; done < $horse_trans/cuffcompare/assmblies.txt
 done < $horse_trans/cuffcompare/assmblies.txt > $horse_trans/cuffcompare/summary_complexTrans.txt
-
+#####################
+cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
+## change of isoform length
+#cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $1,$2,$5,$11,$12,$13}' > all_matchingIsoforms  ## ref_gene_id, ref_Id, cuff_Id, Cuff_len, major_iso_id, ref_len
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $1,$2,$5,$11,$12,$13}' > matchingIsoforms  ## 10427 ## ref_gene_id, ref_Id, cuff_Id, Cuff_len, major_iso_id, ref_len
+cat matchingIsoforms | awk '$2~"^[XN]M"' >  matchingIsoforms_PtnCoding ## 9736 (the remaining=691 are non-ptn coding)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)>0' > matching_increased ## 8899
+cat matching_increased | awk '{print $1}' | uniq | wc -l ## 6817 (no of genes)
+cat matching_increased | awk '{total = total + ($4-$6)}END{print total}'  ## 29697025 (~3.3Kb on ave)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)<0' > matching_decreased ## 831
+cat matching_decreased | awk '{print $1}' | uniq | wc -l ## 718 (no of genes)
+cat matching_decreased | awk '{total = total + ($6-$4)}END{print total}'  ## 339273 (~0.4Kb on ave)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)==0' > matching_noChange ## 6
+## novel transcripts
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
+######################
 mkdir $horse_trans/cuffcompare_Ann
 ## count the genes/transcripts  of each assembly
 ## Note: Cuffcompare discard some transcripts from ref & quary (but with different algorithms so that the no discarded transcripts from the same annotation differs if it is used as reference or quary
@@ -1032,18 +1047,6 @@ done < $horse_trans/cuffcompare/assmblies.txt
 
 ## copy the cuffcompare merged tables to the download folder
 cp *.reduced $horse_trans/downloads/.
-
-cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
-## change of isoform length
-cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $2,$5,$11,$13}' > matchingIsoforms  ## ref_Id, cuff_Id, Cuff_len, ref_len
-cat matchingIsoforms | awk '{print $3-$4}' > matching_lenDif ## 10427
-cat matchingIsoforms | awk '($3-$4)>0' > matching_increased ## 9471
-cat matching_increased | awk '{total = total + ($3-$4)}END{print total}'  ## 31822943 (~3.3Kb on ave)
-cat matchingIsoforms | awk '($3-$4)<0' > matching_decreased ## 949
-cat matching_decreased | awk '{total = total + ($4-$3)}END{print total}'  ## 31822943 (~0.4Kb on ave)
-cat matchingIsoforms | awk '($3-$4)==0' > matching_noChange ## 7
-## novel transcripts
-cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
