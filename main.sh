@@ -407,17 +407,21 @@ headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "mi
 echo "$headers" > $horse_trans/tophat_summary.txt
 while read work_dir; do
   > $work_dir/tophat_output/allsample_summary.txt
+  > $work_dir/tophat_output/allsample_summary_detailed.txt
   for f in $work_dir/tophat_output/tophat_*; do
     echo ${f} >> $work_dir/tophat_output/allsample_summary.txt
     cd ${f}
     grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
     grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
+    echo ${f} >> $work_dir/tophat_output/allsample_summary_detailed.txt
+    cat align_summary.txt >> ../allsample_summary_detailed.txt
   done
   mapping=$(grep "overall read mapping rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
   conc=$(grep "concordant pair alignment rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
   lib=$(basename $work_dir)
   tissue=$(dirname $work_dir | xargs basename)
   echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/tophat_summary.txt
+  cat $work_dir/tophat_output/allsample_summary_detailed.txt >> $horse_trans/tophat_summary_detailed.txt
 done < $horse_trans/working_list.txt
 ##################
 ## define the list samples.
@@ -788,7 +792,7 @@ while read work_dir; do
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
   ## copy the annotation to the download folder
   cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
-  ## statistics 
+  ## statistics (no of genes and transcripts)
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
