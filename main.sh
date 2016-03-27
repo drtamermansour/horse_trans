@@ -989,9 +989,9 @@ done < $horse_trans/cuffcompare/assmblies.txt > $horse_trans/cuffcompare/summary
 #####################
 cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
 ## change of isoform length
-#cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $1,$2,$5,$11,$12,$13}' > all_matchingIsoforms  ## ref_gene_id, ref_Id, cuff_Id, Cuff_len, major_iso_id, ref_len
 cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $1,$2,$5,$11,$12,$13}' > matchingIsoforms  ## 10427 ## ref_gene_id, ref_Id, cuff_Id, Cuff_len, major_iso_id, ref_len
 cat matchingIsoforms | awk '$2~"^[XN]M"' >  matchingIsoforms_PtnCoding ## 9736 (the remaining=691 are non-ptn coding)
+cat matchingIsoforms_PtnCoding | awk '{print $1}' | uniq | wc -l ## 7419 (no of genes)
 cat matchingIsoforms_PtnCoding | awk '($4-$6)>0' > matching_increased ## 8899
 cat matching_increased | awk '{print $1}' | uniq | wc -l ## 6817 (no of genes)
 cat matching_increased | awk '{total = total + ($4-$6)}END{print total}'  ## 29697025 (~3.3Kb on ave)
@@ -999,6 +999,8 @@ cat matchingIsoforms_PtnCoding | awk '($4-$6)<0' > matching_decreased ## 831
 cat matching_decreased | awk '{print $1}' | uniq | wc -l ## 718 (no of genes)
 cat matching_decreased | awk '{total = total + ($6-$4)}END{print total}'  ## 339273 (~0.4Kb on ave)
 cat matchingIsoforms_PtnCoding | awk '($4-$6)==0' > matching_noChange ## 6
+cat matching_noChange | awk '{print $1}' | uniq | wc -l ## 6 (no of genes)
+
 ## novel transcripts
 cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 ######################
