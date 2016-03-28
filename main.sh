@@ -1349,10 +1349,6 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
 bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
 
-<<<<<<< HEAD
-
-=======
->>>>>>> cb96b131da4e93965cc04fd810fbc7966c4058ea
 ###########################################################################################
 ## run icommand to push the file to iplant
 ## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
