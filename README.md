@@ -70,3 +70,7 @@ Links for Downloads:
 -  [Tabulated gene TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/8AD5668A-02C3-4E54-AEE3-509E15C54594/allTissues_geneTPM)  
 -  [Tabulated isoform TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/FA197031-71D3-4AAD-911A-7ACDF7516911/allTissues_isoformTPM)  
 
+
+Updates:
+--------
+- This pipeline was ddeveloped to run on the HPC of michigan state university. Currently we are working on the pipeline to run on Amazon instance as well. Building the Tophat transcriptome-index "run_buildTransIndex.sh" was the last step to be updated. 
