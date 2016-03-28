@@ -14,7 +14,6 @@ cat $horse_trans/user_config.txt
 > $horse_trans/config.txt
 echo "script_path=$horse_trans/scripts" >> $horse_trans/config.txt
 echo "resources=$horse_trans/resources" >> $horse_trans/config.txt
-echo "rawData=$horse_trans/rawdata" >> $horse_trans/config.txt
 echo "prepData=$horse_trans/prepdata" >> $horse_trans/config.txt
 echo "tissue_merge=$horse_trans/tissue_merge" >> $horse_trans/config.txt
 echo "genome_dir=$horse_trans/refGenome" >> $horse_trans/config.txt
@@ -190,14 +189,14 @@ echo "gatk_ref=$genome_dir/gatkIndex/genome.fa" >> $horse_trans/config.txt
 echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 ###########################################################################################
-## create liftover files
+## create liftover files to allow mapping of NCBI annotation to UCSC tracks 
 ## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
 
 # Download the genome files (useless for the new implementation of mapGenome)
-mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
-wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
-gunzip eca_ref_EquCab2.0_*.fa.gz
-cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
+#mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
+#wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
+#gunzip eca_ref_EquCab2.0_*.fa.gz
+#cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
 ## map the genomes
 bash $script_path/mapGenome.sh $genome          ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
 
@@ -408,17 +407,21 @@ headers=$(Rscript -e 'cat("Tissue", "Library", "min_mapping", "max_mapping", "mi
 echo "$headers" > $horse_trans/tophat_summary.txt
 while read work_dir; do
   > $work_dir/tophat_output/allsample_summary.txt
+  > $work_dir/tophat_output/allsample_summary_detailed.txt
   for f in $work_dir/tophat_output/tophat_*; do
     echo ${f} >> $work_dir/tophat_output/allsample_summary.txt
     cd ${f}
     grep "overall read mapping rate" align_summary.txt >> ../allsample_summary.txt
     grep "concordant pair alignment rate" align_summary.txt >> ../allsample_summary.txt
+    echo ${f} >> $work_dir/tophat_output/allsample_summary_detailed.txt
+    cat align_summary.txt >> ../allsample_summary_detailed.txt
   done
   mapping=$(grep "overall read mapping rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
   conc=$(grep "concordant pair alignment rate" $work_dir/tophat_output/allsample_summary.txt | awk '{ print $1 }' | sort -n | sed -e 1b -e '$!d' | tr "\n" "\t")
   lib=$(basename $work_dir)
   tissue=$(dirname $work_dir | xargs basename)
   echo "$tissue"$'\t'"$lib"$'\t'"$mapping""$conc" >> $horse_trans/tophat_summary.txt
+  cat $work_dir/tophat_output/allsample_summary_detailed.txt >> $horse_trans/tophat_summary_detailed.txt
 done < $horse_trans/working_list.txt
 ##################
 ## define the list samples.
@@ -633,8 +636,6 @@ while read work_dir; do if [ -d $work_dir/tophat_output ]; then
   cat "$work_dir"/tophat_output/${cufflinks_run}_assemblies.txt >> $prepData/${cufflinks_run}_assemblies.txt
 fi; done < $horse_trans/working_list.txt
 
-isoformfrac=0.05    ## value 1-0.05 & default= 0.05
-#isoformfrac=0.2    ## value 1-0.05 & default= 0.05
 dist_dir="all_tissues_frac$isoformfrac"
 mkdir -p $dist_dir
 cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
@@ -713,17 +714,6 @@ cat $assembly | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of t
 cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75084
 cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 162261
 
-## filtering of short transfrag (less than 200bp): 598 transcript
-#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
-#$script_path/UCSC_kent_commands/gtfToGenePred merged.gtf merged.gpred
-#$script_path/UCSC_kent_commands/genePredToFakePsl -chromSize=$genome_dir/$UCSCgenome.chrom.sizes file merged.gpred merged.psl /dev/null
-#assemblyPsl="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.psl"
-#assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
-#mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
-#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/removeShort/prep
-#cat $assemblyPsl | awk '{if($11 >= 200)print $10}' > keepit.id
-#grep -F -w -f keepit.id $assembly > ../merged.gtf
-
 ## Using Salmon to eliminate low-expressed transcripts
 ## exclude isoforms with TPM less than 5% of the total TPM of each locus: 41543 transcript
 mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
@@ -782,6 +772,12 @@ while read work_dir; do
   bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
 done < $horse_trans/working_list.txt
 find ./*.quant -name *.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+echo "Total no of input reads" > salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "total fragments" {} \; | sort >> salmonQuant_summary_detailed.txt
+echo "No of mapped reads" >> salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "total reads" {} \; | sort >> salmonQuant_summary_detailed.txt
+echo "Mapping rate" >> salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "Mapping rate" {} \; | sort >> salmonQuant_summary_detailed.txt
 python $script_path/gather-counts2.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
 sf=$(find ./*.quant -name \*.sf | head -n1)
@@ -789,6 +785,7 @@ cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.
 grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
 module load R/3.0.1
 
+## library specific expression and assembly
 while read work_dir; do
   tissue=$(basename $(dirname $work_dir))
   lib=$(basename $work_dir)
@@ -799,10 +796,14 @@ while read work_dir; do
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  ## copy the annotation to the download folder
+  cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
+  ## statistics (no of genes and transcripts)
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
 
+## Tissue specific expression and assembly
 while read work_dir; do
   target=$(basename $work_dir)
   echo $target
@@ -811,123 +812,71 @@ while read work_dir; do
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  ## copy the annotation to the download folder
+  cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
+  ## statistics
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/multi_lib_tissues.txt > $horse_trans/tisAsmStats.txt
 
+## copy the final filtered assembly to the main directory 
 cp $assembly $tissue_Cuffmerge/$cuffmerge_output/filtered/.
 
-## copy tabulated expression files to the download folder
+## copy the final filtered assembly to the download folder
 cp $assembly $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
 ###################
 ## calculate tissue specific expression
 targets=()
 i=1
 rm temp.*
-for f in *.dataSummary_comp;do
+while read target;do
+  f="$target".dataSummary_comp
+  if [ ! -f $f ];then f="$target"_*.dataSummary_comp;fi
   cat $f | tail -n+2 | awk '{print $2,$7}' | uniq > $f.gene
   cat $f | tail -n+2 | awk '{print $3,$6}' > $f.isoform
-  target=${f%.dataSummary_comp}
   targets+=($target)
   if [ $i -eq 1 ];then cat $f.gene > temp.$i;else join -t" " --nocheck-order temp.$((i-1)) $f.gene > temp.$i;fi
   if [ $i -eq 1 ];then cat $f.isoform > isotemp.$i;else join -t" " --nocheck-order isotemp.$((i-1)) $f.isoform > isotemp.$i;fi
   ((i+=1))
-done
-echo "geneName" "${targets[@]}" > allTargets_geneTPM
-cat temp.$((i-1)) >> allTargets_geneTPM
-cat allTargets_geneTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_geneTPM
-echo "isoformName" "${targets[@]}" > allTargets_isoformTPM
-cat isotemp.$((i-1)) >> allTargets_isoformTPM
-cat allTargets_isoformTPM | awk '{print $1,$2,$3,$4,$7,$10,$11,$12,$16}' > allTissues_isoformTPM
+done < <(ls *_*.dataSummary_comp | awk -F '_' '{print $1}' | sort | uniq)
+echo "geneName" "${targets[@]}" > allTissues_geneTPM
+cat temp.$((i-1)) >> allTissues_geneTPM
+echo "isoformName" "${targets[@]}" > allTissues_isoformTPM
+cat isotemp.$((i-1)) >> allTissues_isoformTPM
 
-> tissueSpecificSummary
-echo ##print no of gene/isoform expressed, expressed uniqelly, not expressed uniquelly
-echo "BrainStem" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0' | wc -l >> tissueSpecificSummary
+##print no of gene/isoform expressed, expressed uniqely, not expressed uniquely
+i=0
+n=${#targets[@]}
+while [ $i -lt $n ];do
+ echo ${targets[$i]}
+ cat allTissues_geneTPM | awk -v x=$((i+2)) '$x>0' | wc -l
+ cat allTissues_isoformTPM | awk -v x=$((i+2)) '$x>0' | wc -l
 
-cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
+ cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > isoform;
+ for x in `seq 2 $((n+1))`;do 
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x>0' tempGene > tempGene2; else awk -v x=$x '$x==0' tempGene > tempGene2;fi
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x>0' isoform > isoform2; else awk -v x=$x '$x==0' isoform > isoform2;fi
+   mv tempGene2 tempGene; mv isoform2 isoform;done
+  cat tempGene | wc -l; cat isoform | wc -l;
 
-cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Cerebellum" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$3>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3>0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3==0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Embryo.ICM" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$4>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4>0 && $5==0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4==0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Embryo.TE" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$5>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5>0 && $6==0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5==0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Muscle" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$6>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6>0 && $7==0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6==0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Retina" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$7>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7>0 && $8==0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7==0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "Skin" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$8>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-
-echo "SpinalCord" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2==0 && $3==0 && $4==0 && $5==0 && $6==0 && $7==0 && $8==0 && $9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9==0' | wc -l >> tissueSpecificSummary
+ cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > tempIsoform;
+ for x in `seq 2 $((n+1))`;do 
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x==0' tempGene > tempGene2; else awk -v x=$x '$x>0' tempGene > tempGene2;fi
+   if [ $x -eq $((i+2)) ];then awk -v x=$x '$x==0' tempIsoform > tempIsoform2; else awk -v x=$x '$x>0' tempIsoform > tempIsoform2;fi
+   mv tempGene2 tempGene; mv tempIsoform2 tempIsoform;done
+  cat tempGene | wc -l; cat tempIsoform | wc -l;
+  
+ ((i+=1))
+done > tissueSpecificSummary
+rm tempGene tempIsoform
 
 echo "All Tissues" >> tissueSpecificSummary
-cat allTissues_geneTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 || $3>0 || $4>0 || $5>0 || $6>0 || $7>0 || $8>0 || $9>0' | wc -l >> tissueSpecificSummary
-
-cat allTissues_geneTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
-cat allTissues_isoformTPM | awk '$2>0 && $3>0 && $4>0 && $5>0 && $6>0 && $7>0 && $8>0 && $9>0' | wc -l >> tissueSpecificSummary
+cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > tempIsoform;
+for x in `seq 2 $((n+1))`;do 
+  awk -v x=$x '$x>0' allTissues_geneTPM > tempGene.$x; awk -v x=$x '$x>0' allTissues_isoformTPM > tempIsoform.$x;
+  awk -v x=$x '$x>0' tempGene > tempGene2; awk -v x=$x '$x>0' tempIsoform > tempIsoform2; mv tempGene2 tempGene; mv tempIsoform2 tempIsoform;done
+cat tempGene.* | sort | uniq | wc -l  >> tissueSpecificSummary; cat tempIsoform.* | sort | uniq | wc -l  >> tissueSpecificSummary;
+cat tempGene | wc -l  >> tissueSpecificSummary; cat tempIsoform | wc -l  >> tissueSpecificSummary;
 
 ## copy tabulated expression files to the download folder
 cp allTissues_geneTPM allTissues_isoformTPM $horse_trans/downloads/.
@@ -977,15 +926,6 @@ done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
              $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 #             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt)
 
-## run icommand to push the file to iplant
-## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
-## http://bioinformatics.plantbiology.msu.edu/display/IP/Moving+Data+from+HPCC+to+iPlant
-#icd /iplant/home/drtamermansour/horseTrans
-#while read assembly; do
-#  echo $assembly
-#  iput $assembly/*.BigBed
-#done < $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt
-
 ## initiate a given track hub for cufflinks_run="refGeneGuided_Cufflinks"
 #hub_name=$"HorseTrans_TopGuidedCuff"
 #shortlabel=$"TopGuidedCuff"
@@ -1008,6 +948,13 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb \
 #        <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
 #            $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt) $tiss_assemblies
+
+## copy the annotation to the download folder
+while read ass_path assembly; do
+  id=$(echo $assembly | cut -d "/" -f1,2 | sed 's|/|.|')
+  cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/$id.bed
+done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 ##########################################################################################
 ## Run Cuffcompare with public annotations
 mkdir -p $horse_trans/cuffcompare
@@ -1015,60 +962,103 @@ cd $horse_trans/cuffcompare
 while read root_dir asm_dir; do echo $asm_dir $root_dir/$asm_dir/*.gtf >> assmblies.txt;done < $pubAssemblies/public_assemblies.txt
 echo ensGTF_file ${ensGTF_file}  >> assmblies.txt
 echo refGTF_file ${refGTF_file}  >> assmblies.txt
+echo $cufflinks_run.$cuffmerge_run $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf  >> assmblies.txt
 
-assembly=$tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf
-while read asm_name ref_assembly;do
-  mkdir -p $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  cd $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  identifier=${cufflinks_run}.vs.$asm_name
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-done < assmblies.txt
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    mkdir -p $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    #echo "$assembly" "$identifier" "${ref_assembly}" >> $horse_trans/cuffcompare/temp
+    bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
+
 cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do
-  cd $horse_trans/cuffcompare/${cufflinks_run}.vs.$asm_name
-  identifier=${cufflinks_run}.vs.$asm_name
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-done < assmblies.txt
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    identifier=$asm_name.vs.$ref_name
+    mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
 
-assembly=$pubAssemblies/Hestand_2014/7666675698.gtf
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  mkdir -p $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  identifier="Hestand_2014.vs.$asm_name"
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-fi; done < assmblies.txt
+## identify complex loci: We define the transcripts in the quary assembly that align with complex loci in the reference. A locus would be complex if it has an overlapping genes already or if one quary transcript (or more) align with more than one reference gene
 cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  cd $horse_trans/cuffcompare/Hestand_2014.vs.$asm_name
-  identifier="Hestand_2014.vs.$asm_name"
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-fi; done < assmblies.txt
-
-assembly=$pubAssemblies/ISME.PBMC/withoutLow.gtf
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  mkdir -p $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  identifier="ISME.PBMC.vs.$asm_name"
-  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-fi; done < assmblies.txt
-cd $horse_trans/cuffcompare
-while read asm_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
-  cd $horse_trans/cuffcompare/ISME.PBMC.vs.$asm_name
-  identifier="ISME.PBMC.vs.$asm_name"
-  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
-fi; done < assmblies.txt
-
-cd $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+    #cat *.loci | awk '{print $3}' | sed 's/|.*,/ /g' | sed 's/|.*//' | awk '{delete refs;for (i = 1; i <= NF; i++) {refs[$i]++}; if (length(refs) > 1) {for(gene in refs) {print gene;} } }' > loci.ref.crowded
+    cat *.loci | awk '{print $3}' | sed 's/|.*,/ /g' | sed 's/|.*//' | awk '{delete refs;for (i = 1; i <= NF; i++) {refs[$i]++}; print length(refs);}' > loci.ref.freq
+    paste *.loci loci.ref.freq > loci.ref.freq2
+    cat loci.ref.freq2 | awk '($5>1){print $4}' | tr "\," "\n" > $asm_name.vs.$ref_name.complex
+    wc -l $asm_name.vs.$ref_name.complex
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt > $horse_trans/cuffcompare/summary_complexTrans.txt
+#####################
+cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
 ## change of isoform length
-cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $2,$5,$11,$13}' > matchingIsoforms  ## ref_Id, cuff_Id, Cuff_len, ref_len
-cat matchingIsoforms | awk '{print $3-$4}' > matching_lenDif ## 10427
-cat matchingIsoforms | awk '($3-$4)>0' > matching_increased ## 9471
-cat matching_increased | awk '{total = total + ($3-$4)}END{print total}'  ## 31822943 (~3.3Kb on ave)
-cat matchingIsoforms | awk '($3-$4)<0' > matching_decreased ## 949
-cat matching_decreased | awk '{total = total + ($4-$3)}END{print total}'  ## 31822943 (~0.4Kb on ave)
-cat matchingIsoforms | awk '($3-$4)==0' > matching_noChange ## 7
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="="){print $1,$2,$5,$11,$12,$13}' > matchingIsoforms  ## 10427 ## ref_gene_id, ref_Id, cuff_Id, Cuff_len, major_iso_id, ref_len
+cat matchingIsoforms | awk '$2~"^[XN]M"' >  matchingIsoforms_PtnCoding ## 9736 (the remaining=691 are non-ptn coding)
+cat matchingIsoforms_PtnCoding | awk '{print $1}' | uniq | wc -l ## 7419 (no of genes)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)>0' > matching_increased ## 8899
+cat matching_increased | awk '{print $1}' | uniq | wc -l ## 6817 (no of genes)
+cat matching_increased | awk '{total = total + ($4-$6)}END{print total}'  ## 29697025 (~3.3Kb on ave)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)<0' > matching_decreased ## 831
+cat matching_decreased | awk '{print $1}' | uniq | wc -l ## 718 (no of genes)
+cat matching_decreased | awk '{total = total + ($6-$4)}END{print total}'  ## 339273 (~0.4Kb on ave)
+cat matchingIsoforms_PtnCoding | awk '($4-$6)==0' > matching_noChange ## 6
+cat matching_noChange | awk '{print $1}' | uniq | wc -l ## 6 (no of genes)
+
 ## novel transcripts
-cat nonGuided_Cufflinks.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
+######################
+mkdir $horse_trans/cuffcompare_Ann
+## count the genes/transcripts  of each assembly
+## Note: Cuffcompare discard some transcripts from ref & quary (but with different algorithms so that the no discarded transcripts from the same annotation differs if it is used as reference or quary
+cd $horse_trans/cuffcompare_Ann
+echo "## gene name duplications happen on different chromosomes and on the same chromosomes in one locus but with different orintations or in multiple loci but there is no name duplictation for transcripts" > summary_counts
+while read ref_name ref_assembly;do
+  ## no of genes
+  echo $ref_name "Genes:actual no and uniqe names"
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$10}' | uniq | wc -l   ## 24483
+  cat $ref_assembly | awk -F '[\t"]' '{print $10}' | sort | uniq | wc -l   ## 24317
+  ## frequency fo gene name duplication on the same chr with the same orinataion but different loci
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$10}' | sort | uniq -c | sort -nr > $ref_name.genesDup_count
+
+  ## no of transcripts (there is no name duplictation for transcripts)
+  echo $ref_name "Transcripts:actual no and uniqe names"
+  cat $ref_assembly | awk -F '[\t"]' '{print $1,$7,$12}' | uniq | wc -l   ## 43417
+
+  ## make a transcript to gene map
+  echo -e "transcript.ID\tgene.ID\tchr\tstrand" > $ref_name.transTogene
+  cat $ref_assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $ref_name.transTogene
+done < $horse_trans/cuffcompare/assmblies.txt >> summary_counts
+
+## marge all the tmap files for each annoation as a quary aganist all other annotations as references
+while read asm_name assembly;do
+  cp $asm_name.transTogene $asm_name.merge
+  while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge $horse_trans/cuffcompare/$identifier/$identifier.*.tmap $ref_name
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+  cat $asm_name.merge | cut -f 1-10,13-16,19-22,25-28,31-34 > $asm_name.merge.reduced
+done < $horse_trans/cuffcompare/assmblies.txt
+
+## add index for complex regions
+while read asm_name assembly;do
+  while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
+    identifier=$asm_name.vs.$ref_name
+    echo $identifier
+    identifier2=$ref_name.vs.$asm_name
+    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=F,row.names=NULL,sep="\t"); data2$V2="c"; colnames(data2)=c("transcript.ID",args[3]); dataMerge=merge(data1,data2,by="transcript.ID",all.x=T); data3=read.table(args[4], header=F,row.names=NULL,sep="\t"); data3$V2="c"; colnames(data3)=c("transcript.ID",args[5]);dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);write.table(dataMerge2,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge.reduced $horse_trans/cuffcompare/$identifier/$identifier.complex $identifier.complex $horse_trans/cuffcompare/$identifier2/$identifier2.complex $identifier2.complex
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
+
+## copy the cuffcompare merged tables to the download folder
+cp *.reduced $horse_trans/downloads/.
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
@@ -1212,7 +1202,7 @@ paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 
 ## check for the coding novel transcrips
-cat $horse_trans/cuffcompare/nonGuided_Cufflinks.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
+cat $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
 grep -F -f new_transcripts_key transcripts.fasta.transdecoder.genome.bed > new_transcripts_key.transdecoder.genome.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 == 1' > new_transcripts_key.transdecoder.genome.Singleexon.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 1' > tnew_transcripts_key.transdecoder.genome.multiexon.bed
@@ -1359,7 +1349,10 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ## pipeline_diginormAllsamples_mergeSamples_Tophat2.nonGuided_Cufflinks
 bash ${script_path}/main-DigiTopHatCufflinks_pipline_multi.sh
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> cb96b131da4e93965cc04fd810fbc7966c4058ea
 ###########################################################################################
 ## run icommand to push the file to iplant
 ## https://pods.iplantcollaborative.org/wiki/display/DS/Using+iCommands
