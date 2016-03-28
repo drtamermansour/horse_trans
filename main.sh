@@ -367,7 +367,7 @@ bash $script_path/make_PfamDB.sh $refPfam
 ## build Tophat transcriptome-index
 echo "transcriptome_index=$genome_dir/trans_index/equ" >> $horse_trans/config.txt
 source $horse_trans/config.txt
-bash ${script_path}/buildTransIndex.sh "$refGTF_file" "$transcriptome_index" "$Bowtie2_genome_index_base"
+bash ${script_path}/run_buildTransIndex.sh "$refGTF_file" "$transcriptome_index" "$Bowtie2_genome_index_base" "$platform"
 ###########################################################################################
 #### Mapping
 ## This step requires input  working_list & sample_list and output folder
