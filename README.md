@@ -73,4 +73,4 @@ Links for Downloads:
 
 Updates:
 --------
-- This pipeline was ddeveloped to run on the HPC of michigan state university. Currently we are working on the pipeline to run on Amazon instance as well. Building the Tophat transcriptome-index "run_buildTransIndex.sh" was the last step to be updated. 
+- This pipeline was developed to run on the HPC of michigan state university. Currently we are working on the pipeline to run on Amazon instance as well. Building the Tophat transcriptome-index "run_buildTransIndex.sh" was the last step to be updated. 
