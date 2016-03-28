@@ -772,6 +772,12 @@ while read work_dir; do
   bash ${script_path}/run_salmon.sh "$lib" "$strand" "horse_index" "$identifier" "$seq_dir" "$script_path"
 done < $horse_trans/working_list.txt
 find ./*.quant -name *.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+echo "Total no of input reads" > salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "total fragments" {} \; | sort >> salmonQuant_summary_detailed.txt
+echo "No of mapped reads" >> salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "total reads" {} \; | sort >> salmonQuant_summary_detailed.txt
+echo "Mapping rate" >> salmonQuant_summary_detailed.txt
+find ./*.quant -name salmon_quant.log -exec grep -H "Mapping rate" {} \; | sort >> salmonQuant_summary_detailed.txt
 python $script_path/gather-counts2.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
 sf=$(find ./*.quant -name \*.sf | head -n1)
