@@ -283,9 +283,9 @@ source $horse_trans/config.txt
 ###########################################################################################
 ### Initiate the basic structure for horse track hubs
 echo "UCSCgenome=equCab2" >> $horse_trans/config.txt
+echo "chromSizes=$genome_dir/$UCSCgenome.chrom.sizes" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 ## fetch the UCSC database to get the chromosome sizes
-chromSizes=$genome_dir/$UCSCgenome.chrom.sizes
 bash ${script_path}/calcChromSizes.sh $UCSCgenome $chromSizes
 ## Create the basic directory structure of the track hubs
 mkdir -p $track_hub/$UCSCgenome/BigBed
