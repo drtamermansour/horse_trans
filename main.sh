@@ -759,7 +759,14 @@ cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no 
 #--right $prepData/*/*/trimmed_RNA_reads/*_R2_001.pe.fq \
 #--threads 2
 
+## exclusion of Mitochondrail contigs & save the final filtered assembly to the main directory
+ cat $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf | awk '$1 != "chrM"' > $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf 
+ 
+## copy the final filtered assembly to the download folder
+cp $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
+
 ## back mapping of specific tissue libraries to final transcriptome to develop the tissue specific assemblies
+## Use the assembly version with mitochondrial contigs to allow proper calcuation of mapping rate but remove these contigs from final target assemnblies
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
 cd $(dirname $assembly)
 bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
@@ -795,7 +802,7 @@ while read work_dir; do
   dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/filtered
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
-  grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  grep -F -w -f $target.keepit.id $assembly | awk '$1 != "chrM"' > $dir/merged.gtf
   ## copy the annotation to the download folder
   cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
   ## statistics (no of genes and transcripts)
@@ -811,19 +818,13 @@ while read work_dir; do
   dir=$tissue_Cuffmerge/$target/$cufflinks_run/$cuffmerge_run/filtered
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
-  grep -F -w -f $target.keepit.id $assembly > $dir/merged.gtf
+  grep -F -w -f $target.keepit.id $assembly | awk '$1 != "chrM"' > $dir/merged.gtf
   ## copy the annotation to the download folder
   cp $dir/merged.gtf $horse_trans/downloads/$target.gtf
   ## statistics
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
 done < $horse_trans/multi_lib_tissues.txt > $horse_trans/tisAsmStats.txt
-
-## copy the final filtered assembly to the main directory 
-cp $assembly $tissue_Cuffmerge/$cuffmerge_output/filtered/.
-
-## copy the final filtered assembly to the download folder
-cp $assembly $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
 ###################
 ## calculate tissue specific expression
 targets=()
