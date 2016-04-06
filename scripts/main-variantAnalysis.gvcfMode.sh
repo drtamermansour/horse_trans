@@ -227,6 +227,9 @@ cat temp2 >> $outputVCF_refSorted
 rm temp*
 finalVCF=$assembly/varFixed/${inputVCF%.vcf}_transFinal.vcf
 bash $script_path/filterLiftedVariants.sh "transcripts_allPositive.fa" "$outputVCF_refSorted" "$finalVCF"  ## Filtered 1 records out of 32249 total records
+## copy the final VCF to the download folder
+cp $finalVCF $horse_trans/downloads/.
+
 ## Count the no of indels
 grep -v "^#" GenotypeGVCFs_monoAllel_sig_transFinal.vcf | awk '{if($5 !~ /,/ && (length($5)>1 || length($4)>1)){print}}' | wc -l  ## 5628
 
