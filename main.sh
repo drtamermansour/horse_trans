@@ -211,10 +211,12 @@ cd $genome_dir
 wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/refGene.txt.gz
 ucscTable=$"refGene.txt.gz"
 output_GTF=$"refGene.gtf"
-bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
+#bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
+zcat $ucscTable | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin $output_GTF
 echo "refGTF_file=$genome_dir/refGene.gtf" >> $horse_trans/config.txt
 output_GTF=$"refGene_transcripts.gtf"
-bash ${script_path}/ucscTableToGTF2.sh $ucscTable $output_GTF
+#bash ${script_path}/ucscTableToGTF2.sh $ucscTable $output_GTF
+zcat $ucscTable | cut -f2-11 | $script_path/UCSC_kent_commands/genePredToGtf file stdin $output_GTF
 echo "refTransGTF_file=$genome_dir/refGene_transcripts.gtf" >> $horse_trans/config.txt
 zcat $ucscTable | cut -f2-16 | $script_path/genePredToBed > refGene.bed
 echo "refBED_file=$genome_dir/refGene.bed" >> $horse_trans/config.txt
@@ -1060,6 +1062,68 @@ done < $horse_trans/cuffcompare/assmblies.txt
 
 ## copy the cuffcompare merged tables to the download folder
 cp *.reduced $horse_trans/downloads/.
+#######################
+## compare The filtered assembly to non-horse Refgene tranascripts & gene prediction models
+mkdir $horse_trans/consAna
+cd $horse_trans/consAna
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/xenoRefGene.txt.gz
+zcat xenoRefGene.txt.gz | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin xenoRefGene.gtf
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/transMapAlnRefSeq.txt.gz
+zcat transMapAlnRefSeq.txt.gz | cut -f2-22 > transMapAlnRefSeq.psl
+$script_path/UCSC_kent_commands/pslToBed transMapAlnRefSeq.psl transMapAlnRefSeq.bed
+$script_path/UCSC_kent_commands/bedToGenePred transMapAlnRefSeq.bed transMapAlnRefSeq.GenePred
+$script_path/UCSC_kent_commands/genePredToGtf file transMapAlnRefSeq.GenePred transMapAlnRefSeq.gtf
+rm transMapAlnRefSeq.psl transMapAlnRefSeq.bed transMapAlnRefSeq.GenePred
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/augustusGene.txt.gz
+zcat augustusGene.txt.gz | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin augustusGene.gtf
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/geneid.txt.gz
+zcat geneid.txt.gz | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin geneid.gtf
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/genscan.txt.gz
+zcat genscan.txt.gz | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin genscan.gtf
+
+wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/nscanGene.txt.gz
+zcat nscanGene.txt.gz | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin nscanGene.gtf
+
+rm -f pred_assemblies.txt
+for asm in *.gtf; do
+ echo "${asm%.gtf}" "$(pwd)/${asm}" >> pred_assemblies.txt;
+done
+
+asm_name=$cufflinks_run.$cuffmerge_run
+assembly=$tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf
+while read ref_name ref_assembly;do
+  mkdir -p $horse_trans/consAna/$asm_name.vs.$ref_name
+  cd $horse_trans/consAna/$asm_name.vs.$ref_name
+  identifier=$asm_name.vs.$ref_name
+  echo $identifier
+  #echo "$assembly" "$identifier" "${ref_assembly}" >> $horse_trans/cuffcompare/temp
+  bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+done < pred_assemblies.txt
+
+cd $horse_trans/consAna
+while read ref_name ref_assembly;do
+  cd $horse_trans/consAna/$asm_name.vs.$ref_name
+  identifier=$asm_name.vs.$ref_name
+  mv $(dirname $assembly)/{$identifier.*.refmap,$identifier.*.tmap} .
+done < pred_assemblies.txt
+
+## make a transcript to gene map
+cd $horse_trans/consAna
+echo -e "transcript.ID\tgene.ID\tchr\tstrand" > $asm_name.cons.merge
+cat $assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $asm_name.cons.merge
+
+## marge all the tmap files for each annoation as a quary aganist all other annotations as references
+while read ref_name ref_assembly;do
+ identifier=$asm_name.vs.$ref_name
+ echo $identifier
+ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap $ref_name
+done < pred_assemblies.txt
+cat $asm_name.cons.merge | cut -f 1-10,13-16,19-22,25-28,31-34,37-40 > $asm_name.cons.merge.reduced
 #######################
 ## compare bed files
 mkdir $horse_trans/compareBed
