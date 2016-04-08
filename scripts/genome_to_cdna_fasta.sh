@@ -4,8 +4,8 @@
 #PBS -m abe
 #PBS -N genome_to_cdna_fasta
 
-module load TransDecoder/2.0.1
-decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
+#module load TransDecoder/2.0.1
+#decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
 
 cd $PBS_O_WORKDIR
 
