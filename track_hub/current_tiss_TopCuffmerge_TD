@@ -1,3 +1,2 @@
-all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/transdecoder
-all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/varFixed/transdecoder
-all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/transdecoder_longest_ORF
+transdecoder
+varFixed/transdecoder

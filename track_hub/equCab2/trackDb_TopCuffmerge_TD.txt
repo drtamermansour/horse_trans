@@ -1,30 +1,20 @@
-track All.Cons.ORFs
-bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder.BigBed
-shortLabel all_tissues_frac0.05
-longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/transdecoder
+track transdecoder
+bigDataUrl BigBed/transdecoder.BigBed
+shortLabel transdecoder
+longLabel transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 1
-html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder
+html transdecoder
  
-track All.Cons.Fixed
-bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_varFixed_transdecoder.BigBed
-shortLabel all_tissues_frac0.05
-longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/varFixed/transdecoder
+track varFixed
+bigDataUrl BigBed/varFixed_transdecoder.BigBed
+shortLabel varFixed
+longLabel varFixed/transdecoder
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
 priority 2
-html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_varFixed_transdecoder
- 
-track longest.ORFs
-bigDataUrl BigBed/all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder_longest_ORF.BigBed
-shortLabel all_tissues_frac0.05
-longLabel all_tissues_frac0.05/nonGuided_Cufflinks/nonGuided_Cuffmerge/filtered/transdecoder_longest_ORF
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 3
-html all_tissues_frac0.05_nonGuided_Cufflinks_nonGuided_Cuffmerge_filtered_transdecoder_longest_ORF
+html varFixed_transdecoder
  
