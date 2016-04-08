@@ -1267,14 +1267,6 @@ tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk
 paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 
-mkdir -p $assembly/transdecoder_longest_ORF/transcripts.fasta.transdecoder_dir
-cd $assembly/transdecoder_longest_ORF
-cp $assembly/transdecoder/{transcripts.fasta,transcripts.gff3} .
-cp $assembly/transdecoder/transcripts.fasta.transdecoder_dir/{base_freqs.dat*,longest_orfs.pep,longest_orfs.gff3,longest_orfs.cds} transcripts.fasta.transdecoder_dir/.
-bash $script_path/run_transdecoderPredict_LongestORF.sh "transcripts.fasta" "$script_path/transdecoderPredict_LongestORF.sh"
-$script_path/decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
-$script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
-
 ## check for the coding novel transcrips
 cd $assembly/transdecoder
 cat $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
@@ -1370,12 +1362,11 @@ cat decrease_keys.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5
 ## create list of assemblies
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $tissue_Cuffmerge/decoder_assemblies.txt
-echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
-echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/transdecoder_longest_ORF >> $tissue_Cuffmerge/decoder_assemblies.txt
-echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/varFixed/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
+echo "$tissue_Cuffmerge/$cuffmerge_output/filtered" "transdecoder" >> $tissue_Cuffmerge/decoder_assemblies.txt
+echo "$tissue_Cuffmerge/$cuffmerge_output/filtered" "varFixed/transdecoder" >> $tissue_Cuffmerge/decoder_assemblies.txt
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-update=0    ## 0 means do not update Bigbed files & 1 means update
+update=1    ## 0 means do not update Bigbed files & 1 means update
 rm -f $horse_trans/decoder_assemblies.txt
 while read ass_path assembly; do
   echo $assembly
