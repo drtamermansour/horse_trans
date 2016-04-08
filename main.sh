@@ -321,9 +321,9 @@ while read ass_path assembly; do
     if [ -f "$targetAss" ];then
       bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
     else echo "can not find target assembly"; break;fi
-    if [ -f *.BigBed ];then
+    if [ -f ${targetAss%.bed}.BigBed ];then
       identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-      cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+      cp ${targetAss%.bed}.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
     else echo "could not make merged.BigBed file"; break; fi
   fi
   echo $ass_path/$assembly >> $horse_trans/public_assemblies.txt;
@@ -1225,7 +1225,7 @@ alltissueGFF_file=${filename}.gff
 module load BEDTools/2.24.0
 
 ###########################################################################################
-## run Transdecoder to predict UTRs with homology options
+## run Transdecoder to predict ORFs with homology options
 #bash $script_path/run_transdecoder.sh <(echo "$tissue_Cuffmerge/$cuffmerge_output/filtered") $genome $refPtn $refPfam $script_path/transdecoder.sh
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered"
 mkdir $assembly/transdecoder
@@ -1250,14 +1250,15 @@ cd ../
 bash $script_path/run_transdecoderPredict.sh "transcripts.fasta" "pfam.domtblout" "blastp.outfmt6" "$script_path/transdecoderPredict.sh"
 
 # convert the transcript structure GTF file to an alignment-GFF3 formatted file
-module load TransDecoder/2.0.1
-decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
-$decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "$assembly/merged.gtf" > transcripts.gff3
+#module load TransDecoder/2.0.1
+#decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
+$script_path/decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "$assembly/merged.gtf" > transcripts.gff3
 # generate a genome-based coding region annotation file
-$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+$script_path/decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+
 grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
-$decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
+$script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 ## exclude transcripts with single exon for better visualization
 cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
@@ -1266,7 +1267,16 @@ tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk
 paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 
+mkdir -p $assembly/transdecoder_longest_ORF/transcripts.fasta.transdecoder_dir
+cd $assembly/transdecoder_longest_ORF
+cp $assembly/transdecoder/{transcripts.fasta,transcripts.gff3} .
+cp $assembly/transdecoder/transcripts.fasta.transdecoder_dir/{base_freqs.dat*,longest_orfs.pep,longest_orfs.gff3,longest_orfs.cds} transcripts.fasta.transdecoder_dir/.
+bash $script_path/run_transdecoderPredict_LongestORF.sh "transcripts.fasta" "$script_path/transdecoderPredict_LongestORF.sh"
+$script_path/decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
+$script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
+
 ## check for the coding novel transcrips
+cd $assembly/transdecoder
 cat $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
 grep -F -f new_transcripts_key transcripts.fasta.transdecoder.genome.bed > new_transcripts_key.transdecoder.genome.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 == 1' > new_transcripts_key.transdecoder.genome.Singleexon.bed
@@ -1276,15 +1286,12 @@ cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 3' > tnew_transcrip
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 4' > tnew_transcripts_key.transdecoder.genome.multiexon4.bed
 cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 5' > tnew_transcripts_key.transdecoder.genome.multiexon5.bed
 
-
 cat new_transcripts_key.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 9726
 cat tnew_transcripts_key.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 1901
 cat tnew_transcripts_key.transdecoder.genome.multiexon2.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 837
 cat tnew_transcripts_key.transdecoder.genome.multiexon3.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 397
 cat tnew_transcripts_key.transdecoder.genome.multiexon4.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 220
 cat tnew_transcripts_key.transdecoder.genome.multiexon5.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 126
-
-
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
 bash ${script_path}/main-variantAnalysis.gvcfMode.sh
@@ -1314,15 +1321,12 @@ cat subset*.pfam.domtblout >> ../pfam.domtblout
 cd ../
 bash $script_path/run_transdecoderPredict.sh "transcripts.fasta" "pfam.domtblout" "blastp.outfmt6" "$script_path/transdecoderPredict.sh"
 # create an alignment-GFF3 formatted file
-module load TransDecoder/2.0.1
-decoderUtil=$"/opt/software/TransDecoder/2.0.1--GCC-4.4.5/util"
-$decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "../varFixed_best.gtf" > transcripts.gff3
+$script_path/decoderUtil/cufflinks_gtf_to_alignment_gff3.pl "../varFixed_best.gtf" > transcripts.gff3
 # generate a genome-based coding region annotation file
-#$decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
 $script_path/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta 1> transcripts.fasta.transdecoder.genome.gff3 2> sterr
 grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
-$decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
+$script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 ## exclude transcripts with single exon for better visualization
 cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
@@ -1356,7 +1360,6 @@ cat decrease_keys.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort 
 cat decrease_keys.transdecoder.genome.Singleexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 252
 cat decrease_keys.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 200
 
-
 ## calculate the phase of Transdecoder GFF3 files
 #while read assembly; do if [ -f $assembly/transdecoder/transcripts.fasta.transdecoder.genome.gff3 ];then
 #  echo $assembly
@@ -1364,10 +1367,11 @@ cat decrease_keys.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5
 #  bash $script_path/cdsphase.sh transcripts.fasta.transdecoder.genome.gff3
 #fi; done < $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_assemblies.txt
 #######################
-## create list of assemblies from each library
+## create list of assemblies
 ## This is where you can edit the list to restrict the processing for certain target(s)
 rm -f $tissue_Cuffmerge/decoder_assemblies.txt
 echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
+echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/transdecoder_longest_ORF >> $tissue_Cuffmerge/decoder_assemblies.txt
 echo "$tissue_Cuffmerge" "${assembly#$tissue_Cuffmerge/}"/varFixed/transdecoder >> $tissue_Cuffmerge/decoder_assemblies.txt
 ####################
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
@@ -1379,13 +1383,14 @@ while read ass_path assembly; do
     cd $ass_path/$assembly
   else echo "can not find $ass_path/$assembly"; break;fi
   if [[ ! -f "*.BigBed" || "$update" -eq 1 ]];then
-    targetAss=$"transcripts.fasta.transdecoder.genome.multiexon.bed"
+    #targetAss=$"transcripts.fasta.transdecoder.genome.multiexon.bed"
+    targetAss=$"transcripts.fasta.transdecoder.genome.bed"
     if [ -f "$targetAss" ];then
       bash $script_path/bedToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes"
     else echo "can not find the target BED file"; break;fi
-    if [ -f *.BigBed ];then
+    if [ -f ${targetAss%.bed}.BigBed ];then
       identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
-      cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+      cp ${targetAss%.bed}.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
     else echo "could not make BigBed file"; break; fi
   fi
   echo $ass_path/$assembly >> $horse_trans/decoder_assemblies.txt;
