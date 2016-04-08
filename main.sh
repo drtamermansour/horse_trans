@@ -1013,9 +1013,6 @@ cat matching_decreased | awk '{print $1}' | uniq | wc -l ## 718 (no of genes)
 cat matching_decreased | awk '{total = total + ($6-$4)}END{print total}'  ## 339273 (~0.4Kb on ave)
 cat matchingIsoforms_PtnCoding | awk '($4-$6)==0' > matching_noChange ## 6
 cat matching_noChange | awk '{print $1}' | uniq | wc -l ## 6 (no of genes)
-
-## novel transcripts
-cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 ######################
 mkdir $horse_trans/cuffcompare_Ann
 ## count the genes/transcripts  of each assembly
@@ -1266,12 +1263,29 @@ grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
 $script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 ## exclude transcripts with single exon for better visualization
-cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
+#cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_ID
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
 paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
+wc -l longest_ORFs #  ## the number of transcripts with likely coding sequences 
+wc -l all_ORFs #  ## all signifcant ORFs
+
+## add the length of longest ORF and number of exons to the annotation file
+ann=$horse_trans/cuffcompare_Ann/nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced
+longestORF=$assembly/transdecoder/longest_ORFs
+asmBed=$assembly/merged.bed
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T);'\
+           'data2=read.table(args[2], header=F); colnames(data2)=c("transcript.ID","longest_ORF");'\
+           'dataMerge=merge(data1,data2,by="transcript.ID",all.x=T);'\
+           'data3=read.table(args[3], header=F); data3=data3[,c(4,10)]; colnames(data3)=c("transcript.ID","exons");'\
+           'dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);'\
+           'write.table(dataMerge2,paste(args[1],"ORF_exon",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $ann $longestORF $asmBed
+
+## novel transcripts
+cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
+cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
 
 ## check for the coding novel transcrips
 cd $assembly/transdecoder
@@ -1326,7 +1340,7 @@ grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
 $script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
 ## exclude transcripts with single exon for better visualization
-cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
+#cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_ID
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
