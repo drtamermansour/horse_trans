@@ -1062,6 +1062,12 @@ done < $horse_trans/cuffcompare/assmblies.txt
 
 ## copy the cuffcompare merged tables to the download folder
 cp *.reduced $horse_trans/downloads/.
+
+ann="nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced"
+## R plot to compare the current assembly with the 4 public assemblies
+bash $script_path/run_compAn.sh "$ann" "${ann%.merge.reduced}.transcriptsCompare.pdf" $script_path/compAn.R;
+## R plot to assess the distribution of class codes (according to comparison with NCBI assembly) per chromosome
+bash $script_path/run_compNCBIperChr.sh "$ann" "$genome_dir/$UCSCgenome.chrom.sizes" "${ann%.merge.reduced}.transCompareNCBIperChr.pdf" $script_path/compNCBI_PerCh.R;
 #######################
 ## compare The filtered assembly to non-horse Refgene tranascripts & gene prediction models
 mkdir $horse_trans/consAna
