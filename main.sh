@@ -187,6 +187,7 @@ cat ../*.fa > genome.fa
 bash ${script_path}/run_gatk-index.sh genome.fa
 echo "gatk_ref=$genome_dir/gatkIndex/genome.fa" >> $horse_trans/config.txt
 echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $horse_trans/config.txt
+echo "gatk_ref_dict=$genome_dir/gatkIndex/genome.dict" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 ###########################################################################################
 ## create liftover files to allow mapping of NCBI annotation to UCSC tracks 
@@ -1049,23 +1050,29 @@ done < $horse_trans/cuffcompare/assmblies.txt
 
 ## add index for complex regions
 while read asm_name assembly;do
+  cp $asm_name.merge.reduced $asm_name.merge.reduced.complex
   while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
     identifier=$asm_name.vs.$ref_name
     echo $identifier
     identifier2=$ref_name.vs.$asm_name
-    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=F,row.names=NULL,sep="\t"); data2$V2="c"; colnames(data2)=c("transcript.ID",args[3]); dataMerge=merge(data1,data2,by="transcript.ID",all.x=T); data3=read.table(args[4], header=F,row.names=NULL,sep="\t"); data3$V2="c"; colnames(data3)=c("transcript.ID",args[5]);dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);write.table(dataMerge2,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge.reduced $horse_trans/cuffcompare/$identifier/$identifier.complex $identifier.complex $horse_trans/cuffcompare/$identifier2/$identifier2.complex $identifier2.complex
+    Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL);'\
+'data2=read.table(args[2], header=F,row.names=NULL,sep="\t"); data2$V2="c"; colnames(data2)=c("transcript.ID",args[3]);'\
+'dataMerge=merge(data1,data2,by="transcript.ID",all.x=T);'\
+'data3=read.table(args[4], header=F,row.names=NULL,sep="\t"); data3$V2="c"; colnames(data3)=c("transcript.ID",args[5]);'\
+'dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);'\
+'write.table(dataMerge2,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.merge.reduced.complex $horse_trans/cuffcompare/$identifier/$identifier.complex $identifier.complex $horse_trans/cuffcompare/$identifier2/$identifier2.complex $identifier2.complex
   fi; done < $horse_trans/cuffcompare/assmblies.txt
 done < $horse_trans/cuffcompare/assmblies.txt
 
 ## copy the cuffcompare merged tables to the download folder
-cp *.reduced $horse_trans/downloads/.
+cp *.reduced *.reduced.complex $horse_trans/downloads/.
 
 ann="nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced"
 ## R plot to compare the current assembly with the 4 public assemblies
 bash $script_path/run_compAn.sh "$ann" "${ann%.merge.reduced}.transcriptsCompare.pdf" $script_path/compAn.R;
 ## R plot to assess the distribution of class codes (according to comparison with NCBI assembly) per chromosome
 bash $script_path/run_compNCBIperChr.sh "$ann" "$genome_dir/$UCSCgenome.chrom.sizes" "${ann%.merge.reduced}.transCompareNCBIperChr.pdf" $script_path/compNCBI_PerCh.R;
-#######################
+#######################################################################
 ## compare The filtered assembly to non-horse Refgene tranascripts & gene prediction models
 mkdir $horse_trans/consAna
 cd $horse_trans/consAna
@@ -1121,10 +1128,20 @@ echo -e "transcript.ID\tgene.ID\tchr\tstrand" > $asm_name.cons.merge
 cat $assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $asm_name.cons.merge
 
 ## marge all the tmap files for each annoation as a quary aganist all other annotations as references
+#while read ref_name ref_assembly;do
+# identifier=$asm_name.vs.$ref_name
+# echo $identifier
+# Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap $ref_name
+#done < pred_assemblies.txt
+#cat $asm_name.cons.merge | cut -f 1-10,13-16,19-22,25-28,31-34,37-40 > $asm_name.cons.merge.reduced
+
 while read ref_name ref_assembly;do
  identifier=$asm_name.vs.$ref_name
  echo $identifier
- Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap $ref_name
+ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL);'\
+'data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[-5]=as.vector(sapply(args[3], paste0, colnames(data2)[-5]));'\
+'dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T);'\
+'write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap "$ref_name."
 done < pred_assemblies.txt
 cat $asm_name.cons.merge | cut -f 1-10,13-16,19-22,25-28,31-34,37-40 > $asm_name.cons.merge.reduced
 ###########################################################################################
@@ -1169,23 +1186,82 @@ tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
 paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
-wc -l longest_ORFs #  ## the number of transcripts with likely coding sequences 
-wc -l all_ORFs #  ## all signifcant ORFs
-
+wc -l longest_ORFs # 65062  ## the number of transcripts with likely coding sequences 
+wc -l all_ORFs # 149298  ## all signifcant ORFs
+###########################################################################################
+## novel genes
 ## add the length of longest ORF and number of exons to the annotation file
 ann=$horse_trans/cuffcompare_Ann/nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced
-longestORF=$assembly/transdecoder/longest_ORFs
-asmBed=$assembly/merged.bed
-Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T);'\
-           'data2=read.table(args[2], header=F); colnames(data2)=c("transcript.ID","longest_ORF");'\
-           'dataMerge=merge(data1,data2,by="transcript.ID",all.x=T);'\
-           'data3=read.table(args[3], header=F); data3=data3[,c(4,10)]; colnames(data3)=c("transcript.ID","exons");'\
-           'dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);'\
-           'write.table(dataMerge2,paste(args[1],"ORF_exon",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $ann $longestORF $asmBed
+longestORF=$tissue_Cuffmerge/$cuffmerge_output/filtered/transdecoder/longest_ORFs
+asmBed=$tissue_Cuffmerge/$cuffmerge_output/filtered/merged.bed
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'data2=read.table(args[2], header=F,sep="\t"); colnames(data2)=c("transcript.ID","longest_ORF");'\
+'dataMerge=merge(data1,data2,by="transcript.ID",all.x=T);'\
+'data3=read.table(args[3], header=F,sep="\t"); data3=data3[,c(4,10)]; colnames(data3)=c("transcript.ID","exons");'\
+'dataMerge2=merge(dataMerge,data3,by="transcript.ID",all.x=T);'\
+'write.table(dataMerge2,paste(args[1],"ORF_exons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $ann $longestORF $asmBed
 
-## novel transcripts
-cd $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI
-cat nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI.merged.gtf.tmap | awk '($3=="u"){print $4,$5,$11}' > new_transcripts ## Cuff_gene, Cuff_trans, trans_len    ## 46570 gene/48601 transcript
+## prepare a list of candidate novel genes
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'candidate_novels=subset(data1,class_code.x.1 %in% "u" | class_code.y.1 %in% "u" | class_code.y %in% "u" | class_code.x %in% "u");'\
+'write.table(candidate_novels,paste(args[1],"candNovel",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $ann.ORF_exons
+tail -n+2 $ann.ORF_exons.candNovel | wc -l # 63190
+candNovel_ann=$ann.ORF_exons.candNovel
+## R plot to compare the current assembly with the 4 public assemblies
+bash $script_path/run_compAn.sh "$candNovel_ann" "${candNovel_ann%.merge.reduced*}.candNovel.transcriptsCompare.pdf" $script_path/compAn.R;
+## R plot to assess the distribution of class codes (according to comparison with NCBI assembly) per chromosome
+bash $script_path/run_compNCBIperChr.sh "$candNovel_ann" "$genome_dir/$UCSCgenome.chrom.sizes" "${candNovel_ann%.merge.reduced*}.candNovel.transCompareNCBIperChr.pdf" $script_path/compNCBI_PerCh.R;
+
+## prepare a list of candidate novel genes that are supported by other assemblies
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'check=c("=","j");'\
+'supporting_novels=subset(data1,class_code.x.1 %in% check | class_code.y.1 %in% check | class_code.y %in% check | class_code.x %in% check);'\
+'write.table(supporting_novels,paste(args[1],"sup",sep="."), sep="\t", quote=F, row.names=F, col.names=T);'\
+'unsup_novels=subset(data1,!(class_code.x.1 %in% check | class_code.y.1 %in% check | class_code.y %in% check | class_code.x %in% check));'\
+'write.table(unsup_novels,paste(args[1],"unsup",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $candNovel_ann
+tail -n+2 $ann.ORF_exons.candNovel.sup | wc -l # 7363
+tail -n+2 $ann.ORF_exons.candNovel.unsup | wc -l # 55827
+supNovel_ann=$ann.ORF_exons.candNovel.sup
+unsupNovel_ann=$ann.ORF_exons.candNovel.unsup
+## R plot to compare the current assembly with the 4 public assemblies
+bash $script_path/run_compAn.sh "$supNovel_ann" "${supNovel_ann%.merge.reduced*}.supNovel.transcriptsCompare.pdf" $script_path/compAn.R;
+## R plot to assess the distribution of class codes (according to comparison with NCBI assembly) per chromosome
+bash $script_path/run_compNCBIperChr.sh "$supNovel_ann" "$genome_dir/$UCSCgenome.chrom.sizes" "${supNovel_ann%.merge.reduced*}.supNovel.transCompareNCBIperChr.pdf" $script_path/compNCBI_PerCh.R;
+
+## prepare a list of candidate novel genes that are NOT supported by other assemblies & has an ORF THEN find those overlapping with conserved loci
+#cons=$horse_trans/consAna/$cufflinks_run.$cuffmerge_run.cons.merge.reduced
+#Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+#'data2=read.table(args[2],header=T,sep="\t");'\
+#'notNA=subset(data1,!(is.na(longest_ORF)));'\
+#'check=c("u");'\
+#'novels=subset(notNA,(class_code.x.1 %in% check & class_code.y.1 %in% check & class_code.y %in% check & class_code.x %in% check));'\
+#'dataMerge=merge(novels[,c(1,37,38)],data2,by="transcript.ID",all.x=T);'\
+#'novels_cons=subset(dataMerge,!(augustusGene.class_code %in% check) | !(geneid.class_code %in% check) | !(genscan.class_code %in% check) | !(nscanGene.class_code %in% check) | !(transMapAlnRefSeq.class_code %in% check) | !(xenoRefGene.class_code %in% check));'\
+#'write.table(novels_cons,paste(args[1],"cons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $candNovel_ann $cons
+#tail -n+2 $candNovel_ann.cons | wc -l # 6885 (This means that 63190 - (7363 + 6885)= 48942 have been excluded 
+
+## prepare a list of candidate novel genes that are NOT supported by other assemblies BUT supported by predicted or non horse gene models
+cons=$horse_trans/consAna/$cufflinks_run.$cuffmerge_run.cons.merge.reduced
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'data2=read.table(args[2],header=T,sep="\t");'\
+'check=c("=","j");'\
+'cons=subset(data1,(augustusGene.class_code %in% check | geneid.class_code %in% check | genscan.class_code %in% check | nscanGene.class_code %in% check | transMapAlnRefSeq.class_code %in% check | xenoRefGene.class_code %in% check));'\
+'novels_cons=merge(cons,data2[,c(1,27,28)],by="transcript.ID",all.x=F,all.y=F);'\
+'write.table(novels_cons,paste(args[2],"cons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);'\
+'uncons=subset(data1,!(augustusGene.class_code %in% check | geneid.class_code %in% check | genscan.class_code %in% check | nscanGene.class_code %in% check | transMapAlnRefSeq.class_code %in% check | xenoRefGene.class_code %in% check));'\
+'novels_uncons=merge(data2,data.frame(transcript.ID=uncons[,1]),by="transcript.ID",all.x=F,all.y=F);'\
+'write.table(novels_uncons,paste(args[2],"uncons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $cons $unsupNovel_ann
+tail -n+2 $unsupNovel_ann.cons | wc -l # 1931
+tail -n+2 $unsupNovel_ann.uncons | wc -l # 53896
+
+## prepare a list of candidate novel genes that are NOT supported by other assemblies or predicted or non horse gene models BUT has ORF
+Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'notNA=subset(data1,!(is.na(longest_ORF)));'\
+'write.table(notNA,paste(args[1],"ORF",sep="."), sep="\t", quote=F, row.names=F, col.names=T);'\
+'noORF=subset(data1,is.na(longest_ORF));'\
+'write.table(noORF,paste(args[1],"noORF",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $unsupNovel_ann.uncons
+tail -n+2 $unsupNovel_ann.uncons.ORF | wc -l # 11414
+tail -n+2 $unsupNovel_ann.uncons.noORF | wc -l # 42482
 
 ## check for the coding novel transcrips
 cd $assembly/transdecoder
