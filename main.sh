@@ -644,6 +644,14 @@ mkdir -p $dist_dir
 cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
 #bash ${script_path}/cuffmerge_withRefGene.sh "$genome" "$cuffmerge_output" "$prepData/${cufflinks_run}_assemblies.txt" "$refGTF_file"
 bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
+
+#Construct the transcript fasta file && calculate statistics
+cd $tissue_Cuffmerge/$cuffmerge_output
+bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
+bash $script_path/run_seq_stats.sh "transcripts.fasta" "primitive_transcriptome.MatzStat"
+echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> primitive_transcriptome.MatzStat
+echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> primitive_transcriptome.MatzStat
+cp primitive_transcriptome.MatzStat $horse_trans/downloads/.
 ###################
 ## create a hub for non filtered data
 ## create list of assemblies from each library
@@ -745,30 +753,20 @@ grep -F -w -f keepit.id $assembly > ../merged.gtf
 cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75067
 cat ../merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 114830
 
-## Using transrate/transfuse
-#mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/transrate/prep
-#cd $tissue_Cuffmerge/$cuffmerge_output/filtered/transrate/prep
-#assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
-#bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "hiExpTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-#bash $script_path/run_genome_to_cdna_fasta.sh "$ncbiGTF_file" "$genome" "ncbiTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-#bash $script_path/run_genome_to_cdna_fasta.sh "$ensGTF_file" "$genome" "ensTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-#Hestand_2014GTF=$(ls $pubAssemblies/Hestand_2014/*.gtf)
-#bash $script_path/run_genome_to_cdna_fasta.sh "$Hestand_2014GTF" "$genome" "HesTranscripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-#cat $prepData/*/*/trimmed_RNA_reads/*_R1_001.pe.fq $prepData/*/*/trimmed_RNA_reads/*_R_001.se.fq $prepData/*/*/trimmed_RNA_reads/*_SR_001.se.fq > left_single.fq
-#cat $prepData/*/*/trimmed_RNA_reads/*_R2_001.pe.fq > right.fq
-#module load transrate/1.0.1
-#transrate --assembly transcripts.fa,ncbiTranscripts.fa,ensTranscripts.fa,HesTranscripts.fa \
-#--left $prepData/*/*/trimmed_RNA_reads/*_R1_001.pe.fq \
-#--right $prepData/*/*/trimmed_RNA_reads/*_R2_001.pe.fq \
-#--threads 2
-
 ## exclusion of Mitochondrail contigs & save the final filtered assembly to the main directory
  cat $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf | awk '$1 != "chrM"' > $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf 
  
 ## copy the final filtered assembly to the download folder
 cp $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf $horse_trans/downloads/filtered_Alltissues_Assembly.GTF
 
-## back mapping of specific tissue libraries to final transcriptome to develop the tissue specific assemblies
+#Construct the transcript fasta file && calculate statistics
+cd $tissue_Cuffmerge/$cuffmerge_output/filtered
+bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
+bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered_transcriptome.MatzStat"
+echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> filtered_transcriptome.MatzStat  
+echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered_transcriptome.MatzStat
+cp filtered_transcriptome.MatzStat $horse_trans/downloads/.
+
 ## Use the assembly version with mitochondrial contigs to allow proper calcuation of mapping rate but remove these contigs from final target assemnblies
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
 cd $(dirname $assembly)
@@ -1128,13 +1126,6 @@ echo -e "transcript.ID\tgene.ID\tchr\tstrand" > $asm_name.cons.merge
 cat $assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $asm_name.cons.merge
 
 ## marge all the tmap files for each annoation as a quary aganist all other annotations as references
-#while read ref_name ref_assembly;do
-# identifier=$asm_name.vs.$ref_name
-# echo $identifier
-# Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL); data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[2]=args[3];dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T); write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap $ref_name
-#done < pred_assemblies.txt
-#cat $asm_name.cons.merge | cut -f 1-10,13-16,19-22,25-28,31-34,37-40 > $asm_name.cons.merge.reduced
-
 while read ref_name ref_assembly;do
  identifier=$asm_name.vs.$ref_name
  echo $identifier
@@ -1179,8 +1170,6 @@ $script_path/decoderUtil/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.t
 grep "Warning" sterr > warnings.txt && rm sterr
 # convert the genome-based gene-gff3 file to bed
 $script_path/decoderUtil/gff3_file_to_bed.pl transcripts.fasta.transdecoder.genome.gff3 > transcripts.fasta.transdecoder.genome.bed
-## exclude transcripts with single exon for better visualization
-#cat transcripts.fasta.transdecoder.genome.bed | awk '$10 > 1' > transcripts.fasta.transdecoder.genome.multiexon.bed
 
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '\t' '{print $1}' > Trans_ID
 tail -n+2 transcripts.fasta.transdecoder.bed | awk -F '[\t:]' '{print $6}' | awk -F '_' '{print $1}' > ORF_len
@@ -1219,26 +1208,15 @@ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t"
 'write.table(supporting_novels,paste(args[1],"sup",sep="."), sep="\t", quote=F, row.names=F, col.names=T);'\
 'unsup_novels=subset(data1,!(class_code.x.1 %in% check | class_code.y.1 %in% check | class_code.y %in% check | class_code.x %in% check));'\
 'write.table(unsup_novels,paste(args[1],"unsup",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $candNovel_ann
-tail -n+2 $ann.ORF_exons.candNovel.sup | wc -l # 7363
-tail -n+2 $ann.ORF_exons.candNovel.unsup | wc -l # 55827
 supNovel_ann=$ann.ORF_exons.candNovel.sup
 unsupNovel_ann=$ann.ORF_exons.candNovel.unsup
+tail -n+2 $supNovel_ann | wc -l # 7363
+tail -n+2 $supNovel_ann | awk -F $'\t' '{A[$28]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $supNovel_ann.freq
+tail -n+2 $unsupNovel_ann | wc -l # 55827
 ## R plot to compare the current assembly with the 4 public assemblies
 bash $script_path/run_compAn.sh "$supNovel_ann" "${supNovel_ann%.merge.reduced*}.supNovel.transcriptsCompare.pdf" $script_path/compAn.R;
 ## R plot to assess the distribution of class codes (according to comparison with NCBI assembly) per chromosome
 bash $script_path/run_compNCBIperChr.sh "$supNovel_ann" "$genome_dir/$UCSCgenome.chrom.sizes" "${supNovel_ann%.merge.reduced*}.supNovel.transCompareNCBIperChr.pdf" $script_path/compNCBI_PerCh.R;
-
-## prepare a list of candidate novel genes that are NOT supported by other assemblies & has an ORF THEN find those overlapping with conserved loci
-#cons=$horse_trans/consAna/$cufflinks_run.$cuffmerge_run.cons.merge.reduced
-#Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
-#'data2=read.table(args[2],header=T,sep="\t");'\
-#'notNA=subset(data1,!(is.na(longest_ORF)));'\
-#'check=c("u");'\
-#'novels=subset(notNA,(class_code.x.1 %in% check & class_code.y.1 %in% check & class_code.y %in% check & class_code.x %in% check));'\
-#'dataMerge=merge(novels[,c(1,37,38)],data2,by="transcript.ID",all.x=T);'\
-#'novels_cons=subset(dataMerge,!(augustusGene.class_code %in% check) | !(geneid.class_code %in% check) | !(genscan.class_code %in% check) | !(nscanGene.class_code %in% check) | !(transMapAlnRefSeq.class_code %in% check) | !(xenoRefGene.class_code %in% check));'\
-#'write.table(novels_cons,paste(args[1],"cons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $candNovel_ann $cons
-#tail -n+2 $candNovel_ann.cons | wc -l # 6885 (This means that 63190 - (7363 + 6885)= 48942 have been excluded 
 
 ## prepare a list of candidate novel genes that are NOT supported by other assemblies BUT supported by predicted or non horse gene models
 cons=$horse_trans/consAna/$cufflinks_run.$cuffmerge_run.cons.merge.reduced
@@ -1252,6 +1230,7 @@ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t"
 'novels_uncons=merge(data2,data.frame(transcript.ID=uncons[,1]),by="transcript.ID",all.x=F,all.y=F);'\
 'write.table(novels_uncons,paste(args[2],"uncons",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $cons $unsupNovel_ann
 tail -n+2 $unsupNovel_ann.cons | wc -l # 1931
+tail -n+2 $unsupNovel_ann.cons | awk -F $'\t' '{A[$32]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $unsupNovel_ann.cons.freq
 tail -n+2 $unsupNovel_ann.uncons | wc -l # 53896
 
 ## prepare a list of candidate novel genes that are NOT supported by other assemblies or predicted or non horse gene models BUT has ORF
@@ -1261,25 +1240,27 @@ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t"
 'noORF=subset(data1,is.na(longest_ORF));'\
 'write.table(noORF,paste(args[1],"noORF",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $unsupNovel_ann.uncons
 tail -n+2 $unsupNovel_ann.uncons.ORF | wc -l # 11414
+tail -n+2 $unsupNovel_ann.uncons.ORF | awk -F $'\t' '{A[$28]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $unsupNovel_ann.uncons.ORF.freq
 tail -n+2 $unsupNovel_ann.uncons.noORF | wc -l # 42482
+tail -n+2 $unsupNovel_ann.uncons.noORF | awk -F $'\t' '{A[$28]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $unsupNovel_ann.uncons.noORF.freq
 
-## check for the coding novel transcrips
-cd $assembly/transdecoder
-cat $horse_trans/cuffcompare/nonGuided_Cufflinks.nonGuided_Cuffmerge.vs.NCBI/new_transcripts | awk '{print "ID="$2"|"}' > new_transcripts_key
-grep -F -f new_transcripts_key transcripts.fasta.transdecoder.genome.bed > new_transcripts_key.transdecoder.genome.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 == 1' > new_transcripts_key.transdecoder.genome.Singleexon.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 1' > tnew_transcripts_key.transdecoder.genome.multiexon.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 2' > tnew_transcripts_key.transdecoder.genome.multiexon2.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 3' > tnew_transcripts_key.transdecoder.genome.multiexon3.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 4' > tnew_transcripts_key.transdecoder.genome.multiexon4.bed
-cat new_transcripts_key.transdecoder.genome.bed | awk '$10 > 5' > tnew_transcripts_key.transdecoder.genome.multiexon5.bed
+## copy the novel gene tables to the downloads
+cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $unsupNovel_ann.uncons.noORF $ann.*.freq $horse_trans/downloads/.
+###########################################################################################
+## Final filtered transcriptome
+assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered"
+mkdir $assembly/refined
+cd $assembly/refined
+tail -n+2 $unsupNovel_ann.uncons.noORF | awk '{print $1}' > removeit.id
+grep -v -F -w -f removeit.id $assembly/merged.gtf > merged.gtf
+grep -v -F -w -f removeit.id $assembly/merged.bed > merged.bed
 
-cat new_transcripts_key.transdecoder.genome.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 9726
-cat tnew_transcripts_key.transdecoder.genome.multiexon.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 1901
-cat tnew_transcripts_key.transdecoder.genome.multiexon2.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 837
-cat tnew_transcripts_key.transdecoder.genome.multiexon3.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 397
-cat tnew_transcripts_key.transdecoder.genome.multiexon4.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 220
-cat tnew_transcripts_key.transdecoder.genome.multiexon5.bed | awk -F '[\t=|]' '{print $5}' | sort | uniq | wc -l ## 126
+#Construct the transcript fasta file && calculate statistics
+bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
+bash $script_path/run_seq_stats.sh "transcripts.fasta" "refined_transcriptome.MatzStat"
+echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> refined_transcriptome.MatzStat 
+echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> refined_transcriptome.MatzStat
+cp refined_transcriptome.MatzStat $horse_trans/downloads/.
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
 bash ${script_path}/main-variantAnalysis.gvcfMode.sh
