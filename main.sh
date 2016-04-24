@@ -1130,7 +1130,8 @@ while read ref_name ref_assembly;do
  identifier=$asm_name.vs.$ref_name
  echo $identifier
  Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],sep="\t",header=T,row.names=NULL);'\
-'data2=read.table(args[2], header=T,row.names=NULL,sep="\t"); colnames(data2)[-5]=as.vector(sapply(args[3], paste0, colnames(data2)[-5]));'\
+'data2=read.table(args[2], header=T,row.names=NULL,sep="\t");'\
+'colnames(data2)[-c(5,11,12)]=as.vector(sapply(args[3], paste0, colnames(data2)[-c(5,11,12)]));'\
 'dataMerge=merge(data1,data2[,c(5,11,12,2,1,13,3)],by.x="transcript.ID",by.y="cuff_id",all.x=T, all.y=T);'\
 'write.table(dataMerge,args[1], sep="\t", quote=F, row.names=F, col.names=T);' $asm_name.cons.merge $horse_trans/consAna/$identifier/$identifier.*.tmap "$ref_name."
 done < pred_assemblies.txt
@@ -1151,7 +1152,7 @@ cp ../transcripts.fasta.transdecoder_dir/longest_orfs.pep .
 $script_path/splitFasta.pl longest_orfs.pep 50
 for pep in subset[1-5][0-9]_longest_orfs.pep;do
   label=${pep%_longest_orfs.pep}
-#  bash $script_path/run_blastp.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
+#  bash $script_path/run_blast.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
   bash $script_path/run_hmmscan.sh "$pep" "$refPfam" $label."pfam.domtblout" "$script_path/hmmscan.sh"
 done
 cat subset*.blastp.outfmt6 >> ../blastp.outfmt6
@@ -1247,6 +1248,42 @@ tail -n+2 $unsupNovel_ann.uncons.noORF | awk -F $'\t' '{A[$28]++}END{for(i in A)
 ## copy the novel gene tables to the downloads
 cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $unsupNovel_ann.uncons.noORF $ann.*.freq $horse_trans/downloads/.
 ###########################################################################################
+## annotation of novel genes
+mkdir $horse_trans/novelGenes
+cd $horse_trans/novelGenes
+wget "https://data.broadinstitute.org/Trinity/Trinotate_v3_RESOURCES/Trinotate_v3.sqlite.gz" -O Trinotate.sqlite.gz
+gunzip Trinotate.sqlite.gz
+grep "^>" $tissue_Cuffmerge/$cuffmerge_output/filtered/transcripts.fasta | awk -F'[> ]' 'BEGIN{OFS="\t";} {print $3,$2}' > gene_trans_map_file
+transdecod_path="$tissue_Cuffmerge/$cuffmerge_output/filtered/transdecoder"
+for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do  ## 20708 total 
+ label=${f#$candNovel_ann.}; echo $label;
+ ## make a gene to transcript map
+ tail -n+2 $f | awk -F '[\t"]' '{print $1;}' | grep -F -f - -w gene_trans_map_file > $label.gene_trans_map_file
+ ## isolate the novel group of transcripts
+ awk -F'\t' '{print $2}' $label.gene_trans_map_file > $label.transIDs;
+ bash $script_path/select_trans.sh "$tissue_Cuffmerge/$cuffmerge_output/filtered/transcripts.fasta" "$label.fasta" "$label.transIDs"
+ ## run blastx search against swiss-prot datbase
+ bash $script_path/run_blast.sh "$label.fasta" "$refPtn" $label."blastx.outfmt6" "$script_path/blastx.sh"
+ ## isolate a list of possible ORFs in novel transcripts (This is not all possible ORFs but only the siginicant one after previous transdecoder run)
+ #tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) != "NA")print $1;}' | grep -F -f - -w $transdecod_path/transcripts.fasta.transdecoder_dir/longest_orfs.pep | awk -F'[> ]' '{print $2}' >> novel_ORFs.key
+ tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) != "NA")print $1;}' | grep -F -f - -w $transdecod_path/transcripts.fasta.transdecoder.genome.bed > $label.transdecoder.genome.bed ## 24151 ORF (17651 transcript)
+ awk -F '[\t=;]' '{print $5}' $label.transdecoder.genome.bed > $label.ORFs.key
+ bash $script_path/select_trans.sh "$transdecod_path/transcripts.fasta.transdecoder_dir/longest_orfs.pep" "$label.pep" "$label.ORFs.key"
+ ## get the results of blastp and pfam search from the previous transdecoder run
+ grep -w -F -f $label.ORFs.key $transdecod_path/blastp.outfmt6 > $label.blastp.outfmt6
+ #cat $label.blastp.outfmt6 | sort -k1,1 -k12,12nr -k11,11n | sort -u -k1,1 --merge > $label.blastp.outfmt6.uniq ## qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore
+ head -n3 $transdecod_path/pfam.domtblout > $label.pfam.domtblout
+ grep -w -F -f $label.ORFs.key $transdecod_path/pfam.domtblout >> $label.pfam.domtblout
+ ## generate Trinotate annotation erport
+ cp Trinotate.sqlite $label.Trinotate.sqlite;
+ bash $script_path/trinotate.sh $label
+ awk -F'\t' 'BEGIN{OFS="\t";} {print $1,$2,$3,$6,$7,$8,$10}' $label.annotation_report.xls > $label.annotation_report_reduced.xls
+ ## copy the annotations reports to the downloads
+ cp $label.annotation_report_reduced.xls $horse_trans/downloads/.
+ ## keep a list of novel transcripts without ORFs
+ #tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) == "NA")print $1;}' >  $label.novel_noORFs.key
+done
+###########################################################################################
 ## Final filtered transcriptome
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered"
 mkdir $assembly/refined
@@ -1281,7 +1318,7 @@ cp ../transcripts.fasta.transdecoder_dir/longest_orfs.pep .
 $script_path/splitFasta.pl longest_orfs.pep 50
 for pep in subset10[a-b]_longest_orfs.pep;do
   label=${pep%_longest_orfs.pep}
-#  bash $script_path/run_blastp.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
+#  bash $script_path/run_blast.sh "$pep" "$refPtn" $label."blastp.outfmt6" "$script_path/blastp.sh"
   bash $script_path/run_hmmscan.sh "$pep" "$refPfam" $label."pfam.domtblout" "$script_path/hmmscan.sh"
 done
 cat subset*.blastp.outfmt6 >> ../blastp.outfmt6
