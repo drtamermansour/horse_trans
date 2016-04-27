@@ -1,0 +1,10 @@
+track mergedAsm
+bigDataUrl BigBed/mergedAsm.BigBed
+shortLabel mergedAsm
+longLabel mergedAsm
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 1
+html mergedAsm
+ 

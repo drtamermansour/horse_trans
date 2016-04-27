@@ -969,6 +969,31 @@ while read ref_name ref_assembly;do
   fi; done < $horse_trans/cuffcompare/assmblies.txt
 done < $horse_trans/cuffcompare/assmblies.txt
 
+echo "# sn = Sensitivity (as defined in Burset, M., Guigó, R. : Evaluation of gene structure prediction programs (1996) Genomics, 34 (3), pp. 353-367. doi: 10.1006/geno.1996.0298)" > $horse_trans/cuffcompare/cuffcomp_summary
+echo -e "quary\tquary_loci\treference\tref_loci\tbase_sen(%)\texon_sn(%)\tintron_sn(%)\tintron_chain_sn(%)\tlocus_sn(%)\tmissed_exons\tmissed_introns\tmissed_loci\tnovel_loci" >> $horse_trans/cuffcompare/cuffcomp_summary
+while read ref_name ref_assembly;do
+  while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
+   cd $horse_trans/cuffcompare/$asm_name.vs.$ref_name
+   quary=$asm_name
+   ref=$ref_name
+   base_sn=$(grep "Base level:" $asm_name.vs.$ref_name | awk '{print $3}')
+   exon_sn=$(grep "Exon level:" $asm_name.vs.$ref_name | awk '{print $3}')
+   intron_sn=$(grep "Intron level:" $asm_name.vs.$ref_name | awk '{print $3}')
+   ic_sn=$(grep "Intron chain level:" $asm_name.vs.$ref_name | awk '{print $4}')
+   locus_sn=$(grep "Locus level:" $asm_name.vs.$ref_name | awk '{print $3}')
+   #matchIC=$(grep "Matching intron chains:" $asm_name.vs.$ref_name | awk '{print $4}')
+   #matchLoci=$(grep "Matching intron chains:" $asm_name.vs.$ref_name | awk '{print $3}')
+   missedExons=$(grep "Missed exons:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' 'BEGIN{OFS="";}{print $2,$4}')
+   missedIntrons=$(grep "Missed introns:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' 'BEGIN{OFS="";}{print $2,$4}')
+   missedLoci=$(grep "Missed loci:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' 'BEGIN{OFS="";}{print $2,$4}')
+   refLoci=$(grep "Missed loci:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' '{print $3}')
+   novelLoci=$(grep "Novel loci:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' 'BEGIN{OFS="";}{print $2,$4}')
+   quaryLoci=$(grep "Novel loci:" $asm_name.vs.$ref_name | sed 's/ //g' | awk -F'[:/\t]' '{print $3}')
+   echo -e "$quary\t$quaryLoci\t$ref\t$refLoci\t$base_sn\t$exon_sn\t$intron_sn\t$ic_sn\t$locus_sn\t$missedExons\t$missedIntrons\t$missedLoci\t$novelLoci" >> $horse_trans/cuffcompare/cuffcomp_summary
+  fi; done < $horse_trans/cuffcompare/assmblies.txt
+done < $horse_trans/cuffcompare/assmblies.txt
+grep -v -w "refGTF_file" $horse_trans/cuffcompare/cuffcomp_summary > $horse_trans/cuffcompare/cuffcomp_summary_NOrefGTF
+
 cd $horse_trans/cuffcompare
 while read ref_name ref_assembly;do
   while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
@@ -1027,7 +1052,7 @@ while read ref_name ref_assembly;do
   cat $ref_assembly | awk -F '[\t"]' 'BEGIN{OFS="\t";} {print $12,$10,$1,$7}' | uniq >> $ref_name.transTogene
 done < $horse_trans/cuffcompare/assmblies.txt >> summary_counts
 
-## marge all the tmap files for each annoation as a quary aganist all other annotations as references
+## Transcriptome annoatation table: marge all the tmap files for each annoation as a quary aganist all other annotations as references
 while read asm_name assembly;do
   cp $asm_name.transTogene $asm_name.merge
   while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
@@ -1038,7 +1063,7 @@ while read asm_name assembly;do
   cat $asm_name.merge | cut -f 1-10,13-16,19-22,25-28,31-34 > $asm_name.merge.reduced
 done < $horse_trans/cuffcompare/assmblies.txt
 
-## add index for complex regions
+## make another version with index for complex regions
 while read asm_name assembly;do
   cp $asm_name.merge.reduced $asm_name.merge.reduced.complex
   while read ref_name ref_assembly;do if [ "$assembly" != "$ref_assembly" ];then
@@ -1170,6 +1195,45 @@ paste Trans_ID ORF_len > all_ORFs
 sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 wc -l longest_ORFs # 65062  ## the number of transcripts with likely coding sequences 
 wc -l all_ORFs # 149298  ## all signifcant ORFs
+##########################################################################################
+## Run Cuffcompare to merge all assemblies
+mkdir -p $horse_trans/mergedAsm
+cd $horse_trans/mergedAsm
+> assmblies.txt
+while read root_dir asm_dir; do echo $root_dir/$asm_dir/*.gtf >> assmblies.txt;done < $pubAssemblies/public_assemblies.txt
+echo ${ensGTF_file}  >> assmblies.txt
+#echo ${refGTF_file}  >> assmblies.txt
+echo $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf  >> assmblies.txt
+awk 'BEGIN{ORS=" "} {print;}' assmblies.txt
+
+module load cufflinks/2.2.1
+cuffcompare -V -o "merged" $(awk 'BEGIN{ORS=" "} {print;}' assmblies.txt) &> log
+#bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
+
+## create hub for meregd track
+## create list of assemblies
+> merged_assemblies.txt
+echo "$horse_trans" "mergedAsm" > tissue_assemblies.txt;
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+targetAss=$"merged.combined.gtf"
+bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+identifier="mergedAsm"
+cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+
+hub_name=$"HorseTrans_MergedAsm"
+shortlabel=$"MergedAsm"
+longlabel=$"Merge of all public assemblies"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$horse_trans/mergedAsm/merged_assemblies.txt
+tiss_assemblies=$horse_trans/mergedAsm/tissue_assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
 ###########################################################################################
 ## novel genes
 ## add the length of longest ORF and number of exons to the annotation file
