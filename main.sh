@@ -295,7 +295,6 @@ mkdir -p $pubAssemblies/ISME.PBMC && cd $pubAssemblies/ISME.PBMC
 wget http://europepmc.org/articles/PMC4366165/bin/pone.0122011.s005.zip
 unzip *.zip
 
-
 ## create list of public assemblies
 rm -f $pubAssemblies/public_assemblies.txt
 for tissue in $pubAssemblies/*; do
@@ -758,7 +757,7 @@ echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | 
 echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered_transcriptome.MatzStat
 cp filtered_transcriptome.MatzStat $horse_trans/downloads/.
 
-## Use the assembly version with mitochondrial contigs to allow proper calcuation of mapping rate but remove these contigs from final target assemnblies
+## Use the assembly version with mitochondrial contigs to allow proper calculation of mapping rate but remove these contigs from final target assemblies
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
 cd $(dirname $assembly)
 bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
@@ -919,14 +918,16 @@ done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
              $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissue_assemblies.txt)
 #             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt)
 
-## initiate a given track hub for cufflinks_run="refGeneGuided_Cufflinks"
-#hub_name=$"HorseTrans_TopGuidedCuff"
-#shortlabel=$"TopGuidedCuff"
-#longlabel=$"Single samlpe refGuided Tophat/Cufflinks - Guided Cuffmerge"
-## initiate a given track hub for cufflinks_run="nonGuided_Cufflinks"
-hub_name=$"HorseTrans_TopNonGuidCuff"
-shortlabel=$"TopNonGuidCuff"
-longlabel=$"Single samlpe refGuided Tophat - nonGuided Cufflinks/Cuffmerge"
+## initiate a given track hub for cufflinks_run
+if [ "${cufflinks_run}_${cuffmerge_run}" == "nonGuided_Cufflinks_nonGuided_Cuffmerge" ];then
+ hub_name=$"HorseTrans_TopNonGuidCuff"
+ shortlabel=$"TopNonGuidCuff"
+ longlabel=$"Single samlpe refGuided Tophat - nonGuided Cufflinks/Cuffmerge"
+elif [ "${cufflinks_run}_${cuffmerge_run}" == "refGeneGuided_Cufflinks_refGeneGuided_Cuffmerge" ];then
+ hub_name=$"HorseTrans_TopGuidedCuff"
+ shortlabel=$"TopGuidedCuff"
+ longlabel=$"Single samlpe refGuided Tophat/Cufflinks - Guided Cuffmerge"
+fi
 email=$"drtamermansour@gmail.com"
 cd $track_hub
 bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
@@ -942,7 +943,7 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 #        <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_merged_assemblies.txt \
 #            $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_subtissue_assemblies.txt) $tiss_assemblies
 
-## copy the annotation to the download folder
+## copy the BED files to the download folder
 while read ass_path assembly; do
   id=$(echo $assembly | cut -d "/" -f1,2 | sed 's|/|.|')
   cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/$id.bed
