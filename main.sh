@@ -21,13 +21,11 @@ echo "pubAssemblies=$horse_trans/public_assemblies" >> $horse_trans/config.txt
 echo "track_hub=$horse_trans/track_hub" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 
-## download the UCSC kent commands in the script path
+## UCSC kent commands are used a lot through out the pipeline.
 ## http://genome-source.cse.ucsc.edu/gitweb/?p=kent.git;a=blob;f=src/userApps/README
 ## http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/FOOTER
-mkdir $script_path/UCSC_kent_commands
-cd $script_path/UCSC_kent_commands
-wget -r --no-directories ftp://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/
-chmod 755 *
+## wget -r --no-directories ftp://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/
+
 ###########################################################################################
 #### prepare the raw fastq files:
 ## Every tissue has a separate folder carrying its name (maximum 14 letter) in $prepData.
@@ -77,7 +75,7 @@ while read work_dir; do
 done < $horse_trans/working_list.txt
 
 ###########################################################################################
-## prepare sorted working list accoding to read length
+## prepare sorted working list according to read length
 tail -n+2 $horse_trans/raw_statistics.txt | sort -k8,8nr | awk -v myRoot=$prepData '{ print myRoot"/"$1"/"$2 }' > $horse_trans/working_list_sorted.txt
 ###########################################################################################
 #### Read trimming
@@ -190,22 +188,14 @@ echo "gatk_ref_index=$genome_dir/gatkIndex/genome.fa.fai" >> $horse_trans/config
 echo "gatk_ref_dict=$genome_dir/gatkIndex/genome.dict" >> $horse_trans/config.txt
 source $horse_trans/config.txt
 ###########################################################################################
-## create liftover files to allow mapping of NCBI annotation to UCSC tracks 
+## map the genomes: create liftover files to allow mapping of NCBI annotation to UCSC tracks 
 ## http://genomewiki.ucsc.edu/index.php/LiftOver_Howto
-
-# Download the genome files (useless for the new implementation of mapGenome)
-#mkdir $genome_dir/ncbi && cd $genome_dir/ncbi
-#wget -r --no-directories ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/Assembled_chromosomes/seq/eca_ref_EquCab2.0_*.fa.gz
-#gunzip eca_ref_EquCab2.0_*.fa.gz
-#cat eca_ref_EquCab2.0_*.fa > ncbi_genome.fa
-## map the genomes
 bash $script_path/mapGenome.sh $genome          ## ends by creating ncbi/NCBItoUCSC_map.sorted.chain
 
 ###########################################################################################
-## Create GTF file based of refGenes
+## Create GTF file for refGenes track of UCSC
 ## generation of GTF from UCSC tables using the guidelines of genomewiki.ucsc
 ## http://genomewiki.ucsc.edu/index.php/Genes_in_gtf_or_gff_format
-## The example on the wiki is based ok knowngene table which does not exist for horses. Instead there are refGene and ensGene tables
 ## The commands of wikigenome are modified to match the table schemes
 ## Note: using genepredToGTF can resolve duplicates of transcript ids but not for gene ids so the 10 fields genepred format which uses transcript names as gene names produce no duplicates but the extended genepred uses separte gene names from column 12 and susceptible for gene name duplication
 cd $genome_dir
@@ -250,7 +240,8 @@ source $horse_trans/config.txt
 wget http://hgdownload.cse.ucsc.edu/goldenPath/equCab2/database/ensGene.txt.gz
 ucscTable=$"ensGene.txt.gz"
 output_GTF=$"ensGene.gtf"
-bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
+#bash ${script_path}/ucscTableToGTF.sh $ucscTable $output_GTF
+zcat $ucscTable | cut -f2-16 | $script_path/UCSC_kent_commands/genePredToGtf file stdin $output_GTF
 echo "ensGTF_file=$genome_dir/ensGene.gtf" >> $horse_trans/config.txt
 zcat $ucscTable | cut -f2-16 | $script_path/genePredToBed > ensGene.bed
 echo "ensBED_file=$genome_dir/ensGene.bed" >> $horse_trans/config.txt
