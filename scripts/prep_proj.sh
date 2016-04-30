@@ -1,5 +1,5 @@
 SRA_URL="$1"
-prepData="$2"
+extData="$2"
 script_path="$3"
 proj_rawData=$(pwd)
 
@@ -74,8 +74,8 @@ mv $R1 $newR1; mv $R2 $newR2; done;
 
 bash ${script_path}/run_fastqc.sh "$proj_rawData/temp1"
 
-mkdir -p $prepData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/fastq_data
-mv $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/temp1/* $prepData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/fastq_data/.
+mkdir -p $extData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/fastq_data
+mv $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/temp1/* $extData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014/fastq_data/.
 
 
 

@@ -15,6 +15,7 @@ cat $horse_trans/user_config.txt
 echo "script_path=$horse_trans/scripts" >> $horse_trans/config.txt
 echo "resources=$horse_trans/resources" >> $horse_trans/config.txt
 echo "prepData=$horse_trans/prepdata" >> $horse_trans/config.txt
+echo "extData=$horse_trans/extdata" >> $horse_trans/config.txt
 echo "tissue_merge=$horse_trans/tissue_merge" >> $horse_trans/config.txt
 echo "genome_dir=$horse_trans/refGenome" >> $horse_trans/config.txt
 echo "pubAssemblies=$horse_trans/public_assemblies" >> $horse_trans/config.txt
@@ -48,7 +49,7 @@ newLib=$"PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014"
 SRA_URL=$"ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653"
 mkdir -p $rawData/$newLib
 cd $rawData/PBMCs/PE_49_fr.unstranded_bioproj.265983_10302014
-bash $script_path/prep_proj.sh $SRA_URL $prepData $script_path ## the script assume no sample replicates
+bash $script_path/prep_proj.sh $SRA_URL $extData $script_path ## the script assume no sample replicates
 ###########################################################################################
 ## define the list of working directory and the list samples in each. This is where you can edit the output list file(s) to restrict the processing for certain target(s)
 rm -f $horse_trans/working_list.txt
@@ -74,9 +75,17 @@ while read work_dir; do
   echo "$tissue"$'\t'"$lib"$'\t'"$no"$'\t'"$stat" >> $horse_trans/raw_statistics.txt
 done < $horse_trans/working_list.txt
 
-###########################################################################################
 ## prepare sorted working list according to read length
 tail -n+2 $horse_trans/raw_statistics.txt | sort -k8,8nr | awk -v myRoot=$prepData '{ print myRoot"/"$1"/"$2 }' > $horse_trans/working_list_sorted.txt
+###########################################################################################
+## prepare list of external data 
+rm -f $horse_trans/extdata_list.txt
+for work_dir in $extData/*/{PE_*,SE_*}; do if [ -d $work_dir/fastq_data ]; then
+  echo $work_dir >> $horse_trans/extdata_list.txt
+  rm -f $work_dir/fastq_data/sample_list.txt
+  for f in $work_dir/fastq_data/{*_R1_*.fastq.gz,*_SR_*.fastq.gz}; do if [ -f $f ]; then
+    echo $f >> $work_dir/fastq_data/sample_list.txt; fi; done;
+fi; done;
 ###########################################################################################
 #### Read trimming
 ## This step requires input working_list & sample_list and output folder
@@ -721,8 +730,8 @@ mkdir -p $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/prep
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf"
 bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-#bash ${script_path}/salmonIndex.sh "horse_index" "transcripts.fa"
-qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex2.sh
+bash $script_path/run_salmonIndex.sh "horse_index" "transcripts.fa" ${script_path}/salmonIndex.sh
+#qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex.sh
 while read work_dir; do
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
@@ -735,9 +744,13 @@ python $script_path/gather-counts.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
 sf=$(find ./*.quant -name \*.sf | head -n1)
 cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
-grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
-module load R/3.0.1
-Rscript ${script_path}/calcTPM.R "$(pwd)"
+#grep "^>" transcripts.fa | sed 's/>//g' > transTogene.map
+#module load R/3.0.1
+#Rscript ${script_path}/calcTPM.R "$(pwd)"
+grep "^>" transcripts.fa | awk -F'[> ]' '{print $3,$2}' > gene_transcript_map
+identifier="" ## leave the identifier empty if you want to calculate TPM for all files
+bash $script_path/run_calcTPM.sh "$(pwd)" "$identifier" "transcripts.lengthes" "gene_transcript_map" ${script_path}/calcTPM2.R
+#Rscript ${script_path}/calcTPM.R "$(pwd)"
 cat dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
 cat ../merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 75067
@@ -761,7 +774,8 @@ cp filtered_transcriptome.MatzStat $horse_trans/downloads/.
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf"
 cd $(dirname $assembly)
 bash $script_path/run_genome_to_cdna_fasta.sh "$assembly" "$genome" "transcripts.fa" "$script_path/genome_to_cdna_fasta.sh"
-qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex2.sh
+bash $script_path/run_salmonIndex.sh "horse_index" "transcripts.fa" ${script_path}/salmonIndex.sh
+#qsub -v index="horse_index",transcriptome="transcripts.fa" ${script_path}/salmonIndex.sh
 while read work_dir; do
   lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
   strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
@@ -780,8 +794,9 @@ python $script_path/gather-counts2.py -i "$(pwd)"
 echo "transcript"$'\t'"length" > transcripts.lengthes
 sf=$(find ./*.quant -name \*.sf | head -n1)
 cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
-grep "^>" transcripts.fa | sed 's/>//g' > gene_transcript.map
-module load R/3.0.1
+#grep "^>" transcripts.fa | sed 's/>//g' > transTogene.map
+#module load R/3.0.1
+grep "^>" transcripts.fa | awk -F'[> ]' '{print $3,$2}' > gene_transcript_map
 
 ## library specific expression and assembly
 while read work_dir; do
@@ -789,7 +804,8 @@ while read work_dir; do
   lib=$(basename $work_dir)
   target=$tissue"_"$lib
   echo $target
-  Rscript ${script_path}/calcTPM_tis.R "$(pwd)" "$target" >> targets_list # > /dev/null
+  bash $script_path/run_calcTPM.sh "$(pwd)" "$target" "transcripts.lengthes" "gene_transcript_map" ${script_path}/calcTPM2.R
+  #Rscript ${script_path}/calcTPM_tis.R "$(pwd)" "$target" >> targets_list # > /dev/null
   dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/filtered
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
@@ -805,7 +821,8 @@ done < $horse_trans/working_list.txt > $horse_trans/libAsmStats.txt
 while read work_dir; do
   target=$(basename $work_dir)
   echo $target
-  Rscript ${script_path}/calcTPM_tis.R "$(pwd)" "$target" >> targets_list # > /dev/null
+  bash $script_path/run_calcTPM.sh "$(pwd)" "$target" "transcripts.lengthes" "gene_transcript_map" ${script_path}/calcTPM2.R
+  #Rscript ${script_path}/calcTPM_tis.R "$(pwd)" "$target" >> targets_list # > /dev/null
   dir=$tissue_Cuffmerge/$target/$cufflinks_run/$cuffmerge_run/filtered
   mkdir -p $dir
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
@@ -1196,45 +1213,6 @@ sort -k1,1 -k2,2rg all_ORFs | sort -u -k1,1 --merge > longest_ORFs
 wc -l longest_ORFs # 65062  ## the number of transcripts with likely coding sequences 
 wc -l all_ORFs # 149298  ## all signifcant ORFs
 ##########################################################################################
-## Run Cuffcompare to merge all assemblies
-mkdir -p $horse_trans/mergedAsm
-cd $horse_trans/mergedAsm
-> assmblies.txt
-while read root_dir asm_dir; do echo $root_dir/$asm_dir/*.gtf >> assmblies.txt;done < $pubAssemblies/public_assemblies.txt
-echo ${ensGTF_file}  >> assmblies.txt
-#echo ${refGTF_file}  >> assmblies.txt
-echo $tissue_Cuffmerge/$cuffmerge_output/filtered/merged.gtf  >> assmblies.txt
-awk 'BEGIN{ORS=" "} {print;}' assmblies.txt
-
-module load cufflinks/2.2.1
-cuffcompare -V -o "merged" $(awk 'BEGIN{ORS=" "} {print;}' assmblies.txt) &> log
-#bash ${script_path}/run_cuffcompare.sh "$assembly" "$identifier" "${ref_assembly}" "$script_path/cuffcompare.sh"
-
-## create hub for meregd track
-## create list of assemblies
-> merged_assemblies.txt
-echo "$horse_trans" "mergedAsm" > tissue_assemblies.txt;
-## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
-targetAss=$"merged.combined.gtf"
-bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-identifier="mergedAsm"
-cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
-
-hub_name=$"HorseTrans_MergedAsm"
-shortlabel=$"MergedAsm"
-longlabel=$"Merge of all public assemblies"
-email=$"drtamermansour@gmail.com"
-cd $track_hub
-bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
-
-## edit the trackDb
-current_libs=$track_hub/current_libs_$shortlabel
-current_tissues=$track_hub/current_tiss_$shortlabel
-trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
-lib_assemblies=$horse_trans/mergedAsm/merged_assemblies.txt
-tiss_assemblies=$horse_trans/mergedAsm/tissue_assemblies.txt
-bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
-###########################################################################################
 ## novel genes
 ## add the length of longest ORF and number of exons to the annotation file
 ann=$horse_trans/cuffcompare_Ann/nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced
@@ -1354,6 +1332,111 @@ bash $script_path/run_seq_stats.sh "transcripts.fasta" "refined_transcriptome.Ma
 echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> refined_transcriptome.MatzStat 
 echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> refined_transcriptome.MatzStat
 cp refined_transcriptome.MatzStat $horse_trans/downloads/.
+##########################################################################################
+## merge FATSA of the refined assembly to the gene bank  assemblies and filter by read support
+mkdir -p $horse_trans/mergedTrans
+cd $horse_trans/mergedTrans
+## run cufcompare to merge the assemblies to generate gene_trans_map for the super loci (use -C & -F to keep contained and redundant fragments)
+module load cufflinks/2.2.1
+refinedGTF_file=$tissue_Cuffmerge/$cuffmerge_output/filtered/refined/merged.gtf
+cuffcompare -V -C -F -o "merged" $ncbiGTF_file $ensGTF_file $refinedGTF_file &> cuffcompare.log
+for f in $ncbiGTF_file $ensGTF_file $refinedGTF_file;do mv $(dirname $f)/merged.$(basename $f).tmap .;done
+grep "made redundant by" cuffcompare.log | awk '{print $2,$7}' | sed 's/)//g' > redundant_list ## First column is the descarded transcript
+cat merged.loci | awk -F'\t' '{print $1,$4,$5,$6}' | sed 's/ -//g; s/,/ /g;' | awk '{for(i=2;i<=NF;i++){print $1,$i;}}' > gene_transcript_map.nonRedundant
+join -j2 -o 2.1,1.1 <(sort -k 2b,2 redundant_list) <(sort -k 2b,2 gene_transcript_map.nonRedundant) > gene_transcript_map.Redundant
+cat gene_transcript_map.nonRedundant gene_transcript_map.Redundant > gene_transcript_map 
+
+wget ftp://ftp.ncbi.nih.gov/genomes/Equus_caballus/RNA/rna.fa.gz -O NCBI.fa.gz
+gunzip NCBI.fa.gz
+cat NCBI.fa | awk '/^>/ {if(N>0) printf("\n"); printf("%s\n",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' > NCBI_unwrap.fasta
+sed -i 's/>gi|.*|ref|/>/g; s/|//g' NCBI_unwrap.fasta 
+cat $ncbiGTF_file | awk -F '[\t"]' '{ print $12 }' |  sort | uniq > ncbi_gtf.ids
+grep "^>" NCBI_unwrap.fasta | awk -F'[> ]' '{print $2}' | sort > ncbi_fasta.ids
+comm -23 ncbi_gtf.ids ncbi_fasta.ids > ncbi_remaining.ids
+grep -F -w -f ncbi_remaining.ids $ncbiGTF_file > ncbi_remaining.gtf
+bash $script_path/run_genome_to_cdna_fasta.sh "ncbi_remaining.gtf" "$genome" "NCBI_remaining.fasta" "$script_path/genome_to_cdna_fasta.sh"
+bash $script_path/run_genome_to_cdna_fasta.sh "$ensGTF_file" "$genome" "ensembl.fasta" "$script_path/genome_to_cdna_fasta.sh"
+cp $tissue_Cuffmerge/$cuffmerge_output/filtered/refined/transcripts.fasta refinedTrans.fasta
+cat *.fasta > allTrans.fa
+#qsub -v index="allTrans_index",transcriptome="allTrans.fa" ${script_path}/salmonIndex.sh
+bash $script_path/run_salmonIndex.sh "allTrans_index" "allTrans.fa" ${script_path}/salmonIndex.sh
+while read work_dir; do
+  lib=$(basename $work_dir | cut -d"_" -f 1)                      ## PE or SE
+  strand=$(basename $work_dir | cut -d"_" -f 3 | sed 's/\./-/')   ## fr-unstranded, fr-firststrand or fr-secondstrand
+  identifier=$(echo $work_dir | rev | cut -d"/" -f 1,2 | rev | sed 's/\//_/')
+  seq_dir=$work_dir/trimmed_RNA_reads
+  bash ${script_path}/run_salmon.sh "$lib" "$strand" "allTrans_index" "$identifier" "$seq_dir" "$script_path"
+done < $horse_trans/working_list.txt
+find ./*.quant -name \*.sf -exec grep -H "mapping rate" {} \; | sort > salmonQuant_summary.txt
+python $script_path/gather-counts.py -i "$(pwd)"
+echo "transcript"$'\t'"length" > transcripts.lengthes
+sf=$(find ./*.quant -name \*.sf | head -n1)
+cat $sf | grep -v "^#" | awk -F "\t" -v OFS='\t' '{print $1,$2}' >> transcripts.lengthes
+
+identifier="" ## leave the identifier empty if you want to calculate TPM for all files
+bash $script_path/run_calcTPM.sh "$(pwd)" "$identifier" "transcripts.lengthes" "gene_transcript_map" ${script_path}/calcTPM2.R
+cat dataSummary_comp | tail -n+2 | awk '{if($7 >= 0.1 && $10 >= 5)print $3}' > keepit.id
+grep  "^[NX]\|^rna" keepit.id > ncbi.keepit.id
+grep "^ENSECAT" keepit.id > ens.keepit.id
+grep "^TCONS" keepit.id > refined.keepit.id
+wc -l *.keepit.id
+
+grep -F -w -f ncbi.keepit.id $ncbiGTF_file > new_ncbi.gtf
+grep -F -w -f ens.keepit.id $ensGTF_file > new_ens.gtf
+grep -F -w -f refined.keepit.id $refinedGTF_file > new_refined.gtf
+
+for f in ncbiGTF_file ensGTF_file refinedGTF_file;do
+ echo $f
+ cat ${!f} | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 
+ cat ${!f} | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 
+done > mergeTrans.summary
+
+for f in new_*.gtf;do
+ echo $f
+ cat ${f} | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l ## no of gene 
+ cat ${f} | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l ## no of trans 
+done >> mergeTrans.summary
+
+module load cufflinks/2.2.1
+cat new_ncbi.gtf new_ens.gtf new_refined.gtf > mergeTrans.gtf
+cuffcompare -T -V -o "mergeTrans" mergeTrans.gtf &> cuffcompare.log2
+grep "made redundant by" cuffcompare.log2 | awk '{print $2,$7}' | sed 's/)//g' > redundant_list2 ## First column is the descarded transcript
+grep  "^[NX]\|^rna" redundant_list2 > ncbi.redundant
+grep "^ENSECAT" redundant_list2 > ens.redundant
+grep "^TCONS" redundant_list2 > refined.redundant
+for f in *.redundant; do
+ wc -l $f
+ echo "made redundant by ncbi: " $(awk '{print $2}' $f | grep "^[NX]\|^rna" | wc -l)
+ echo "made redundant by ensembl: " $(awk '{print $2}' $f | grep "^ENSECAT" | wc -l)
+ echo "made redundant by refined Transcriptome: " $(awk '{print $2}' $f | grep "^TCONS" | wc -l)
+done > redundancy_report
+
+awk '{print $1}' redundant_list2 | grep -v -F -w -f - mergeTrans.gtf > mergeTrans_nonRedundant.gtf
+
+## create hub for meregd track
+## create list of assemblies
+> merged_assemblies.txt
+echo "$horse_trans" "mergedTrans" > tissue_assemblies.txt;
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+targetAss=$"mergeTrans_nonRedundant.gtf"
+bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+identifier="mergedAsm"
+cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+
+hub_name=$"HorseTrans_MergedAsm"
+shortlabel=$"MergedAsm"
+longlabel=$"Merge of all public assemblies"
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$horse_trans/mergedTrans/merged_assemblies.txt
+tiss_assemblies=$horse_trans/mergedTrans/tissue_assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
 ###########################################################################################
 ## correct the assembled trascriptome to fix genome errors
 bash ${script_path}/main-variantAnalysis.gvcfMode.sh
