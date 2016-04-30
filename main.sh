@@ -1420,7 +1420,7 @@ echo "$horse_trans" "mergedTrans" > tissue_assemblies.txt;
 ## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
 targetAss=$"mergeTrans_nonRedundant.gtf"
 bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
-identifier="mergedAsm"
+identifier="mergedTrans"
 cp *.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
 
 hub_name=$"HorseTrans_MergedAsm"
