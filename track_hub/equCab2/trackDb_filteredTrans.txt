@@ -1,0 +1,60 @@
+track NoIntronicFrag
+bigDataUrl BigBed/NoIntronicFrag.BigBed
+shortLabel NoIntronicFrag
+longLabel NoIntronicFrag
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 1
+html NoIntronicFrag
+ 
+track highExp
+bigDataUrl BigBed/highExp.BigBed
+shortLabel highExp
+longLabel highExp
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 2
+html highExp
+ 
+track transdecoder
+bigDataUrl BigBed/transdecoder.BigBed
+shortLabel transdecoder
+longLabel transdecoder
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 3
+html transdecoder
+ 
+track supported
+bigDataUrl BigBed/supported.BigBed
+shortLabel supported
+longLabel supported
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 4
+html supported
+ 
+track refined
+bigDataUrl BigBed/refined.BigBed
+shortLabel refined
+longLabel refined
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 5
+html refined
+ 
+track mergedTrans
+bigDataUrl BigBed/mergedTrans.BigBed
+shortLabel mergedTrans
+longLabel mergedTrans
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 6
+html mergedTrans
+ 

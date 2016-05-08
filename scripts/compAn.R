@@ -10,7 +10,7 @@ if (!require("reshape2")) {
 args=(commandArgs(TRUE));
 data_chr<-read.table(args[1], header=T)
 #data_chr<-read.table("nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced", header=T)
-keeps <- c("transcript.ID", "class_code.x.1", "class_code.y.1", "class_code.y", "class_code.x")
+keeps <- c("transcript.ID", "NCBI.class_code", "ensGTF_file.class_code", "ISME.PBMC.class_code", "Hestand_2014.class_code")
 selected <- data_chr[keeps]
 selected_class <- selected[ ,2:5]
 colnames(selected_class) <- c("NCBI","ENSEMBL","ISME","Hestand")

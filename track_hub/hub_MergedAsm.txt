@@ -1,5 +1,0 @@
-hub HorseTrans_MergedAsm
-shortLabel MergedAsm
-longLabel Merge of all public assemblies
-genomesFile genomes_MergedAsm.txt
-email drtamermansour@gmail.com

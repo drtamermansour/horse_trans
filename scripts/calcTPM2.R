@@ -18,7 +18,7 @@ files <- dir(path=pathToCountFiles,pattern=paste("^", target, ".*quant.counts$",
 print(files)
 data <- readDGE(files)
 head(data$counts)
-dataCounts_sorted=data$counts[order(rownames(data$counts)), ]
+dataCounts_sorted=as.matrix(data$counts[order(rownames(data$counts)), ])
 head(dataCounts_sorted)
 rawCounts=rowSums(dataCounts_sorted)  ## raw counts mapping to transcripts
 
