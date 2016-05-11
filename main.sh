@@ -1295,7 +1295,7 @@ tail -n+2 $unsupNovel_ann.uncons.noORF | wc -l # 0
 tail -n+2 $unsupNovel_ann.uncons.noORF | awk -F $'\t' '{A[$28]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $unsupNovel_ann.uncons.noORF.freq
 
 ## copy the novel gene tables to the downloads
-#cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $unsupNovel_ann.uncons.noORF $ann.*.freq $horse_trans/downloads/.
+cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $ann.*.freq $horse_trans/downloads/novelAnn/.
 ###########################################################################################
 ## annotation of novel genes
 mkdir $horse_trans/novelGenes
