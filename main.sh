@@ -1111,13 +1111,14 @@ while read ref_name ref_assembly;do
 done < $horse_trans/cuffcompare/ref_assemblies.txt
 
 echo "# sn = Sensitivity & sp = Specificity (as defined in Burset, M., Guigó, R. : Evaluation of gene structure prediction programs (1996) Genomics, 34 (3), pp. 353-367. doi: 10.1006/geno.1996.0298)" > $horse_trans/cuffcompare/cuffcomp_summary
-echo -e "quary\tquary\tquary\tquary\tref\tbase\t-\texon\t-\tintron\t-\tintron_chain\t-\ttranscript\t-\tlocus\tmissed\tmissed\tmissed\tnovel" >> $horse_trans/cuffcompare/cuffcomp_summary
+echo -e "quary\tquary\tquary\tquary\tref\tbase\t-\texon\t-\tintron\t-\tintron_chain\t-\ttranscript\t-\tlocus\t-\tmissed\tmissed\tmissed\tnovel" >> $horse_trans/cuffcompare/cuffcomp_summary
 echo -e "id\ttranscripts\tloci\tmulti-exon\tid\tsn(%)\tsp(%)\tsn(%)\tsp(%)\tsn(%)\tsp(%)\tsn(%)\tsp(%)\tsn(%)\tsp(%)\tsn(%)\tsp(%)\texons\tintrons\tloci\tloci" >> $horse_trans/cuffcompare/cuffcomp_summary
 while read ref_name ref_assembly;do
   while read asm_name assembly;do if [ "$assembly" != "$ref_assembly" ];then
     cuff_Report=$asm_name.vs.$ref_name/$asm_name.vs.$ref_name;
     quaryInfo=$(grep "Query mRNAs" $cuff_Report | sed 's/ //g;s/:/ /;s/in/ /;s/loci(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2,$3,$4}');
     #quaryLoci=$(grep "Novel loci:" $cuff_Report | sed 's/ //g' | awk -F'[:/\t]' '{print $3}')
+    #refInfo=$(grep "Reference mRNAs" $cuff_Report | sed 's/ //g;s/:/ /;s/in/ /;s/loci(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2,$3,$4}');
     #refLoci=$(grep "Missed loci:" $cuff_Report | sed 's/ //g' | awk -F'[:/\t]' '{print $3}')
     intro="$asm_name\t$quaryInfo\t$ref_name";
     grep "level:" $cuff_Report | awk -F':' '{print $2}' | awk -v intro="$intro" 'BEGIN{OFS="\t";ORS="\t";print intro;}{print $1,$2}';
