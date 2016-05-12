@@ -651,8 +651,6 @@ cp $tissue_Cuffmerge/$cuffmerge_output/merged.gtf $horse_trans/downloads/allTiss
 cd $tissue_Cuffmerge/$cuffmerge_output
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "unfiltered_transcriptome.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> unfiltered_transcriptome.MatzStat
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> unfiltered_transcriptome.MatzStat
 cp unfiltered_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ###################
 ## create a hub for non filtered data
@@ -730,8 +728,6 @@ cp $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf $horse
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered1_NoIntronicFrag_transcriptome.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> filtered1_NoIntronicFrag_transcriptome.MatzStat
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered1_NoIntronicFrag_transcriptome.MatzStat
 cp filtered1_NoIntronicFrag_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ##########################
 ## Using Salmon to eliminate low-expressed transcripts
@@ -771,8 +767,6 @@ cp $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf $horse_trans/
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered2_hiExp_transcriptome.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> filtered2_hiExp_transcriptome.MatzStat  
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered2_hiExp_transcriptome.MatzStat
 cp filtered2_hiExp_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ###################
 ## define gene model supportive evidences
@@ -937,8 +931,6 @@ cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered3_s
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered3_sup_transcriptome.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> filtered3_sup_transcriptome.MatzStat
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered3_sup_transcriptome.MatzStat
 cp filtered3_sup_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ###################
 ## Removal of likely erroneous transcripts
@@ -962,8 +954,6 @@ cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered4_r
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered4_refined_Alltissues.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> filtered4_refined_Alltissues.MatzStat
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> filtered4_refined_Alltissues.MatzStat
 cp filtered4_refined_Alltissues.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ###################
 ## proposed addational filter
@@ -1018,8 +1008,6 @@ cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/mergedTrans
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "mergedTrans.MatzStat"
-#echo "no of gene: " $(cat merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l) >> mergedTrans.MatzStat
-#echo "no of transcripts: " $(cat merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l) >> mergedTrans.MatzStat
 cp mergedTrans.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
 ###################
 ## create hub for filtered data
@@ -1146,6 +1134,27 @@ done < $horse_trans/cuffcompare/ref_assemblies.txt > $horse_trans/cuffcompare/co
 grep -v -w "refGTF_file" $horse_trans/cuffcompare/complexLoci_summary > $horse_trans/cuffcompare/complexLoci_summary_NOrefGTF
 ## copy the cuffcomp_summary to the download folder
 cp $horse_trans/cuffcompare/complexLoci_summary_NOrefGTF $horse_trans/downloads/cuffcomp/complexLoci_summary.tab
+
+## transcriptome statistics
+mkdir -p $horse_trans/cuffcompare/temp_stat
+cd $horse_trans/cuffcompare/temp_stat
+while read asm_name assembly;do
+  output=${asm_name%.*}
+  cuffcompare -V -T -o $output $assembly &> $output.log
+  echo $asm_name "super-loci:" $(grep "Total union super-loci" $output.stats | awk -F':' '{print $2}')
+  echo $asm_name "transcripts:" $(cat $assembly | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l)
+  echo $asm_name "multi-transcript_loci:" $(grep "multi-transcript loci" $output.stats | sed 's/ //g;s/(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+  echo $asm_name "multi-exon_transcripts:" $(grep "multi-exon transcripts" $output.stats | sed 's/ //g;s/loci(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+  echo $asm_name "redundant_transfrags:" $(grep "redundant cufflinks transfrags discarded" $output.log | awk '{print $1}');
+  asm_bed=${assembly%.gtf}.bed
+  echo $asm_name "unstranded:" $(cat $asm_bed | awk -F '[\t"]' '($6 == ".")' | uniq | wc -l)
+  echo $asm_name "single_exon:" $(cat $asm_bed | awk -F '[\t"]' '($10 == 1)' | uniq | wc -l)
+  echo $asm_name "two_exons:" $(cat $asm_bed | awk -F '[\t"]' '($10 == 2)' | uniq | wc -l)
+  echo $asm_name "many_exons:" $(cat $asm_bed | awk -F '[\t"]' '($10 > 2)' | uniq | wc -l)
+done < $horse_trans/cuffcompare/assemblies.txt > $horse_trans/cuffcompare/trans_stats
+grep -v -w "refGTF_file" $horse_trans/cuffcompare/trans_stats > $horse_trans/cuffcompare/trans_stats_NOrefGTF
+## copy the cuffcomp_summary to the download folder
+cp $horse_trans/cuffcompare/trans_stats_NOrefGTF $horse_trans/downloads/cuffcomp/trans_stats.tab
 
 ## Transcriptome annoatation table: marge all the tmap files for each annoation as a quary aganist all other annotations as references
 cd $horse_trans/cuffcompare
