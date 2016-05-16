@@ -3,8 +3,3 @@ shortLabel filteredTrans
 longLabel Single sample refGuided Tophat - nonGuided Cufflinks/Cuffmerge - filtered
 genomesFile genomes_filteredTrans.txt
 email drtamermansour@gmail.com
-hub HorseTrans_filtered
-shortLabel filteredTrans
-longLabel Single sample refGuided Tophat - nonGuided Cufflinks/Cuffmerge - filtered
-genomesFile genomes_filteredTrans.txt
-email drtamermansour@gmail.com
