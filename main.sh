@@ -1480,6 +1480,71 @@ rm tempGene* tempIsoform*
 
 ## copy tabulated expression files to the download folder
 cp allTissues_geneTPM allTissues_isoformTPM tissueSpecificSummary $horse_trans/downloads/backmapping_stats/.
+###################
+## create hub for tissue specific transcriptomes
+## create list of assemblies from each library
+## This is where you can edit the list to restrict the processing for certain target(s)
+rm -f $prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt
+while read work_dir; do
+  dir=$work_dir/tophat_output/$cufflinks_run/$cuffmerge_run/filtered
+  if [ -d $dir ]; then
+    echo "$prepData" "${dir#$prepData/}" >> $prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt;
+fi; done < $horse_trans/working_list.txt
+
+## create list of assemblies for tissues of multiple libraries
+rm -f $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt
+for tissue in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run/filtered; do if [ -f $tissue/merged.gtf ]; then
+  echo "$tissue_Cuffmerge" "${tissue#$tissue_Cuffmerge/}" >> $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt;
+fi; done
+####################
+## convert the gtf files into BigBed files & copy the BigBed files to the track hub directory
+update=1    ## 0 means do not update Bigbed files & 1 means update
+rm -f $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_filtered.tissueSp_assemblies.txt
+while read ass_path assembly; do
+  echo $assembly
+  if [ -d "$ass_path/$assembly" ];then
+    cd $ass_path/$assembly
+  else echo "can not find $ass_path/$assembly"; break;fi
+  if [[ ! -f "merged.BigBed" || "$update" -eq 1 ]];then
+    targetAss=$"merged.gtf"
+    if [ -f "$targetAss" ];then
+      bash $script_path/gtfToBigBed.sh "$targetAss" "$genome_dir/$UCSCgenome.chrom.sizes" "$script_path"
+    else echo "can not find merged.gtf"; break;fi
+    if [ -f $"merged.BigBed" ];then
+      identifier=$(echo $assembly | sed 's/\//_/g' | sed 's/_output//g')
+      cp merged.BigBed $track_hub/$UCSCgenome/BigBed/${identifier}.BigBed
+    else echo "could not make merged.BigBed file"; break; fi
+  fi
+  echo $ass_path/$assembly >> $horse_trans/Tophat_${cufflinks_run}_${cuffmerge_run}_filtered.tissueSp_assemblies.txt;
+done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt)
+
+## initiate a given track hub for cufflinks_run
+hub_name=$"HorseTrans_tissueSp"
+shortlabel=$"tissueSpecific"
+if [ "${cufflinks_run}_${cuffmerge_run}" == "nonGuided_Cufflinks_nonGuided_Cuffmerge" ];then
+ longlabel=$"Single sample refGuided Tophat - nonGuided Cufflinks/Cuffmerge - tissueSpecific"
+elif [ "${cufflinks_run}_${cuffmerge_run}" == "refGeneGuided_Cufflinks_refGeneGuided_Cuffmerge" ];then
+ longlabel=$"Single samlpe refGuided Tophat - Guided Cufflinks/Cuffmerge - tissueSpecific"
+fi
+email=$"drtamermansour@gmail.com"
+cd $track_hub
+bash $script_path/create_trackHub.sh "$UCSCgenome" "$hub_name" "$shortlabel" "$longlabel" "$email"
+
+## edit the trackDb
+current_libs=$track_hub/current_libs_$shortlabel
+current_tissues=$track_hub/current_tiss_$shortlabel
+trackDb=$track_hub/$UCSCgenome/trackDb_$shortlabel.txt
+lib_assemblies=$prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt
+tiss_assemblies=$tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt
+bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_assemblies $tiss_assemblies
+
+## copy the BED files to the download folder
+while read ass_path assembly; do
+  id=$(echo $assembly | cut -d "/" -f1,2 | sed 's|/|.|')
+  cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/tissueSpecific_BED/$id.bed
+done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt \
+             $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt)
 ###########################################################################################
 ###########################################################################################
 ###########################################################################################
