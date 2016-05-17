@@ -49,9 +49,9 @@ You can add them to your hubs on UCSC using these URLs:
 
 -  Publically avaliable assemblies
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt) 
--  Unfileterd : Intial transcriptome assembly was done using Non guided Cufflinks and Cuffmerge to all samples. This hub provides access to the initial tissue spcific assemblies as well as a cuffmerge version of all input tissues
+-  Unfileterd horse transcriptome: Intial transcriptome assembly was done using Non guided Cufflinks and Cuffmerge to all samples. This hub provides access to the initial tissue spcific assemblies as well as a cuffmerge version of all input tissues
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt) 
-- Filtered Horse transcriptome: Four stages of filtertion were required to remove likely pre-mRNA and erroneous transcripts to produce what we call the refined transcriptome. Finally the refined transcriptome was combined with NCBI and ENSEMBL annotations with removal of redundant transcripts producing the merged transcrpitome. This track provide access to all these versions.   
+- Filtered horse transcriptome: Four stages of filtertion were required to remove likely pre-mRNA and erroneous transcripts to produce what we call the refined transcriptome. Finally the refined transcriptome was combined with NCBI and ENSEMBL annotations with removal of redundant transcripts producing the merged transcrpitome. This track provide access to all these versions.   
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_filteredTrans.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_filteredTrans.txt)
 -  Tissue specific transcriptome:
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_tissueSpecific.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_tissueSpecific.txt) 
@@ -63,6 +63,7 @@ https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hu
 --->
 To add a hub, go to the genome browser home bage. In the My Data menu, open the Track Hubs page and click the [My Hubs](https://genome.ucsc.edu/cgi-bin/hgHubConnect) tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button.
 
+<!---  
 Links for Downloads:
 --------------------
 -  [GTF file of filtered assembly](http://de.iplantcollaborative.org/dl/d/417AF4BC-7E70-45B5-9538-0882A45669E9/filtered_Alltissues_Assembly.GTF)
@@ -70,7 +71,7 @@ Links for Downloads:
 -  [Tabulated gene TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/8AD5668A-02C3-4E54-AEE3-509E15C54594/allTissues_geneTPM)  
 -  [Tabulated isoform TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/FA197031-71D3-4AAD-911A-7ACDF7516911/allTissues_isoformTPM)  
 -  [Compare filtered assembly to the avaliable public assemblies](http://de.iplantcollaborative.org/dl/d/7D7DFA37-5225-474A-84F3-49856D37660F/nonGuided_Cufflinks.nonGuided_Cuffmerge.merge.reduced)
-
+--->
 
 Updates:
 --------
