@@ -47,14 +47,14 @@ Current avaliable track hubs
 ============================
 You can add them to your hubs on UCSC using these URLs:
 
--  Tophat2 followed by Non guided Cufflinks/Cuffmerge:
-https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopNonGuidCuff.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopNonGuidCuff.txt)
--  Tophat2 followed by Non guided Cufflinks/Cuffmerge (The unfiltered version):
-https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt) 
--  Adding UTRs to the coding transcripts:
-https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TopCuffmerge_TD.txt) 
 -  Publically avaliable assemblies
 https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_public_assemblies.txt) 
+-  Unfileterd : Intial transcriptome assembly was done using Non guided Cufflinks and Cuffmerge to all samples. This hub provides access to the initial tissue spcific assemblies as well as a cuffmerge version of all input tissues
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_TNGCuffUnfilt.txt) 
+- Filtered Horse transcriptome: Four stages of filtertion were required to remove likely pre-mRNA and erroneous transcripts to produce what we call the refined transcriptome. Finally the refined transcriptome was combined with NCBI and ENSEMBL annotations with removal of redundant transcripts producing the merged transcrpitome. This track provide access to all these versions.   
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_filteredTrans.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_filteredTrans.txt)
+-  Tissue specific transcriptome:
+https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_tissueSpecific.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_tissueSpecific.txt) 
 
 <!---  
 -  Diginorm followed by refGTFguided Tophat2 then refGTFguided Cufflinks https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_rawdigi_TopCuff.txt or you can view it directly by following this [link](http://genome.ucsc.edu/cgi-bin/hgTracks?db=equCab2&hubUrl=https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hub_rawdigi_TopCuff.txt)
