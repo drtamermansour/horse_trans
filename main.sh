@@ -1445,7 +1445,7 @@ mkdir uniqExp
 cutoff=5            ## run with cutoff=0or5
 i=0
 n=${#targets[@]}
-echo "## no of gene/isoform expressed, expressed uniqely, not expressed uniquely" > uniqExp/tissueSpecificSummary_cutoff.$cutoff
+echo "## no of gene/isoform expressed, expressed uniqely, not expressed uniquely" > tissueSpecificSummary_cutoff.$cutoff
 while [ $i -lt $n ];do
   echo ${targets[$i]}
   cat allTissues_geneTPM | awk -v x=$((i+2)) -v c=$cutoff '$x>c' | wc -l
@@ -1467,22 +1467,22 @@ while [ $i -lt $n ];do
   cat tempGene | wc -l; cat tempIsoform | wc -l;
   mv tempGene uniqExp/${targets[$i]}.gene.notExpressed_uniqely_cutoff.$cutoff; mv tempIsoform uniqExp/${targets[$i]}.isoform.notExpressed_uniqely_cutoff.$cutoff; 
   ((i+=1))
-done >> uniqExp/tissueSpecificSummary_cutoff.$cutoff
+done >> tissueSpecificSummary_cutoff.$cutoff
 
-echo "===========" >> uniqExp/tissueSpecificSummary_cutoff.$cutoff
-echo "All Tissues" >> uniqExp/tissueSpecificSummary_cutoff.$cutoff
+echo "===========" >> tissueSpecificSummary_cutoff.$cutoff
+echo "All Tissues" >> tissueSpecificSummary_cutoff.$cutoff
 cat allTissues_geneTPM > tempGene; cat allTissues_isoformTPM > tempIsoform;
 for x in `seq 2 $((n+1))`;do
   awk -v x=$x -v c=$cutoff '$x>c' allTissues_geneTPM > tempGene.$x; awk -v x=$x -v c=$cutoff '$x>c' allTissues_isoformTPM > tempIsoform.$x;
   awk -v x=$x -v c=$cutoff '$x>c' tempGene > tempGene2; awk -v x=$x -v c=$cutoff '$x>c' tempIsoform > tempIsoform2; mv tempGene2 tempGene; mv tempIsoform2 tempIsoform;done
-echo "expressed in at least on tissue" >> uniqExp/tissueSpecificSummary_cutoff.$cutoff
-cat tempGene.* | sort | uniq | wc -l  >> uniqExp/tissueSpecificSummary_cutoff.$cutoff; cat tempIsoform.* | sort | uniq | wc -l  >> uniqExp/tissueSpecificSummary_cutoff.$cutoff;
-echo "expressed in all tissues" >> uniqExp/tissueSpecificSummary_cutoff.$cutoff
-cat tempGene | wc -l  >> uniqExp/tissueSpecificSummary_cutoff.$cutoff; cat tempIsoform | wc -l  >> uniqExp/tissueSpecificSummary_cutoff.$cutoff;
+echo "expressed in at least on tissue" >> tissueSpecificSummary_cutoff.$cutoff
+cat tempGene.* | sort | uniq | wc -l  >> tissueSpecificSummary_cutoff.$cutoff; cat tempIsoform.* | sort | uniq | wc -l  >> tissueSpecificSummary_cutoff.$cutoff;
+echo "expressed in all tissues" >> tissueSpecificSummary_cutoff.$cutoff
+cat tempGene | wc -l  >> tissueSpecificSummary_cutoff.$cutoff; cat tempIsoform | wc -l  >> tissueSpecificSummary_cutoff.$cutoff;
 rm tempGene* tempIsoform*
 
 ## copy tabulated expression files to the download folder
-cp -r allTissues_geneTPM allTissues_isoformTPM uniqExp $horse_trans/downloads/backmapping_stats/.
+cp -r allTissues_geneTPM allTissues_isoformTPM tissueSpecificSummary_cutoff.* uniqExp $horse_trans/downloads/backmapping_stats/.
 ###################
 ## create hub for tissue specific transcriptomes
 ## create list of assemblies from each library
