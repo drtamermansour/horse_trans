@@ -1347,6 +1347,26 @@ for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do  ## 20
  ## keep a list of novel transcripts without ORFs
  #tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) == "NA")print $1;}' >  $label.novel_noORFs.key
 done
+
+## statistics
+echo -e "Group\tNovel transcipts\tNovel genes\tIsoforms w blastx hit only\tGenes w blastx hit only\tIsoforms w blastp hit only\tGenes w blastp hit only\tIsoform w blastx and blastp hits\tGenes w blastx and blastp hits\tTotal annotated isoforms\tTotal annotated genes\tFrequency of annotated isoforms\tFrequency of annotated genes" > novelAnn_report
+for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do
+ label=${f#$candNovel_ann.};
+ totalTrans=$(tail -n+2 $f | wc -l)
+ totalGene=$(tail -n+2 $f | awk -F'\t' '{print $2}' | sort | uniq | wc -l)
+ isoX=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($3!="." && $6==".")print $2;}' | sort | uniq | wc -l)
+ genX=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($3!="." && $6==".")print $1;}' | sort | uniq | wc -l)
+ isoP=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($6!="." && $3==".")print $2;}' | sort | uniq | wc -l)
+ genP=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($6!="." && $3==".")print $1;}' | sort | uniq | wc -l)
+ isoB=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($3!="." && $6!=".")print $2;}' | sort | uniq | wc -l)
+ genB=$(tail -n+2 $label.annotation_report_reduced.xls | awk -F'\t' '{if($3!="." && $6!=".")print $1;}' | sort | uniq | wc -l)
+ sumIso=$(($isoX + $isoP + $isoB))
+ sumGen=$(($genX + $genP + $genB))
+ isoFreq=$(echo "scale=3; ($sumIso/$totalTrans)*100" | bc | xargs printf "%.*f\n" 1)%
+ genFreq=$(echo "scale=3; ($sumGen/$totalGene)*100" | bc | xargs printf "%.*f\n" 1)%
+ echo -e "$label\t$totalTrans\t$totalGene\t$isoX\t$genX\t$isoP\t$genP\t$isoB\t$genB\t$sumIso\t$sumGen\t$isoFreq\t$genFreq"
+done >> novelAnn_report
+
 ###################################
 ## BAck mapping to the final RNAseqSupTrans 
 ## make a version of the refined transcriptome with articial version of mitochondrial sequences 
