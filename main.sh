@@ -1341,12 +1341,22 @@ done
 for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do  ## 20708 total 
  label=${f#$candNovel_ann.}; echo $label;
  bash $script_path/trinotate.sh $label
- awk -F'\t' 'BEGIN{OFS="\t";} {print $1,$2,$3,$6,$7,$8,$10}' $label.annotation_report.xls > $label.annotation_report_reduced.xls
+ awk -F'\t' 'BEGIN{OFS="\t";} {print $1,$2,$3,$6,$7,$8}' $label.annotation_report.xls > $label.annotation_report_reduced.xls
  ## copy the annotations reports to the downloads
  cp $label.annotation_report_reduced.xls $horse_trans/downloads/novelAnn/.
  ## keep a list of novel transcripts without ORFs
  #tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) == "NA")print $1;}' >  $label.novel_noORFs.key
 done
+
+## merge annotation with their cuffompare report for category I and II of novel genes
+for f in $supNovel_ann $unsupNovel_ann.cons;do
+ label=${f#$candNovel_ann.};
+ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
+'data2=read.table(paste(args[2],"annotation_report_reduced.xls",sep="."),header=F,sep="\t");'\
+'ann_merge=merge(data1,data2[,c(2:5)],by.x="transcript.ID",by.y="V2",all.x=T,all.y=T);'\
+'write.table(ann_merge,paste(args[2],"annWithCuffcomp.xls",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $f $label
+done
+cp *.annWithCuffcomp.xls $horse_trans/downloads/novelAnn/.
 
 ## statistics
 echo -e "Group\tNovel transcipts\tNovel genes\tIsoforms w blastx hit only\tGenes w blastx hit only\tIsoforms w blastp hit only\tGenes w blastp hit only\tIsoform w blastx and blastp hits\tGenes w blastx and blastp hits\tTotal annotated isoforms\tTotal annotated genes\tFrequency of annotated isoforms\tFrequency of annotated genes" > novelAnn_report
@@ -1366,7 +1376,6 @@ for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do
  genFreq=$(echo "scale=3; ($sumGen/$totalGene)*100" | bc | xargs printf "%.*f\n" 1)%
  echo -e "$label\t$totalTrans\t$totalGene\t$isoX\t$genX\t$isoP\t$genP\t$isoB\t$genB\t$sumIso\t$sumGen\t$isoFreq\t$genFreq"
 done >> novelAnn_report
-
 ###################################
 ## BAck mapping to the final RNAseqSupTrans 
 ## make a version of the refined transcriptome with articial version of mitochondrial sequences 
