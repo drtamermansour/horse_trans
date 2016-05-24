@@ -1352,8 +1352,8 @@ done
 for f in $supNovel_ann $unsupNovel_ann.cons;do
  label=${f#$candNovel_ann.};
  Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t");'\
-'data2=read.table(paste(args[2],"annotation_report_reduced.xls",sep="."),header=F,sep="\t");'\
-'ann_merge=merge(data1,data2[,c(2:5)],by.x="transcript.ID",by.y="V2",all.x=T,all.y=T);'\
+'data2=read.table(paste(args[2],"annotation_report_reduced.xls",sep="."),header=F,sep="\t",col.names=c("gene_id","transcript.ID","sprot_Top_BLASTX_hit","prot_id","prot_coords","sprot_Top_BLASTP_hit"));'\
+'ann_merge=merge(data1,data2[,c(2:6)],by="transcript.ID",all.x=T,all.y=T);'\
 'write.table(ann_merge,paste(args[2],"annWithCuffcomp.xls",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $f $label
 done
 cp *.annWithCuffcomp.xls $horse_trans/downloads/novelAnn/.
