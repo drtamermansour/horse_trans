@@ -1512,6 +1512,10 @@ rm tempGene* tempIsoform*
 
 ## copy tabulated expression files to the download folder
 cp -r allTissues_geneTPM allTissues_isoformTPM tissueSpecificSummary_cutoff.* uniqExp $horse_trans/downloads/backmapping_stats/.
+
+## R plot of uniquely expressed and absent transcripts
+bash $script_path/run_plotUniq.sh "tissueSpecificSummary_cutoff.0" "tissueSpecificSummary_cutoff.5" "allTissues_isoformTPM" "isoformUniq.pdf" $script_path/plotUniq.R;
+
 ###################
 ## create hub for tissue specific transcriptomes
 ## create list of assemblies from each library
