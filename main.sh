@@ -1512,10 +1512,19 @@ rm tempGene* tempIsoform*
 
 ## copy tabulated expression files to the download folder
 cp -r allTissues_geneTPM allTissues_isoformTPM tissueSpecificSummary_cutoff.* uniqExp $horse_trans/downloads/backmapping_stats/.
+cp -r uniqExp $horse_trans/downloads/backmapping_stats/.
 
-## R plot (& lists for panther analysis) of uniquely expressed and absent transcripts
-bash $script_path/run_plotUniq.sh "tissueSpecificSummary_cutoff.0" "tissueSpecificSummary_cutoff.5" "isoformUniq.pdf" "uniqExp" "$RNAseqSupTrans/merged_sorted.bed" "$horse_trans/cuffcompare/RNAseqSupTrans.merge.reduced"  $script_path/plotUniq.R;
+# Annotated isoform lists (to be used for panther analysis) 
+for f in uniqExp/*.isoform.notExpressed_uniqely_cutoff.* uniqExp/*.isoform.expressed_uniqely_cutoff.*;do
+ echo $f;
+ head -n1 $horse_trans/cuffcompare/RNAseqSupTrans.merge.reduced | awk -F'\t' 'BEGIN{OFS="\t";}{print $1,$2,$3,$4,$5,$15,$16,$17,$18,$19,$20,$21,$22}' > $f.ann
+ awk '{print $1}' $f | grep -F -w -f - "$horse_trans/cuffcompare/RNAseqSupTrans.merge.reduced" | awk -F'\t' 'BEGIN{OFS="\t";}{print $1,$2,$3,$4,$5,$15,$16,$17,$18,$19,$20,$21,$22}' >> $f.ann
+done
+cp uniqExp/*.ann $horse_trans/downloads/backmapping_stats/annUniqExp/.
 
+## R plot of uniquely expressed and absent transcripts
+bash $script_path/run_plotUniq.sh "tissueSpecificSummary_cutoff.0" "tissueSpecificSummary_cutoff.5" "isoformUniq.pdf" "uniqExp" $script_path/plotUniq.R;
+cp *isoformUniq.pdf $horse_trans/downloads/figures/3B
 ###################
 ## create hub for tissue specific transcriptomes
 ## create list of assemblies from each library
