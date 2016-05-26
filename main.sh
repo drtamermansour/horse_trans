@@ -1432,8 +1432,10 @@ while read work_dir; do
   ## statistics (no of genes and transcripts)
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
+  ## self cuffcompare
+  bash ${script_path}/run_cuffcompareSelf.sh "$dir/merged.gtf" "selfCuff_$target" "selfCuff_$target.log" "$script_path/cuffcompareSelf.sh"
 done < $horse_trans/working_list.txt >> $horse_trans/libAsmStats.txt
-
+ 
 ## Tissue specific expression and assembly
 echo "## no of genes and transcripts" > $horse_trans/tisAsmStats.txt
 while read work_dir; do
@@ -1450,8 +1452,23 @@ while read work_dir; do
   ## statistics
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
+  ## self cuffcompare
+  bash ${script_path}/run_cuffcompareSelf.sh "$dir/merged.gtf" "self" "cuffcompare_self.log" "$script_path/cuffcompareSelf.sh"
 done < $horse_trans/multi_lib_tissues.txt >> $horse_trans/tisAsmStats.txt
 cp $horse_trans/libAsmStats.txt $horse_trans/tisAsmStats.txt $horse_trans/downloads/backmapping_stats/.
+
+## tissue specific self cuffcompare stats
+for run in $tissue_Cuffmerge/*/$cufflinks_run/$cuffmerge_run/filtered/selfCuff_*.loci $prepData/*/*/tophat_output/$cufflinks_run/$cuffmerge_run/filtered/selfCuff_*.loci;do
+ #f=$dir/selfCuff_*.stats; if [ ! -f $f ];then temp=$(ls $dir/selfCuff_*.loci); f=${temp%.loci}; fi
+ f=${run%.loci}.stats; if [ ! -f $f ];then f=${run%.loci}; fi
+ echo $(basename $f)
+ echo $asm_name "super-loci:" $(grep "Total union super-loci" $f | awk -F':' '{print $2}')
+ echo $asm_name "transcripts:" $(grep "multi-exon transcripts" $f | sed 's/ //g;s/:/ /;s/in/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+ echo $asm_name "multi-exon_transcripts:" $(grep "multi-exon transcripts" $f | sed 's/ //g;s/loci(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+ echo $asm_name "multi-transcript_loci:" $(grep "multi-transcript loci" $f | sed 's/ //g;s/(/ /;s/multi/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+ echo $asm_name "Splicing rate:" $(grep "multi-transcript loci" $f | sed 's/ //g;s/~/ /;s/transcriptsperlocus/ /;' | awk -F' ' 'BEGIN{OFS="\t";}{print $2}');
+done > TissueSp_selfCuff.stats
+cp TissueSp_selfCuff.stats $horse_trans/downloads/backmapping_stats/.
 ###################
 ## calculate tissue specific expression
 targets=()
