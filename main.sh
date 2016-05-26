@@ -1469,6 +1469,10 @@ echo "isoformName" "${targets[@]}" > allTissues_isoformTPM
 cat isotemp.$((i-1)) >> allTissues_isoformTPM
 rm temp.* isotemp.*
 
+# Calculattion of mitochondrial expression
+bash $script_path/run_mtRatio.sh "allTissues_geneTPM" "mitochondrialExp.png" $script_path/mtRatio.R;
+cp mitochondrialExp.png $horse_trans/downloads/figures/3C
+
 # Heatmap of highly expressed genes showing veriablity across tissues
 bash $script_path/run_heatmapTis.sh "allTissues_geneTPM" "heatmap_manual_Tissue.png" "hmap_order.csv" "$horse_trans/cuffcompare/RNAseqSupTrans.merge.reduced" $script_path/heatmapTis.R;
 cp heatmap_manual_Tissue.png *hmap_order.csv $horse_trans/downloads/figures/3A
