@@ -1469,6 +1469,10 @@ echo "isoformName" "${targets[@]}" > allTissues_isoformTPM
 cat isotemp.$((i-1)) >> allTissues_isoformTPM
 rm temp.* isotemp.*
 
+# Heatmap of highly expressed genes showing veriablity across tissues
+bash $script_path/run_heatmapTis.sh "allTissues_geneTPM" "heatmap_manual_Tissue.png" "hmap_order.csv" "$horse_trans/cuffcompare/RNAseqSupTrans.merge.reduced" $script_path/heatmapTis.R;
+cp heatmap_manual_Tissue.png *hmap_order.csv $horse_trans/downloads/figures/3A
+
 ##print no of gene/isoform expressed, expressed uniqely, not expressed uniquely
 mkdir uniqExp
 cutoff=5            ## run with cutoff=0or5
