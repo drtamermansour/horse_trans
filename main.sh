@@ -1358,6 +1358,10 @@ for f in $supNovel_ann $unsupNovel_ann.cons;do
 done
 cp *.annWithCuffcomp.xls $horse_trans/downloads/novelAnn/.
 
+# no of novel transcripts in relation to their no of exons
+bash $script_path/run_novelCount.sh "$supNovel_ann" "$unsupNovel_ann.cons" "$unsupNovel_ann.uncons.ORF" "novelCounts.png" $script_path/novelCount.R;
+cp novelCounts.png $horse_trans/downloads/figures/4B
+
 ## statistics
 echo -e "Group\tNovel transcipts\tNovel genes\tIsoforms w blastx hit only\tGenes w blastx hit only\tIsoforms w blastp hit only\tGenes w blastp hit only\tIsoform w blastx and blastp hits\tGenes w blastx and blastp hits\tTotal annotated isoforms\tTotal annotated genes\tFrequency of annotated isoforms\tFrequency of annotated genes" > novelAnn_report
 for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do
