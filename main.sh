@@ -1538,6 +1538,11 @@ cp uniqExp/*.ann $horse_trans/downloads/backmapping_stats/annUniqExp/.
 bash $script_path/run_plotUniq.sh "tissueSpecificSummary_cutoff.0" "tissueSpecificSummary_cutoff.5" "isoformUniq.pdf" "uniqExp" $script_path/plotUniq.R;
 cp *isoformUniq.pdf $horse_trans/downloads/figures/3B
 ###################
+cd $horse_trans/novelGenes
+# exp of novel transcripts in relation to their no of exons in different tissues
+bash $script_path/run_novelCountTis.sh "$supNovel_ann" "$unsupNovel_ann.cons" "$unsupNovel_ann.uncons.ORF" "$horse_trans/backMap/allTissues_isoformTPM" "novelCountsTis.png" $script_path/novelCountTis.R;
+cp novelCountsTis.png $horse_trans/downloads/figures/4C
+###################
 ## create hub for tissue specific transcriptomes
 ## create list of assemblies from each library
 ## This is where you can edit the list to restrict the processing for certain target(s)
