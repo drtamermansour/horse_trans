@@ -45,21 +45,25 @@ df.melt_unsup$cat <- 'Category III'
 df.melt <- rbind(df.melt_sup,df.melt_cons,df.melt_unsup)
 
 ## Plot sum of TPM of novel genes with exon number subset per tissue
-my_pal <- brewer.pal(12,"Set3")
+my_pal <- brewer.pal(6,"Set3")
 #getting gene numbers
 geneN <- subset(df.melt, value > 0.5)
 #geneN <- geneN[!duplicated(geneN),]
 count_gene <- count(geneN,c("variable","cat","exons"))
+# update a new version of merged data by changing all exon counts to be 6 for easier visualiztion 
+df.melt2=df.melt
+df.melt2$exons[which(df.melt2$exons > 5)]=6 
+# plot
 png(filename=args[5], width=1000, height=750)
-ggplot(subset(df.melt, exons %in% c(1:30)), aes(variable,group=exons,fill=exons)) + 
-  geom_bar(aes(weight=value),position="stack") + xlab("Tissue") + 
-  ylab("cumulative expression (TPM)") + 
-  scale_fill_gradientn(colours=my_pal, breaks=c(1,2,3,4,seq(5,28,5)),
-                                       labels=c("1","2","3","4","5","6-10","11-15","16-20","21-25")) +
-  guides(fill=guide_legend(title="exon number")) + 
-  #geom_point(data=count_gene, aes(x=variable, y=freq * 80,size=exons, group=1)) +
-  #scale_size_continuous(range = c(1,6), limits=c(1,2,3),labels=c("1","2","3", ">3"), trans="identity") +
+ggplot(df.melt2, aes(variable,group=exons,fill=exons)) +
+  geom_bar(aes(weight=value),position="stack") + xlab("Tissue") +
+  ylab("cumulative expression (TPM)") +
+  scale_fill_gradientn(breaks=c(1,2,3,4,5,6), labels=c("1","2","3","4","5",">5"), colours=my_pal, guide="legend") +
+  guides(fill=guide_legend(title="exon number")) +
+  #geom_point(data=count_gene, aes(x=variable, y=freq * 50,size=exons, group=1)) +
+  #scale_size_continuous(limits=c(1,2,3,4,5,6),
+                      #labels=c("1","2","3", "4","5",">5")) +
   facet_grid(~ cat) +
   theme(axis.text.x = element_text(colour="black", size =10,angle=90 )) +
-  theme(axis.title = element_text(colour="black", size = 14)) 
+  theme(axis.title = element_text(colour="black", size = 14))
 graphics.off()  # close the PNG device

@@ -1,14 +1,12 @@
 ##Figure 3A: Tissue specificity, heatmap of genes
 ###Tissue specific heatmap
-library(plyr)
-library(reshape2)
 if (!require("reshape2")) {
-    install.packages("reshape2", dependencies = TRUE, lib='~/R/v3.0.1/library', contriburl=contrib.url('http://cran.r-project.org/'))
-    library(reshape2, lib.loc = "~/R/v3.0.1/library")
+    install.packages("reshape2", dependencies = TRUE, lib='~/R/v3.2.0/library', contriburl=contrib.url('http://cran.r-project.org/'))
+    library(reshape2, lib.loc = "~/R/v3.2.0/library")
 }
 if (!require("plyr")) {
-    install.packages("plyr", dependencies = TRUE, lib='~/R/v3.0.1/library', contriburl=contrib.url('http://cran.r-project.org/'))
-    library(plyr, lib.loc = "~/R/v3.0.1/library")
+    install.packages("plyr", dependencies = TRUE, lib='~/R/v3.2.0/library', contriburl=contrib.url('http://cran.r-project.org/'))
+    library(plyr, lib.loc = "~/R/v3.2.0/library")
 }
 
 #Read in data
