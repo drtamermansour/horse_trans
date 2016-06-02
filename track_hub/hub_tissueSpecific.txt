@@ -1,0 +1,5 @@
+hub HorseTrans_tissueSp
+shortLabel tissueSpecific
+longLabel Single sample refGuided Tophat - nonGuided Cufflinks/Cuffmerge - tissueSpecific
+genomesFile genomes_tissueSpecific.txt
+email drtamermansour@gmail.com

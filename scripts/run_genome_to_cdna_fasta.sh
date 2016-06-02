@@ -10,6 +10,7 @@ inputGTF="$1"
 genome="$2"
 outputFASTA="$3"
 script="$4"
+decoderUtil=$(dirname "${BASH_SOURCE[0]}")/decoderUtil 
 
 
-qsub -v inputGTF="$inputGTF",genome="$genome",outputFASTA="$outputFASTA" "$script"
+qsub -v inputGTF="$inputGTF",genome="$genome",outputFASTA="$outputFASTA",decoderUtil="$decoderUtil" "$script"

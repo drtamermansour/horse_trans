@@ -2,7 +2,7 @@
 #PBS -l walltime=2:00:00,nodes=1:ppn=1,mem=32Gb
 #mdiag -A ged
 #PBS -m abe
-#PBS -N salmonQuant_PE
+#PBS -N salmonQuant_SE
 
 
 module load GNU/4.8.2

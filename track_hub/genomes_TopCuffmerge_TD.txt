@@ -1,4 +1,0 @@
-genome equCab2
-trackDb equCab2/trackDb_TopCuffmerge_TD.txt
-genome equCab2
-trackDb equCab2/trackDb_TopCuffmerge_TD.txt

@@ -181,14 +181,14 @@ tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>3){A[$2]++}END{for(i in A)print 
 tail -n+2 varFreq_indels.txt | awk -F '\t' '($1>4){A[$2]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > AF_indels4.freq
 
 ##########################
-## isolate common variants (AF >= 0.9)
+## isolate common variants (AF >= 0.8)
 grep "^#" GenotypeGVCFs_monoAllel.vcf > GenotypeGVCFs_monoAllel_sig.vcf
-grep -v "^#" GenotypeGVCFs_monoAllel.vcf | awk -F '[\t=;]' '($9 >3 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_sig.vcf
+grep -v "^#" GenotypeGVCFs_monoAllel.vcf | awk -F '[\t=;]' '($9 >= 4 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_sig.vcf
 
 grep -v "^#" GenotypeGVCFs_monoAllel_sig.vcf | wc -l  ##227717
 
 grep "^#" GenotypeGVCFs_monoAllel_indels.vcf > GenotypeGVCFs_monoAllel_indels_sig.vcf
-grep -v "^#" GenotypeGVCFs_monoAllel_indels.vcf | awk -F '[\t=;]' '($9 >3 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_indels_sig.vcf
+grep -v "^#" GenotypeGVCFs_monoAllel_indels.vcf | awk -F '[\t=;]' '($9 >= 4 && $11 >= 0.8)'  >> GenotypeGVCFs_monoAllel_indels_sig.vcf
 
 grep -v "^#" GenotypeGVCFs_monoAllel_indels_sig.vcf | wc -l  ##38433
 
@@ -196,8 +196,9 @@ grep -v "^#" GenotypeGVCFs_monoAllel_indels_sig.vcf | wc -l  ##38433
 #### liftover the genome variance file to the transcriptome
 assembly="$tissue_Cuffmerge/$cuffmerge_output/filtered"
 mkdir $assembly/varFixed
-cp $assembly/{merged.gtf,merged.gpred} $assembly/varFixed/.
+cp $assembly/highExp/merged.gtf $assembly/varFixed/.
 cd $assembly/varFixed
+$script_path/UCSC_kent_commands/gtfToGenePred merged.gtf merged.gpred
 
 ## change merged.gtf to be all +ve starnded
 cat merged.gtf | awk -F "\t" -v OFS='\t' '{ $7 = "+"; print }' > merged_allPositive.gtf
@@ -227,6 +228,24 @@ cat temp2 >> $outputVCF_refSorted
 rm temp*
 finalVCF=$assembly/varFixed/${inputVCF%.vcf}_transFinal.vcf
 bash $script_path/filterLiftedVariants.sh "transcripts_allPositive.fa" "$outputVCF_refSorted" "$finalVCF"  ## Filtered 1 records out of 32249 total records
+## copy the final VCF to the download folder
+cp $finalVCF $horse_trans/downloads/.
+
+## make a version of the final variants mapped to the genome to allow genome browser visualization 
+$script_path/UCSC_kent_commands/chainSwap genomeToTrans_map.chain transToGenome_map.chain
+$script_path/UCSC_kent_commands/chainSort transToGenome_map.chain transToGenome_map.sorted.chain
+chainBack=$assembly/varFixed/transToGenome_map.sorted.chain
+outputGenomicVCF=${finalVCF%_transFinal.vcf}_genomic.vcf
+bash $script_path/liftoverVariants.sh "transcripts_allPositive.fa" "$finalVCF" "$chainBack" "$gatk_ref_dict" "$outputGenomicVCF" ## Converted 32248 records; failed to convert 0 records.
+outputGenomicVCF_refSorted=${outputGenomicVCF%.vcf}RefSorted.vcf
+grep -v "^#" $outputGenomicVCF > temp
+perl $script_path/sortByRef.pl temp $gatk_ref_index > temp2
+grep "^#" $outputGenomicVCF > $outputGenomicVCF_refSorted
+cat temp2 >> $outputGenomicVCF_refSorted
+rm temp*
+
+## Count the no of indels
+grep -v "^#" GenotypeGVCFs_monoAllel_sig_transFinal.vcf | awk '{if($5 !~ /,/ && (length($5)>1 || length($4)>1)){print}}' | wc -l  ## 5628
 
 ## correct the transcripts with VCF
 bash $script_path/fastaAlternateReferenceMaker.sh "transcripts_allPositive.fa" "$finalVCF" "corTranscripts_allPositive.fa"
@@ -247,7 +266,8 @@ done 3<transcripts_allPositive.fa 4<corTranscripts_allPositive_unwrap.fa > corTr
 
 ## assess the rate of edits per transcript
 grep "^>" transcripts_allPositive.fa | sed 's/>//' | awk '{ print $1 }' > ids
-while read id;do grep $id <(grep -v "^#" $finalVCF) | wc -l; done < ids > counts
+#while read id;do grep $id <(grep -v "^#" $finalVCF) | wc -l; done < ids > counts
+while read id;do c=$(grep $id <(grep -v "^#" $finalVCF) | wc -l); echo "$c $id"; done < ids > counts2
 cat counts | awk '{A[$1]++}END{for(i in A)print i,A[i]}' | sort -k1,1nr > freq
 
 ## determine the list of negativeStrandTransHeaders
@@ -287,10 +307,4 @@ sort -k10,10 -k1,1rg varFixed.psl | sort -u -k10,10 --merge > varFixed_best.psl
 $script_path/UCSC_kent_commands/pslToBed varFixed_best.psl varFixed_best.bed
 $script_path/UCSC_kent_commands/bedToGenePred varFixed_best.bed varFixed_best.GenePred
 $script_path/UCSC_kent_commands/genePredToGtf file varFixed_best.GenePred varFixed_best.gtf
-
-
-
-
-
-
 

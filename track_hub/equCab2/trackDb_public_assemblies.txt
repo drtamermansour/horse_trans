@@ -8,16 +8,6 @@ visibility dense
 priority 1
 html Hestand_2014
  
-track NCBI
-bigDataUrl BigBed/NCBI.BigBed
-shortLabel NCBI
-longLabel NCBI
-type bigBed 12
-colorByStrand 255,0,0 0,0,255
-visibility dense
-priority 2
-html NCBI
- 
 track ISME.PBMC
 bigDataUrl BigBed/ISME.PBMC.BigBed
 shortLabel ISME.PBMC
@@ -25,6 +15,16 @@ longLabel ISME.PBMC
 type bigBed 12
 colorByStrand 255,0,0 0,0,255
 visibility dense
-priority 3
+priority 2
 html ISME.PBMC
+ 
+track NCBI
+bigDataUrl BigBed/NCBI.BigBed
+shortLabel NCBI
+longLabel NCBI
+type bigBed 12
+colorByStrand 255,0,0 0,0,255
+visibility dense
+priority 3
+html NCBI
  

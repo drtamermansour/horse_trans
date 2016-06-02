@@ -8,6 +8,6 @@ module load BLAST+/2.2.30
 
 cd $PBS_O_WORKDIR
 
-blastp -query $pep  -db $refPtn -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 1 > $output
+blastp -query $seq  -db $refPtn -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 1 > $output
 
 qstat -f ${PBS_JOBID}

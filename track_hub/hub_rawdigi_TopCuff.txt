@@ -1,5 +1,0 @@
-hub HorseTrans_rawdigi_TopCuff
-shortLabel rawdigi_TopCuff
-longLabel diginorm of raw data followed by reference guided Tophat/Cufflinks
-genomesFile genomes_rawdigi_TopCuff.txt
-email drtamermansour@gmail.com

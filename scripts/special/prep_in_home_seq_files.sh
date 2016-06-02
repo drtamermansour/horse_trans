@@ -1,7 +1,9 @@
+myRoot="/mnt/ls15/scratch/users/mansourt/Tamer/horse_trans"
 script_path=$myRoot/horse_trans/scripts
-rawData=$myRoot/horse_trans/rawdata
 prepData=$myRoot/horse_trans/prepdata
 
+rawData=$myRoot/horse_trans/rawdata
+mkdir $rawData
 ###############################################################################################
 mkdir -p $rawData/Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/rawdata
 cd $rawData/Muscle/PE_125_fr.firststrand_Valberg.Finno_01012015/rawdata

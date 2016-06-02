@@ -1,5 +1,4 @@
 #!/bin/sh
-
 refGTF_file="$1"
 transcriptome_index="$2"
 Bowtie2_genome_index_base="$3"
