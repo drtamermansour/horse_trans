@@ -8,7 +8,7 @@ Most of the gene models of the current horse genome lack transcriptional evidenc
 4. Use GitHub and UCSC genome browser to provide a scientific collaborative platform for laboratories interested in the horse functional genomics and provide a replicable model for other organisms. 
 5. Allow continuous update of transcriptomes with new RNAseq experiments. Also facilitate reproduction of the whole annotation pipeline with newer versions of the genome 
    
-This github project contains all the scripts required to reproduce the analysis of the horse transcriptome project on the HPC of Michigan state university. Also it has the basic tree structure of the UCSC track hub. This design will allow the community to share in developing the track hub and also they can fork to have their own version with different view options.
+This github project contains all the scripts required to reproduce the analysis of the horse transcriptome project on the HPC of Michigan State University. Also it has the basic tree structure of the UCSC track hub. This design will allow the community to share in developing the track hub and also they can fork to have their own version with different view options.
 
 Coding guidelines in this project
 ---------------------------------
@@ -35,7 +35,7 @@ Coding guidelines in this project
       - The first syllabus (the part of the file name before \_R1_ , \_R2_ or \_SR_) should be unique
       - All samples should be prepared so that they have encoding "Sanger / Illumina 1.9"
    * prep_proj.sh script can automatically convert an SRA repository into the appropriate format (the script assumes no sample replicates)
-- All the analysis was done on the High performance computer of Michigan state university. The main script represents an abstraction administrator. It does not run any of the programs but always initiates daughter scripts to do the job. This allows new forks or branches to provide different implementations of the daughter scripts to run the same pipeline with different versions or on different machines.
+- All the analysis was done on the High performance computer of Michigan State University. The main script represents an abstraction administrator. It does not run any of the programs but always initiates daughter scripts to do the job. This allows new forks or branches to provide different implementations of the daughter scripts to run the same pipeline with different versions or on different machines.
 - With such a large scale analysis, it is difficult to check that every job ended successfully. I tried to add a check point after every step to make sure that I am getting out what I really expect. I believe adding more of these tests would be a good practice
 - Every step in the analysis receives the input data as a sample list. This enables the users to run the pipeline for selected samples. Also enables easier re-running of failed samples. On the long term this would allow the community to keep the transcriptome list updated without re-analysis or re-coding. 
 - Track hubs: 
@@ -75,4 +75,4 @@ Links for Downloads:
 
 Updates:
 --------
-- This pipeline was developed to run on the HPC of Michigan state university. Currently we are working on the pipeline to run on Amazon instance as well. Building the Tophat transcriptome-index "run_buildTransIndex.sh" was the last step to be updated. 
+- This pipeline was developed to run on the HPC of Michigan State University. Currently we are working on the pipeline to run on Amazon instance as well. Building the Tophat transcriptome-index "run_buildTransIndex.sh" was the last step to be updated. 
