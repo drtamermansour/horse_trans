@@ -58,7 +58,8 @@ png(filename=args[5], width=1000, height=750)
 ggplot(df.melt2, aes(variable,group=exons,fill=exons)) +
   geom_bar(aes(weight=value),position="stack") + xlab("Tissue") +
   ylab("cumulative expression (TPM)") +
-  scale_fill_gradientn(breaks=c(1,2,3,4,5,6), labels=c("1","2","3","4","5",">5"), colours=my_pal, guide="legend") +
+ # scale_fill_gradientn(breaks=c(1,2,3,4,5,6), labels=c("1","2","3","4","5",">5"), colours=my_pal, guide="legend") +
+  scale_fill_gradientn(breaks=c(6,5,4,3,2,1), labels=c(">5","5","4","3","2","1"), colours=my_pal, guide="legend") +
   guides(fill=guide_legend(title="exon number")) +
   #geom_point(data=count_gene, aes(x=variable, y=freq * 50,size=exons, group=1)) +
   #scale_size_continuous(limits=c(1,2,3,4,5,6),

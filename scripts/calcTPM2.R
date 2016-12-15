@@ -43,7 +43,7 @@ dataSummary2_sorted <- dataSummary2[ order(row.names(dataSummary2)), ]
 stopifnot(all(rownames(dataSummary2_sorted)==data3_sorted$V2))
 dataSummary3=data.frame(genes,dataSummary2_sorted)      ## Add gene names
 head(dataSummary3)
-#write.table(dataSummary3, file='dataSummary', sep='\t', quote=F, row.names=T, col.names=NA)
+write.table(dataSummary3, file='dataSummary', sep='\t', quote=F, row.names=T, col.names=NA)
 
 transcripts=rownames(dataSummary3)
 dataSummary4=data.frame(transcripts,dataSummary3)

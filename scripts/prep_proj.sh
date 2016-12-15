@@ -3,6 +3,8 @@ extData="$2"
 script_path="$3"
 proj_rawData=$(pwd)
 
+## Determining the location of SRA data files for automated or scripted downloads.
+## http://www.ncbi.nlm.nih.gov/books/NBK158899/#SRA_download.determining_the_location_of
 wget -r $SRA_URL/*
 #wget -r ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653/ERR6534[2-9][0-9]
 #wget -r ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/ERR/ERR653/ERR6535[0-9][0-9]

@@ -757,6 +757,7 @@ grep "^>" transcripts.fa | awk -F'[> ]' '{print $3,$2}' > gene_transcript_map
 identifier="" ## leave the identifier empty if you want to calculate TPM for all files
 bash $script_path/run_calcTPM.sh "$(pwd)" "$identifier" "transcripts.lengthes" "gene_transcript_map" ${script_path}/calcTPM2.R
 #Rscript ${script_path}/calcTPM.R "$(pwd)"
+cp dataSummary $horse_trans/downloads/.
 cat dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
  

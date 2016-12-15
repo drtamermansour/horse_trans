@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#PBS -l walltime=2:00:00,nodes=1:ppn=1,mem=32Gb
+#PBS -l walltime=4:00:00,nodes=1:ppn=1,mem=64Gb
 #mdiag -A ged
 #PBS -m abe
 #PBS -N salmonQuant_SE

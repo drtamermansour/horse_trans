@@ -36,7 +36,6 @@ ggplot(all_novel_exons) +
   scale_x_discrete("Novel gene category", labels = c("novel_conserved" = "Category II","novel_supported" = " Category I",
                                                      "novel_unsupported" = "Category III"),
                    limits=c("novel_supported","novel_conserved","novel_unsupported")) +
-  scale_fill_manual(breaks=c(1,2,3,4,5,10,28),
-                    labels=c("1","2","3","4","5","6-10","11-28"),
-                    values = getPalette(colourCount))
+#  scale_fill_manual(breaks=c(1,2,3,4,5,10,28), labels=c("1","2","3","4","5","6-10","11-28"), values = getPalette(colourCount))
+  scale_fill_manual(breaks=c(28,10,5,4,3,2,1), labels=c("11-28","6-10","5","4","3","2","1"), values = getPalette(colourCount))
 graphics.off()  # close the PNG device
