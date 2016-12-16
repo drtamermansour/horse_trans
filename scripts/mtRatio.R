@@ -14,6 +14,7 @@ if (!require("dplyr")) {
 #read in dataset with expression values for each term and a dataset with annotation for each gene
 args=(commandArgs(TRUE));
 tissues <- read.table(args[1],header=T)
+colnames(tissues)=gsub("Embryo.", "Emb.", colnames(tissues))
 
 mt <- tissues[1:2,2:9]
 mt_TPM <- as.data.frame(colSums(mt))
@@ -34,9 +35,9 @@ ggplot(bar, aes(x=Var1, y=value / 1000000, fill=factor(Var2)))+
   ylab("Proportion of transcriptional output") + xlab("Tissue") +
   guides(fill=guide_legend(title="gene origin",
                            labels=c("nuclear", "mitochondrial"))) +
-  theme(legend.text = element_text(colour="black", size = 14)) +
-  theme(legend.title = element_text(colour="black", size = 16)) +
-  theme(axis.text = element_text(colour="black", size = 14)) +
-  theme(axis.title = element_text(colour="black", size = 16))
+  theme(legend.text = element_text(colour="black", size = 16)) +
+  theme(legend.title = element_text(colour="black", size = 18)) +
+  theme(axis.text = element_text(colour="black", size = 16)) +
+  theme(axis.title = element_text(colour="black", size = 20))
 graphics.off()  # close the PNG device
 

@@ -23,16 +23,17 @@ all_novel_exons=rbind(novel_sup_exons,novel_cons_exons,novel_unsup_exons)
 #making the figure with ability to see all exons
 colourCount = length(unique(all_novel_exons$exons))
 getPalette = colorRampPalette(brewer.pal(8, "Set1"))
-png(filename=args[4], width=800, height=750)
+png(filename=args[4], width=1200, height=500)
 ggplot(all_novel_exons) + 
   stat_count(aes(label,fill=factor(exons))) + ylab("Transcript count") + xlab("Novel gene category") +
   scale_y_discrete("Transcript count", limits=(seq(0,15000,1000))) +
   guides(fill=guide_legend(title="Number of exons")) +
-  theme(axis.text.y = element_text(colour="black", size = 14, angle = 90)) +
-  theme(axis.text.x = element_text(colour="black", size = 12)) +
-  theme(axis.text.y = element_text(colour="black", size = 10, angle=0)) +
-  theme(axis.title = element_text(colour="black", size = 14)) +
-  theme(legend.text = element_text(colour="black", size = 10)) +
+  theme(axis.text.y = element_text(colour="black", size = 18, angle = 90)) +
+  theme(axis.text.x = element_text(colour="black", size = 16)) +
+  theme(axis.text.y = element_text(colour="black", size = 18, angle=0)) +
+  theme(axis.title = element_text(colour="black", size = 20)) +
+  theme(legend.title = element_text(colour="black", size=14, face="bold")) +
+  theme(legend.text = element_text(colour="black", size = 18)) +
   scale_x_discrete("Novel gene category", labels = c("novel_conserved" = "Category II","novel_supported" = " Category I",
                                                      "novel_unsupported" = "Category III"),
                    limits=c("novel_supported","novel_conserved","novel_unsupported")) +

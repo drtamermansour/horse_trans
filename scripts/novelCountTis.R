@@ -54,7 +54,7 @@ count_gene <- count(geneN,c("variable","cat","exons"))
 df.melt2=df.melt
 df.melt2$exons[which(df.melt2$exons > 5)]=6 
 # plot
-png(filename=args[5], width=1000, height=750)
+png(filename=args[5], width=1000, height=500)
 ggplot(df.melt2, aes(variable,group=exons,fill=exons)) +
   geom_bar(aes(weight=value),position="stack") + xlab("Tissue") +
   ylab("cumulative expression (TPM)") +
@@ -65,6 +65,10 @@ ggplot(df.melt2, aes(variable,group=exons,fill=exons)) +
   #scale_size_continuous(limits=c(1,2,3,4,5,6),
                       #labels=c("1","2","3", "4","5",">5")) +
   facet_grid(~ cat) +
-  theme(axis.text.x = element_text(colour="black", size =10,angle=90 )) +
-  theme(axis.title = element_text(colour="black", size = 14))
+  theme(axis.text.x = element_text(colour="black", size =14,angle=90 )) +
+  theme(axis.text.y = element_text(colour="black", size =16,angle=90 )) +
+  theme(axis.title = element_text(colour="black", size = 18)) +
+  theme(legend.title = element_text(colour="black", size=18, face="bold")) +
+  theme(legend.text = element_text(colour="black", size = 16)) +
+  theme(strip.text.x = element_text(size = 18, colour = "black"))
 graphics.off()  # close the PNG device

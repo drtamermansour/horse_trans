@@ -43,6 +43,9 @@ data_5 <- read.table("tissue_geneVSisoforms_5.txt",stringsAsFactors=FALSE)
 data_5$not_unique_genes <- data_5$not_unique_genes * -1
 data_5$not_unique_isoforms <- data_5$not_unique_isoforms * -1
 
+rownames(data_0)=gsub("Embryo.","Emb.",rownames(data_0))
+rownames(data_5)=gsub("Embryo.","Emb.",rownames(data_5))
+
 #more isoform plots
 Absent_Uisoforms_data_0 <- as.data.frame(data_0$not_unique_isoforms)
 rownames(Absent_Uisoforms_data_0) <- rownames(data_0) 
@@ -97,9 +100,9 @@ BrainStem_p_target=cbind(BrainStem_p[,c(1,2)],"BrainStem")
 names(BrainStem_p_target)=c("transcript_name","TPM","Tissue")
 Cerebellum_p_target=cbind(Cerebellum_p[,c(1,3)],"Cerebellum")
 names(Cerebellum_p_target)=c("transcript_name","TPM","Tissue")
-Embryo.ICM_p_target=cbind(Embryo.ICM_p[,c(1,4)],"Embryo.ICM")
+Embryo.ICM_p_target=cbind(Embryo.ICM_p[,c(1,4)],"Emb.ICM")
 names(Embryo.ICM_p_target)=c("transcript_name","TPM","Tissue")
-Embryo.TE_p_target=cbind(Embryo.TE_p[,c(1,5)],"Embryo.TE")
+Embryo.TE_p_target=cbind(Embryo.TE_p[,c(1,5)],"Emb.TE")
 names(Embryo.TE_p_target)=c("transcript_name","TPM","Tissue")
 Muscle_p_target=cbind(Muscle_p[,c(1,6)],"Muscle")
 names(Muscle_p_target)=c("transcript_name","TPM","Tissue")
@@ -127,12 +130,12 @@ ggplot() +
   ylab("Number of isoforms") +
   scale_color_discrete(name="Unique isoforms", labels=c("present","absent"),expand = c(0,0)) +
   xlab("Tissue") +
-  theme(legend.title = element_text(colour="black", size=14, face="bold")) +
-  theme(legend.text = element_text(colour="black", size = 12)) +
-  theme(axis.text.x = element_text(colour="black", size = 9)) +
-  theme(axis.title = element_text(colour="black", size = 14)) +
+  theme(legend.title = element_text(colour="black", size=18, face="bold")) +
+  theme(legend.text = element_text(colour="black", size = 16)) +
+  theme(axis.text.x = element_text(colour="black", size = 12)) +
+  theme(axis.title = element_text(colour="black", size = 18)) +
   geom_line(data=melted_tissue, aes(x=Tissue,y=sum / 50, group=1),colour="green") +
-  scale_x_discrete(limits=c("BrainStem","Cerebellum","Embryo.ICM", "Embryo.TE","Muscle","Retina","Skin","SpinalCord"))
+  scale_x_discrete(limits=c("BrainStem","Cerebellum","Emb.ICM", "Emb.TE","Muscle","Retina","Skin","SpinalCord"))
 dev.off()
 
 
