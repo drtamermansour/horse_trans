@@ -645,13 +645,13 @@ cuffmerge_output=$dist_dir/$cufflinks_run/$cuffmerge_run
 bash ${script_path}/cuffmerge_noGTF.sh "$genome" "$cuffmerge_output" "$isoformfrac" "$prepData/${cufflinks_run}_assemblies.txt"
 
 ## copy the assembly to the download folder
-cp $tissue_Cuffmerge/$cuffmerge_output/merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/unfiltered_Alltissues_Assembly.GTF
+cp $tissue_Cuffmerge/$cuffmerge_output/merged.gtf $horse_trans/downloads/allTissAsm/unfiltered_Alltissues_Assembly.GTF
 
 #Construct the transcript fasta file && calculate statistics
 cd $tissue_Cuffmerge/$cuffmerge_output
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "unfiltered_transcriptome.MatzStat"
-cp unfiltered_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp unfiltered_transcriptome.MatzStat $horse_trans/downloads/allTissStat/.
 ###################
 ## create a hub for non filtered data
 ## create list of assemblies from each library
@@ -722,13 +722,13 @@ tail -n+2 nonGuided_Cufflinks_multiExon.merged.gtf.tmap | awk '{if($3!="e" && $3
 grep -F -w -f keepit.id $assembly > ../merged.gtf
 
 ## copy the filtered assembly to the download folder
-cp $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered1_NoIntronicFrag_Alltissues.GTF
+cp $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag/merged.gtf $horse_trans/downloads/allTissAsm/filtered1_NoIntronicFrag_Alltissues.GTF
 
 #Construct the transcript fasta file && calculate statistics
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/NoIntronicFrag
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered1_NoIntronicFrag_transcriptome.MatzStat"
-cp filtered1_NoIntronicFrag_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp filtered1_NoIntronicFrag_transcriptome.MatzStat $horse_trans/downloads/allTissStat/.
 ##########################
 ## Using Salmon to eliminate low-expressed transcripts
 ## exclude isoforms with TPM less than 5% of the total TPM of each locus: 41543 transcript
@@ -762,13 +762,13 @@ cat dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > keepit.id
 grep -F -w -f keepit.id $assembly > ../merged.gtf
  
 ## copy the filtered assembly to the download folder
-cp $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered2_hiExp_Alltissues.GTF
+cp $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf $horse_trans/downloads/allTissAsm/filtered2_hiExp_Alltissues.GTF
 
 #Construct the transcript fasta file && calculate statistics
 cd $tissue_Cuffmerge/$cuffmerge_output/filtered/highExp
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered2_hiExp_transcriptome.MatzStat"
-cp filtered2_hiExp_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp filtered2_hiExp_transcriptome.MatzStat $horse_trans/downloads/allTissStat/.
 ###################
 ## define gene model supportive evidences
 filtered2_hiExpGTF=$tissue_Cuffmerge/$cuffmerge_output/filtered/highExp/merged.gtf
@@ -927,12 +927,12 @@ Rscript -e 'args=(commandArgs(TRUE)); data1=read.table(args[1],header=T,sep="\t"
 grep -v -F -w -f unsup $filtered2_hiExpGTF > merged.gtf ## 38507
 
 ## copy the filtered assembly to the download folder
-cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered3_sup_Alltissues.GTF
+cp merged.gtf $horse_trans/downloads/allTissAsm/filtered3_sup_Alltissues.GTF
 
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered3_sup_transcriptome.MatzStat"
-cp filtered3_sup_transcriptome.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp filtered3_sup_transcriptome.MatzStat $horse_trans/downloads/allTissStat/.
 ###################
 ## Removal of likely erroneous transcripts
 filtered3_supGTF=$tissue_Cuffmerge/$cuffmerge_output/filtered/supported/merged.gtf
@@ -950,12 +950,12 @@ grep -v -F -w -f small_IDs noChrM.gtf > merged.gtf
 #grep -v -F -w -f unstranded_IDs noSmall.gtf > merged.gtf
 
 ## copy the filtered assembly to the download folder
-cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/filtered4_refined_Alltissues.GTF
+cp merged.gtf $horse_trans/downloads/allTissAsm/filtered4_refined_Alltissues.GTF
 
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "filtered4_refined_Alltissues.MatzStat"
-cp filtered4_refined_Alltissues.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp filtered4_refined_Alltissues.MatzStat $horse_trans/downloads/allTissStat/.
 ###################
 ## proposed addational filter
 ## run the complex loci detection module aganist NCBI, ensambl and non-horse tracks 
@@ -1004,12 +1004,12 @@ done
 awk -F'"' 'BEGIN{OFS="\""}{if(NF==11)print $1,$2,$3,$8,$5,$6,$7,$4,$9,$10,$11;else print $1,$2,$3,$10,$5,$6,$7,$8,$9,$4,$11,$12,$13;}' testRedundancy.combined.gtf > merged.gtf
 
 ## copy the filtered assembly to the download folder
-cp merged.gtf $horse_trans/downloads/allTissues_assemblies_and_stats/mergedTrans.GTF
+cp merged.gtf $horse_trans/downloads/allTissAsm/mergedTrans.GTF
 
 #Construct the transcript fasta file && calculate statistics
 bash $script_path/run_genome_to_cdna_fasta.sh "merged.gtf" "$genome" "transcripts.fasta" "$script_path/genome_to_cdna_fasta.sh"
 bash $script_path/run_seq_stats.sh "transcripts.fasta" "mergedTrans.MatzStat"
-cp mergedTrans.MatzStat $horse_trans/downloads/allTissues_assemblies_and_stats/.
+cp mergedTrans.MatzStat $horse_trans/downloads/allTissStat/.
 ###################
 ## create hub for filtered data
 ## create list of assemblies from each library
@@ -1070,7 +1070,7 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 
 ## copy the BED files to the download folder
 while read ass_path assembly; do
-  cp $ass_path/$assembly/*_sorted.bed $horse_trans/downloads/allTissues_BED/$assembly.bed
+  cp $ass_path/$assembly/*_sorted.bed $horse_trans/downloads/allTissBED/$assembly.bed
 done < $tissue_Cuffmerge/$cuffmerge_output/filtered/filtered_assemblies.txt
 ##########################################################################################
 ## Run Cuffcompare with public annotations
@@ -1177,7 +1177,7 @@ while read asm_name assembly;do
   cat $asm_name.merge | cut -f 1-10,13-16,19-22,25-28,31-34 > $asm_name.merge.reduced
 done < $horse_trans/cuffcompare/ref_assemblies.txt
 ## copy the annotation tables to the download folder
-cp $horse_trans/cuffcompare/*.merge.reduced $horse_trans/downloads/annotations/.
+cp $horse_trans/cuffcompare/*.merge.reduced $horse_trans/downloads/compAnn/.
 
 ## make another version with index for complex regions
 #cd $horse_trans/cuffcompare
@@ -1306,7 +1306,7 @@ tail -n+2 $unsupNovel_ann.uncons.noORF | wc -l # 0
 tail -n+2 $unsupNovel_ann.uncons.noORF | awk -F $'\t' '{A[$28]++}END{for(i in A)print i,A[i]}' | sort -k2,2nr > $unsupNovel_ann.uncons.noORF.freq
 
 ## copy the novel gene tables to the downloads
-cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $ann.*.freq $horse_trans/downloads/novelAnn/.
+cp $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF $ann.*.freq $horse_trans/downloads/novelGeneAnn/.
 ###########################################################################################
 ## annotation of novel genes
 mkdir $horse_trans/novelGenes
@@ -1344,7 +1344,7 @@ for f in $supNovel_ann $unsupNovel_ann.cons $unsupNovel_ann.uncons.ORF;do  ## 20
  bash $script_path/trinotate.sh $label
  awk -F'\t' 'BEGIN{OFS="\t";} {print $1,$2,$3,$6,$7,$8}' $label.annotation_report.xls > $label.annotation_report_reduced.xls
  ## copy the annotations reports to the downloads
- cp $label.annotation_report_reduced.xls $horse_trans/downloads/novelAnn/.
+ cp $label.annotation_report_reduced.xls $horse_trans/downloads/novelGeneAnn/.
  ## keep a list of novel transcripts without ORFs
  #tail -n+2 $f | awk -F '[\t"]' '{if($(NF-1) == "NA")print $1;}' >  $label.novel_noORFs.key
 done
@@ -1357,7 +1357,7 @@ for f in $supNovel_ann $unsupNovel_ann.cons;do
 'ann_merge=merge(data1,data2[,c(2:6)],by="transcript.ID",all.x=T,all.y=T);'\
 'write.table(ann_merge,paste(args[2],"annWithCuffcomp.xls",sep="."), sep="\t", quote=F, row.names=F, col.names=T);' $f $label
 done
-cp *.annWithCuffcomp.xls $horse_trans/downloads/novelAnn/.
+cp *.annWithCuffcomp.xls $horse_trans/downloads/novelGeneAnn/.
 
 # no of novel transcripts in relation to their no of exons
 bash $script_path/run_novelCount.sh "$supNovel_ann" "$unsupNovel_ann.cons" "$unsupNovel_ann.uncons.ORF" "novelCounts.png" $script_path/novelCount.R;
@@ -1429,7 +1429,7 @@ while read work_dir; do
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly | awk '$1 != "chrM"' > $dir/merged.gtf
   ## copy the annotation to the download folder
-  cp $dir/merged.gtf $horse_trans/downloads/tissueSpecific_assemblies/$target.gtf
+  cp $dir/merged.gtf $horse_trans/downloads/tissSpAsm/$target.gtf
   ## statistics (no of genes and transcripts)
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
@@ -1449,7 +1449,7 @@ while read work_dir; do
   cat $target.dataSummary_comp | tail -n+2 | awk '{if($10 >= 5)print $3}' > $target.keepit.id
   grep -F -w -f $target.keepit.id $assembly | awk '$1 != "chrM"' > $dir/merged.gtf
   ## copy the annotation to the download folder
-  cp $dir/merged.gtf $horse_trans/downloads/tissueSpecific_assemblies/$target.gtf
+  cp $dir/merged.gtf $horse_trans/downloads/tissSpAsm/$target.gtf
   ## statistics
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $10 }' |  sort | uniq | wc -l
   cat $dir/merged.gtf | awk -F '[\t"]' '{ print $12 }' |  sort | uniq | wc -l
@@ -1622,7 +1622,7 @@ bash $script_path/edit_trackDb.sh $current_libs $current_tissues $trackDb $lib_a
 ## copy the BED files to the download folder
 while read ass_path assembly; do
   id=$(echo $assembly | cut -d "/" -f1,2 | sed 's|/|.|')
-  cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/tissueSpecific_BED/$id.bed
+  cp $ass_path/$assembly/merged_sorted.bed $horse_trans/downloads/tissSpBed/$id.bed
 done < <(cat $prepData/${cufflinks_run}_${cuffmerge_run}_librarySp.assemblies.txt \
              $tissue_Cuffmerge/${cufflinks_run}_${cuffmerge_run}_tissueSp.assemblies.txt)
 ###########################################################################################
