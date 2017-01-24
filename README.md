@@ -63,10 +63,14 @@ https://raw.githubusercontent.com/drtamermansour/horse_trans/master/track_hub/hu
 --->
 To add a hub, go to the genome browser home page. In the My Data menu, open the Track Hubs page and click the [My Hubs](https://genome.ucsc.edu/cgi-bin/hgHubConnect) tab. This tab lists the unlisted track hubs that you have loaded into your browser. To import a new hub, type its URL into the text box, then click the Add Hub button.
 
-<!---  
 Links for Downloads:
 --------------------
--  [GTF file of filtered assembly](http://de.iplantcollaborative.org/dl/d/417AF4BC-7E70-45B5-9538-0882A45669E9/filtered_Alltissues_Assembly.GTF)
+-  [GTF file of primitive assembly](http://de.cyverse.org/dl/d/C0F0B9BE-8A0A-423D-AB0C-B05AA3138FE7/unfiltered_Alltissues_Assembly.GTF). This is our initial RNAseq supported assembly before any filtration.  
+-  [GTF file of filtered assembly](http://de.cyverse.org/dl/d/7EBE4618-C6A5-4F38-8EC2-B092C8CA910E/filtered4_refined_Alltissues.GTF). This is our final "refined assembly" after application of four filters to remove the unlikely true transcripts.  
+-  [GTF file of merged assembly](http://de.cyverse.org/dl/d/191E87F8-98E1-43B4-BC95-B386AEB710F5/mergedTrans.GTF). The is a version of the refined assembly merged with NCBI and ENSEMBL annotations to achieve breadth not covered by our tissues
+
+
+<!---  
 -  [Transcriptome edited by common variants](http://de.iplantcollaborative.org/dl/d/5F00CC13-5775-4AD5-A814-E3AFC768E2D9/varFixed_Transcriptome.fa)
 -  [Tabulated gene TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/8AD5668A-02C3-4E54-AEE3-509E15C54594/allTissues_geneTPM)  
 -  [Tabulated isoform TPM expression for all tissues](http://de.iplantcollaborative.org/dl/d/FA197031-71D3-4AAD-911A-7ACDF7516911/allTissues_isoformTPM)  
