@@ -68,7 +68,7 @@ Links for Downloads:
 -  [GTF file of primitive assembly](http://de.cyverse.org/dl/d/C0F0B9BE-8A0A-423D-AB0C-B05AA3138FE7/unfiltered_Alltissues_Assembly.GTF). This is our initial RNAseq supported assembly before any filtration.  
 -  [GTF file of filtered assembly](http://de.cyverse.org/dl/d/7EBE4618-C6A5-4F38-8EC2-B092C8CA910E/filtered4_refined_Alltissues.GTF). This is our final "refined assembly" after application of four filters to remove the unlikely true transcripts.  
 -  [GTF file of merged assembly](http://de.cyverse.org/dl/d/191E87F8-98E1-43B4-BC95-B386AEB710F5/mergedTrans.GTF). The is a version of the refined assembly merged with NCBI and ENSEMBL annotations to achieve breadth not covered by our tissues
-
+- [Annotation table of the new assembly](http://de.cyverse.org/dl/d/D44C705B-8F45-46BE-BAF4-E666F3E0B169/RNAseqSupTrans.merge.reduced). For each transcript in our assembly, the table identifies the corresponding transcripts in the assemblies of Hestand et al (2014), ISME (2015), NCBI, ENSEMBL, and refGene track. The table uses class codes of Cuffcompare to describe the type of similarity between our transcripts and those in each assembly. 
 
 <!---  
 -  [Transcriptome edited by common variants](http://de.iplantcollaborative.org/dl/d/5F00CC13-5775-4AD5-A814-E3AFC768E2D9/varFixed_Transcriptome.fa)
